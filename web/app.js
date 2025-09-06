@@ -17,6 +17,8 @@
   const statusEl = document.getElementById('status');
   const tableSection = document.getElementById('tableSection');
   const tbody = document.getElementById('actorsTbody');
+  const tabs = document.querySelectorAll('.tab');
+  const tabContents = document.querySelectorAll('.tab-content');
 
   // State
   let saveObj = null;           // whole parsed save JSON
@@ -289,6 +291,22 @@
         th.classList.add(sortState.dir === 'desc' ? 'sort-desc' : 'sort-asc');
       }
     });
+  }
+
+  // Tabs
+  function activateTab(name) {
+    tabs.forEach(btn => {
+      const match = btn.getAttribute('data-tab') === name;
+      btn.classList.toggle('active', match);
+      btn.setAttribute('aria-selected', match ? 'true' : 'false');
+    });
+    tabContents.forEach(sec => {
+      const id = sec.id; // e.g., tab-actors
+      const match = id === `tab-${name}`;
+      sec.classList.toggle('active', match);
+    });
+    // When activating actors, ensure the table renders
+    if (name === 'actors') render();
   }
 
   function render() {
@@ -572,6 +590,18 @@
         render();
       });
     });
+  })();
+
+  // Tab handlers
+  (function attachTabs() {
+    tabs.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const name = btn.getAttribute('data-tab');
+        activateTab(name);
+      });
+    });
+    // default active
+    activateTab('actors');
   })();
 
   // Download

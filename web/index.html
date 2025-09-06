@@ -12,6 +12,15 @@
       <p>Edit actors: acting skill, limit, ART, COM.</p>
     </header>
 
+    <nav class="tabs" role="tablist" aria-label="Primary">
+      <button class="tab active" role="tab" aria-selected="true" data-tab="actors">Actors</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="directors">Directors</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="producers">Producers</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="writers">Writers</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="editors">Editors</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="movies">Movies</button>
+    </nav>
+
     <section id="loaders">
       <div class="loader">
         <h2>1) Load Save File</h2>
@@ -30,32 +39,50 @@
       </div>
     </section>
 
-    <section id="controls" class="controls" hidden>
-      <div class="control-row">
-        <input type="text" id="searchInput" placeholder="Search actors by name..." />
-        <div style="display:flex; align-items:center; gap:6px;">
-          <label for="gameYearInput">Game Year:</label>
-          <input type="number" id="gameYearInput" min="1850" max="2100" style="width:100px" />
+    <section id="tab-actors" class="tab-content active" role="tabpanel" aria-labelledby="tab-actors">
+      <section id="controls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="searchInput" placeholder="Search actors by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label for="gameYearInput">Game Year:</label>
+            <input type="number" id="gameYearInput" min="1850" max="2100" style="width:100px" />
+          </div>
+          <button id="downloadBtn" disabled>Download Edited Save</button>
         </div>
-        <button id="downloadBtn" disabled>Download Edited Save</button>
-      </div>
-      <div id="status" class="status"></div>
+        <div id="status" class="status"></div>
+      </section>
+
+      <section id="tableSection" hidden>
+        <table id="actorsTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="skill">Acting Skill</th>
+              <th data-sort-key="limit">Limit</th>
+              <th data-sort-key="art">ART</th>
+              <th data-sort-key="com">COM</th>
+            </tr>
+          </thead>
+          <tbody id="actorsTbody"></tbody>
+        </table>
+      </section>
     </section>
 
-    <section id="tableSection" hidden>
-      <table id="actorsTable">
-        <thead>
-          <tr>
-            <th style="min-width: 240px;" data-sort-key="name">Name</th>
-            <th data-sort-key="age">Age</th>
-            <th data-sort-key="skill">Acting Skill</th>
-            <th data-sort-key="limit">Limit</th>
-            <th data-sort-key="art">ART</th>
-            <th data-sort-key="com">COM</th>
-          </tr>
-        </thead>
-        <tbody id="actorsTbody"></tbody>
-      </table>
+    <section id="tab-directors" class="tab-content" role="tabpanel" aria-labelledby="tab-directors">
+      <div class="placeholder">Directors editing coming soon.</div>
+    </section>
+    <section id="tab-producers" class="tab-content" role="tabpanel" aria-labelledby="tab-producers">
+      <div class="placeholder">Producers editing coming soon.</div>
+    </section>
+    <section id="tab-writers" class="tab-content" role="tabpanel" aria-labelledby="tab-writers">
+      <div class="placeholder">Writers editing coming soon.</div>
+    </section>
+    <section id="tab-editors" class="tab-content" role="tabpanel" aria-labelledby="tab-editors">
+      <div class="placeholder">Editors editing coming soon.</div>
+    </section>
+    <section id="tab-movies" class="tab-content" role="tabpanel" aria-labelledby="tab-movies">
+      <div class="placeholder">Movies/films editing coming soon.</div>
     </section>
 
     <footer>

@@ -20,6 +20,11 @@ header{border-bottom:1px solid var(--border)}
 footer{border-top:1px solid var(--border); color:var(--muted)}
 h1{margin:0 0 6px 0; font-size:20px}
 h2{margin:0 0 8px 0; font-size:16px}
+.tabs{display:flex; gap:8px; padding:10px 20px; border-bottom:1px solid var(--border); background:var(--panel)}
+.tab{background:transparent; color:var(--text); border:1px solid var(--border); border-bottom:none; padding:8px 12px; border-top-left-radius:6px; border-top-right-radius:6px; cursor:pointer}
+.tab.active{background:#0e1016; border-color:var(--accent); color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
 .hint{color:var(--muted); margin: 0 0 8px 0}
 .meta{color:var(--muted); margin-top:6px}
 .controls{padding:12px 20px; border-top:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--panel)}
@@ -49,5 +54,6 @@ td input[type="number"]{width:90px}
 td input[type="range"]{width:160px}
 .slider-cell{display:flex; align-items:center; gap:8px}
 .slider-val{min-width:52px; text-align:right; color:var(--muted); font-variant-numeric: tabular-nums}
+.placeholder{padding:16px 20px; color:var(--muted)}
 .status{margin-top:8px; color:var(--muted)}
 .note{margin:8px 0 0}
