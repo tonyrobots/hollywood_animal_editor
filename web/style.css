@@ -1,0 +1,53 @@
+:root{
+  --bg: #0f1115;
+  --panel: #171a21;
+  --text: #e6e9ef;
+  --muted: #a8b0bd;
+  --accent: #6ea8fe;
+  --good: #5bd38d;
+  --warn: #ffcc66;
+  --danger: #ff6b6b;
+  --border: #2a2f3a;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:var(--text); background:var(--bg);
+}
+header, footer{padding:16px 20px}
+header{border-bottom:1px solid var(--border)}
+footer{border-top:1px solid var(--border); color:var(--muted)}
+h1{margin:0 0 6px 0; font-size:20px}
+h2{margin:0 0 8px 0; font-size:16px}
+.hint{color:var(--muted); margin: 0 0 8px 0}
+.meta{color:var(--muted); margin-top:6px}
+.controls{padding:12px 20px; border-top:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--panel)}
+.control-row{display:flex; gap:10px; align-items:center}
+input[type="text"], input[type="file"], select, button{
+  background:#0e1016; color:var(--text); border:1px solid var(--border); padding:8px; border-radius:6px;
+}
+input[type="text"]{min-width:280px}
+button{cursor:pointer}
+button:disabled{opacity:.6; cursor:not-allowed}
+
+#loaders{display:flex; gap:20px; padding:16px 20px; flex-wrap:wrap}
+.loader{flex:1; min-width:320px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px}
+.drop-zone{border:2px dashed var(--border); border-radius:8px; padding:14px; text-align:center; color:var(--muted)}
+.drop-zone.drag{border-color:var(--accent); color:var(--text)}
+
+#actorsTable{width:100%; border-collapse:collapse}
+#actorsTable th, #actorsTable td{padding:8px 10px; border-bottom:1px solid var(--border)}
+#actorsTable th{user-select:none; cursor:pointer; position:relative}
+#actorsTable th.sort-asc::after{content:"\25B2"; /* ▲ */ color:var(--muted); display:inline-block; margin-left:6px; font-size:10px}
+#actorsTable th.sort-desc::after{content:"\25BC"; /* ▼ */ color:var(--muted); display:inline-block; margin-left:6px; font-size:10px}
+#actorsTable thead{position:sticky; top:0; background:var(--panel); z-index:1}
+tbody tr:hover{background:rgba(255,255,255,0.03)}
+td input[type="text"]{width:110px}
+td select{width:110px}
+td input[type="number"]{width:90px}
+td input[type="range"]{width:160px}
+.slider-cell{display:flex; align-items:center; gap:8px}
+.slider-val{min-width:52px; text-align:right; color:var(--muted); font-variant-numeric: tabular-nums}
+.status{margin-top:8px; color:var(--muted)}
+.note{margin:8px 0 0}

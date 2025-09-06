@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hollywood Animal — Save Editor (MVP)</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Hollywood Animal — Save Editor (MVP)</h1>
+      <p>Edit actors: acting skill, limit, ART, COM.</p>
+    </header>
+
+    <section id="loaders">
+      <div class="loader">
+        <h2>1) Load Save File</h2>
+        <div id="dropZone" class="drop-zone" tabindex="0" aria-label="Drop save file here">
+          <p>Drag & drop save JSON here, or</p>
+          <input type="file" id="saveFileInput" accept="application/json,.json" />
+        </div>
+        <div id="saveMeta" class="meta"></div>
+      </div>
+
+      <div class="loader">
+        <h2>2) Load Name Map</h2>
+        <p class="hint">Tries to auto-load <code>data/CHARACTER_NAMES.json</code>. If it fails, provide it here:</p>
+        <input type="file" id="namesFileInput" accept="application/json,.json" />
+        <div id="namesMeta" class="meta"></div>
+      </div>
+    </section>
+
+    <section id="controls" class="controls" hidden>
+      <div class="control-row">
+        <input type="text" id="searchInput" placeholder="Search actors by name..." />
+        <div style="display:flex; align-items:center; gap:6px;">
+          <label for="gameYearInput">Game Year:</label>
+          <input type="number" id="gameYearInput" min="1850" max="2100" style="width:100px" />
+        </div>
+        <button id="downloadBtn" disabled>Download Edited Save</button>
+      </div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section id="tableSection" hidden>
+      <table id="actorsTable">
+        <thead>
+          <tr>
+            <th style="min-width: 240px;" data-sort-key="name">Name</th>
+            <th data-sort-key="age">Age</th>
+            <th data-sort-key="skill">Acting Skill</th>
+            <th data-sort-key="limit">Limit</th>
+            <th data-sort-key="art">ART</th>
+            <th data-sort-key="com">COM</th>
+          </tr>
+        </thead>
+        <tbody id="actorsTbody"></tbody>
+      </table>
+    </section>
+
+    <footer>
+      <p class="note">Tip: If opening this file directly (file://), browsers may block auto-loading <code>data/CHARACTER_NAMES.json</code>. Use the Name Map loader above or serve locally (e.g., <code>python -m http.server</code>).</p>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+  </html>
