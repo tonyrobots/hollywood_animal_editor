@@ -1,0 +1,46 @@
+Hollywood Animal — Save Editor: Next Steps / TODO
+
+Core Editing Expansion
+- Implement other talent tabs (filter by professions):
+  - Directors (professions.Director)
+  - Producers (professions.Producer)
+  - Writers (professions.Writer)
+  - Editors (professions.Editor)
+- Movies tab: list films with key fields (title, release date, art/com values where applicable) and basic edits.
+- Add a detail page/view for each entity (Actor, Director, Movie):
+  - Show full record JSON with grouped sections (identity, professions, contracts, labels, tags, history)
+  - Safe edits for additional fields (mood, attitude, selfEsteem, contracts)
+  - Back link to list with deep-link support (hash routing)
+
+UX / Quality
+- Add inline reset per row/field and a global “revert unsaved changes” action.
+- Provide undo/redo stack for recent edits.
+- Bulk operations (e.g., set ART/COM for selected items; adjust limits in range).
+- Keyboard navigation and accessibility passes (aria roles, focus order, labels).
+- Visual sort indicators already added; consider multi-column sort with modifier key.
+- Persist UI state (search query, sort, active tab, game year) to localStorage.
+- Tooltips on Age to show exact birthDate; show raw birthDate on hover.
+
+Data Handling
+- Streaming or targeted parsing for very large saves (extract only `characters` and needed subtrees).
+- Guard against unexpected date formats and nulls; surface non-blocking warnings.
+- Optional: configurable decimal precision (default three decimals) with consistent normalization.
+
+Name Map
+- Validate indices; highlight missing/invalid name IDs.
+- Optional: support alternate local name map packages/languages.
+
+Export / Safety
+- Pre-export validation summary (changed fields count, potential anomalies).
+- Optional: backup original file name + timestamp when downloading.
+
+Technical / Code Health
+- Factor common table rendering helpers and formatting utils.
+- Add lightweight tests for parsing helpers (e.g., birthDate parse/format, game year detection).
+- Linting/format sanity (no external tooling required; optional preconfigured tasks if added later).
+- Consider TypeScript refactor if complexity grows (keep offline and simple).
+
+Documentation
+- Expand README with per-tab instructions once other tabs are implemented.
+- Include JSON path references for each editable field on detail pages.
+
