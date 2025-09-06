@@ -1,0 +1,46 @@
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# Node / web tooling (future-proof)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.cache/
+.parcel-cache/
+.vite/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Env
+.env
+.env.*
+
+# Editors/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs / reports
+*.log
+coverage/
+.coverage
+reports/
+
+# Web
+web/.DS_Store
+
