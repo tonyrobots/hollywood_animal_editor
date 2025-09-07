@@ -453,6 +453,93 @@
     return isFinite(n) ? n : -Infinity;
   }
 
+  // Shared helper for skill + limit slider cells
+  function buildSkillLimitCells(entity, config) {
+    const { readKeys, writeKeyCanonical, label } = config;
+    const pickReadSkill = () => {
+      const prof = entity.professions || {};
+      for (const k of readKeys) {
+        const v = prof[k];
+        if (isFinite(Number(v))) return Number(v);
+      }
+      return 0;
+    };
+    const resolveWriteKey = () => {
+      const prof = entity.professions || {};
+      for (const k of readKeys) {
+        if (k in prof) return k;
+      }
+      return writeKeyCanonical;
+    };
+
+    const writeKey = resolveWriteKey();
+
+    // Skill cell
+    const tdSkill = document.createElement('td');
+    const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
+    const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
+    const skillNum = pickReadSkill(); skillRange.value = String(skillNum);
+    const skillVal = document.createElement('span'); skillVal.className = 'slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
+
+    // Limit cell
+    const tdLimit = document.createElement('td');
+    const limitWrap = document.createElement('div'); limitWrap.className = 'slider-cell';
+    const limitRange = document.createElement('input'); limitRange.type = 'range'; limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
+    const limitNum = isFinite(Number(entity.limit ?? entity.Limit)) ? Number(entity.limit ?? entity.Limit) : 0; limitRange.value = String(limitNum);
+    const limitVal = document.createElement('span'); limitVal.className = 'slider-val'; limitVal.textContent = formatUnitToTen(limitNum);
+
+    // Skill events
+    skillRange.addEventListener('input', () => {
+      if (!entity.professions || typeof entity.professions !== 'object') entity.professions = {};
+      if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(entity.professions?.[writeKey] ?? '');
+      const norm = Number(skillRange.value).toFixed(3);
+      entity.professions[writeKey] = norm;
+      skillVal.textContent = formatUnitToTen(norm);
+      // Auto raise limit
+      const curLimit = isFinite(Number(entity.limit ?? entity.Limit)) ? Number(entity.limit ?? entity.Limit) : 0;
+      if (Number(norm) > curLimit) {
+        if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(entity.limit ?? entity.Limit ?? '');
+        if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(entity.limit ?? entity.Limit ?? '');
+        entity.limit = norm; entity.Limit = norm;
+        limitRange.value = String(norm);
+        limitVal.textContent = formatUnitToTen(norm);
+        skillRange.dataset.autoLimitNew = norm;
+      }
+    });
+    skillRange.addEventListener('change', () => {
+      const finalVal = Number(skillRange.value).toFixed(3);
+      const initialVal = skillRange.dataset.initial ?? String(finalVal);
+      delete skillRange.dataset.initial;
+      recordEdit({ entity, label, path: `professions.${writeKey}`, oldValue: initialVal, newValue: finalVal });
+      if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+        recordEdit({ entity, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+      }
+      delete skillRange.dataset.autoLimitOld; delete skillRange.dataset.autoLimitNew;
+    });
+    skillRange.addEventListener('focus', () => markFocusedId(entity.id));
+    skillWrap.appendChild(skillRange); skillWrap.appendChild(skillVal); tdSkill.appendChild(skillWrap);
+
+    // Limit events
+    limitRange.addEventListener('input', () => {
+      const skillFloor = isFinite(Number(entity.professions?.[writeKey])) ? Number(entity.professions[writeKey]) : 0;
+      if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(entity.limit ?? entity.Limit ?? '');
+      if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor);
+      const norm = Number(limitRange.value).toFixed(3);
+      entity.limit = norm; entity.Limit = norm;
+      limitVal.textContent = formatUnitToTen(norm);
+    });
+    limitRange.addEventListener('change', () => {
+      const finalVal = Number(limitRange.value).toFixed(3);
+      const initialVal = limitRange.dataset.initial ?? String(finalVal);
+      delete limitRange.dataset.initial;
+      recordEdit({ entity, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal });
+    });
+    limitRange.addEventListener('focus', () => markFocusedId(entity.id));
+    limitWrap.appendChild(limitRange); limitWrap.appendChild(limitVal); tdLimit.appendChild(limitWrap);
+
+    return { tdSkill, tdLimit };
+  }
+
   function sortList(list) {
     const dirMul = sortState.dir === 'desc' ? -1 : 1;
     const key = sortState.key;
@@ -698,89 +785,10 @@
       tdAge.appendChild(ageInput);
       tr.appendChild(tdAge);
 
-      // Acting Skill (slider)
-      const tdSkill = document.createElement('td');
-      const skillWrap = document.createElement('div');
-      skillWrap.className = 'slider-cell';
-      const skillRange = document.createElement('input');
-      skillRange.type = 'range';
-      skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
-      const currentSkill = actor.professions?.Actor;
-      const skillNum = isFinite(Number(currentSkill)) ? Number(currentSkill) : 0;
-      skillRange.value = String(skillNum);
-      const skillVal = document.createElement('span');
-      skillVal.className = 'slider-val';
-      skillVal.textContent = formatUnitToTen(skillNum);
-      skillRange.addEventListener('input', () => {
-        if (!actor.professions || typeof actor.professions !== 'object') actor.professions = {};
-        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(actor.professions.Actor ?? '');
-        const norm = Number(skillRange.value).toFixed(3);
-        actor.professions.Actor = norm;
-        skillVal.textContent = formatUnitToTen(norm);
-        // Auto-raise limit if skill exceeds current limit
-        const currentLimitNum = isFinite(Number(actor.limit ?? actor.Limit)) ? Number(actor.limit ?? actor.Limit) : 0;
-        if (Number(norm) > currentLimitNum) {
-          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(actor.limit ?? actor.Limit ?? '');
-          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(actor.limit ?? actor.Limit ?? '');
-          actor.limit = norm;
-          actor.Limit = norm;
-          limitRange.value = String(norm);
-          limitVal.textContent = formatUnitToTen(norm);
-          skillRange.dataset.autoLimitNew = norm;
-        }
-      });
-      skillRange.addEventListener('focus', () => markFocusedId(actor.id));
-      skillRange.addEventListener('change', () => {
-        const finalVal = Number(skillRange.value).toFixed(3);
-        const initialVal = skillRange.dataset.initial ?? String(finalVal);
-        delete skillRange.dataset.initial;
-        recordEdit({ entity: actor, label: 'Acting Skill', path: 'professions.Actor', oldValue: initialVal, newValue: finalVal });
-        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
-          recordEdit({ entity: actor, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
-        }
-        delete skillRange.dataset.autoLimitOld;
-        delete skillRange.dataset.autoLimitNew;
-      });
-      // no change-triggered re-render
-      skillWrap.appendChild(skillRange);
-      skillWrap.appendChild(skillVal);
-      tdSkill.appendChild(skillWrap);
-      tr.appendChild(tdSkill);
-
-      // Limit (slider)
-      const tdLimit = document.createElement('td');
-      const limitWrap = document.createElement('div');
-      limitWrap.className = 'slider-cell';
-      const limitRange = document.createElement('input');
-      limitRange.type = 'range';
-      limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
-      const currentLimit = actor.limit ?? actor.Limit;
-      const limitNum = isFinite(Number(currentLimit)) ? Number(currentLimit) : 0;
-      limitRange.value = String(limitNum);
-      const limitVal = document.createElement('span');
-      limitVal.className = 'slider-val';
-      limitVal.textContent = formatUnitToTen(limitNum);
-      limitRange.addEventListener('input', () => {
-        const skillFloor = isFinite(Number(actor.professions?.Actor)) ? Number(actor.professions.Actor) : 0;
-        if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(actor.limit ?? actor.Limit ?? '');
-        if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor);
-        const norm = Number(limitRange.value).toFixed(3);
-        actor.limit = norm;
-        actor.Limit = norm;
-        limitVal.textContent = formatUnitToTen(norm);
-      });
-      limitRange.addEventListener('focus', () => markFocusedId(actor.id));
-      limitRange.addEventListener('change', () => {
-        const finalVal = Number(limitRange.value).toFixed(3);
-        const initialVal = limitRange.dataset.initial ?? String(finalVal);
-        delete limitRange.dataset.initial;
-        recordEdit({ entity: actor, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal });
-      });
-      // no change-triggered re-render
-      limitWrap.appendChild(limitRange);
-      limitWrap.appendChild(limitVal);
-      tdLimit.appendChild(limitWrap);
-      tr.appendChild(tdLimit);
+      // Skill + Limit via shared helper
+      const cells = buildSkillLimitCells(actor, { readKeys: ['Actor'], writeKeyCanonical: 'Actor', label: 'Acting Skill' });
+      tr.appendChild(cells.tdSkill);
+      tr.appendChild(cells.tdLimit);
 
       // ART (slider)
       const tdArt = document.createElement('td');
@@ -1263,9 +1271,9 @@
       const skillVal = document.createElement('span'); skillVal.className = 'slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
       skillRange.addEventListener('input', () => {
         if (!w.professions || typeof w.professions !== 'object') w.professions = {};
-        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(w.professions.Writer ?? w.professions.Scriptwriter ?? '');
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(w.professions.Scriptwriter ?? w.professions.Writer ?? '');
         const norm = Number(skillRange.value).toFixed(3);
-        w.professions.Writer = norm;
+        w.professions.Scriptwriter = norm;
         skillVal.textContent = formatUnitToTen(norm);
         // Auto-raise limit if skill exceeds current limit
         const currentLimitNum = isFinite(Number(w.limit ?? w.Limit)) ? Number(w.limit ?? w.Limit) : 0;
@@ -1283,7 +1291,7 @@
         const finalVal = Number(skillRange.value).toFixed(3);
         const initialVal = skillRange.dataset.initial ?? String(finalVal);
         delete skillRange.dataset.initial;
-        recordEdit({ entity: w, label: 'Writer Skill', path: 'professions.Writer', oldValue: initialVal, newValue: finalVal });
+        recordEdit({ entity: w, label: 'Writer Skill', path: 'professions.Scriptwriter', oldValue: initialVal, newValue: finalVal });
         if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
           recordEdit({ entity: w, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
         }
@@ -1297,7 +1305,7 @@
       const limitRange = document.createElement('input'); limitRange.type = 'range'; limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
       const limitNum = isFinite(Number(w.limit ?? w.Limit)) ? Number(w.limit ?? w.Limit) : 0; limitRange.value = String(limitNum);
       const limitVal = document.createElement('span'); limitVal.className = 'slider-val'; limitVal.textContent = formatUnitToTen(limitNum);
-      limitRange.addEventListener('input', () => { const skillFloor = isFinite(Number(w.professions?.Writer ?? w.professions?.Scriptwriter)) ? Number(w.professions.Writer ?? w.professions.Scriptwriter) : 0; if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(w.limit ?? w.Limit ?? ''); if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor); const norm = Number(limitRange.value).toFixed(3); w.limit = norm; w.Limit = norm; limitVal.textContent = formatUnitToTen(norm); });
+      limitRange.addEventListener('input', () => { const skillFloor = isFinite(Number(w.professions?.Scriptwriter ?? w.professions?.Writer)) ? Number(w.professions.Scriptwriter ?? w.professions.Writer) : 0; if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(w.limit ?? w.Limit ?? ''); if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor); const norm = Number(limitRange.value).toFixed(3); w.limit = norm; w.Limit = norm; limitVal.textContent = formatUnitToTen(norm); });
       limitRange.addEventListener('focus', () => markFocusedId(w.id));
       limitRange.addEventListener('change', () => { const finalVal = Number(limitRange.value).toFixed(3); const initialVal = limitRange.dataset.initial ?? String(finalVal); delete limitRange.dataset.initial; recordEdit({ entity: w, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal }); });
       // no change-triggered re-render
@@ -1372,9 +1380,9 @@
       const skillVal = document.createElement('span'); skillVal.className = 'slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
       skillRange.addEventListener('input', () => {
         if (!ed.professions || typeof ed.professions !== 'object') ed.professions = {};
-        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(ed.professions.Editor ?? ed.professions.FilmEditor ?? '');
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(ed.professions.FilmEditor ?? ed.professions.Editor ?? '');
         const norm = Number(skillRange.value).toFixed(3);
-        ed.professions.Editor = norm;
+        ed.professions.FilmEditor = norm;
         skillVal.textContent = formatUnitToTen(norm);
         // Auto-raise limit if skill exceeds current limit
         const currentLimitNum = isFinite(Number(ed.limit ?? ed.Limit)) ? Number(ed.limit ?? ed.Limit) : 0;
@@ -1391,7 +1399,7 @@
         const finalVal = Number(skillRange.value).toFixed(3);
         const initialVal = skillRange.dataset.initial ?? String(finalVal);
         delete skillRange.dataset.initial;
-        recordEdit({ entity: ed, label: 'Editor Skill', path: 'professions.Editor', oldValue: initialVal, newValue: finalVal });
+        recordEdit({ entity: ed, label: 'Editor Skill', path: 'professions.FilmEditor', oldValue: initialVal, newValue: finalVal });
         if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
           recordEdit({ entity: ed, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
         }
@@ -1405,7 +1413,7 @@
       const limitRange = document.createElement('input'); limitRange.type = 'range'; limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
       const limitNum = isFinite(Number(ed.limit ?? ed.Limit)) ? Number(ed.limit ?? ed.Limit) : 0; limitRange.value = String(limitNum);
       const limitVal = document.createElement('span'); limitVal.className = 'slider-val'; limitVal.textContent = formatUnitToTen(limitNum);
-      limitRange.addEventListener('input', () => { const skillFloor = isFinite(Number(ed.professions?.Editor ?? ed.professions?.FilmEditor)) ? Number(ed.professions.Editor ?? ed.professions.FilmEditor) : 0; if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(ed.limit ?? ed.Limit ?? ''); if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor); const norm = Number(limitRange.value).toFixed(3); ed.limit = norm; ed.Limit = norm; limitVal.textContent = formatUnitToTen(norm); });
+      limitRange.addEventListener('input', () => { const skillFloor = isFinite(Number(ed.professions?.FilmEditor ?? ed.professions?.Editor)) ? Number(ed.professions.FilmEditor ?? ed.professions.Editor) : 0; if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(ed.limit ?? ed.Limit ?? ''); if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor); const norm = Number(limitRange.value).toFixed(3); ed.limit = norm; ed.Limit = norm; limitVal.textContent = formatUnitToTen(norm); });
       limitRange.addEventListener('change', () => { const finalVal = Number(limitRange.value).toFixed(3); const initialVal = limitRange.dataset.initial ?? String(finalVal); delete limitRange.dataset.initial; recordEdit({ entity: ed, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal }); });
       // no change-triggered re-render
       limitWrap.appendChild(limitRange); limitWrap.appendChild(limitVal); tdLimit.appendChild(limitWrap); tr.appendChild(tdLimit);
