@@ -10,15 +10,83 @@
   const dropZone = document.getElementById('dropZone');
   const saveMeta = document.getElementById('saveMeta');
   const namesMeta = document.getElementById('namesMeta');
+  const reloadBtn = document.getElementById('reloadBtn');
+  const loadersSection = document.getElementById('loaders');
   const controls = document.getElementById('controls');
   const searchInput = document.getElementById('searchInput');
-  const gameYearInput = document.getElementById('gameYearInput');
+  const gameYearText = document.getElementById('gameYearText');
   const downloadBtn = document.getElementById('downloadBtn');
   const statusEl = document.getElementById('status');
   const tableSection = document.getElementById('tableSection');
   const tbody = document.getElementById('actorsTbody');
   const tabs = document.querySelectorAll('.tab');
   const tabContents = document.querySelectorAll('.tab-content');
+  const changesPanel = document.getElementById('changesPanel');
+  const changesList = document.getElementById('changesList');
+  const changesCount = document.getElementById('changesCount');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  // placeholders for other tabs
+  const directorsPlaceholder = document.getElementById('directorsPlaceholder');
+  const producersPlaceholder = document.getElementById('producersPlaceholder');
+  const writersPlaceholder = document.getElementById('writersPlaceholder');
+  const editorsPlaceholder = document.getElementById('editorsPlaceholder');
+  const moviesPlaceholder = document.getElementById('moviesPlaceholder');
+  const moviesControls = document.getElementById('moviesControls');
+  const moviesSearchInput = document.getElementById('moviesSearchInput');
+  const moviesStatus = document.getElementById('moviesStatus');
+  const moviesTableSection = document.getElementById('moviesTableSection');
+  const moviesTbody = document.getElementById('moviesTbody');
+  // New roles UI
+  const composersPlaceholder = document.getElementById('composersPlaceholder');
+  const composersControls = document.getElementById('composersControls');
+  const composersSearchInput = document.getElementById('composersSearchInput');
+  const composersStatus = document.getElementById('composersStatus');
+  const composersTableSection = document.getElementById('composersTableSection');
+  const composersTbody = document.getElementById('composersTbody');
+  const gameYearText6 = document.getElementById('gameYearText6');
+  const cinematographersPlaceholder = document.getElementById('cinematographersPlaceholder');
+  const cinematographersControls = document.getElementById('cinematographersControls');
+  const cinematographersSearchInput = document.getElementById('cinematographersSearchInput');
+  const cinematographersStatus = document.getElementById('cinematographersStatus');
+  const cinematographersTableSection = document.getElementById('cinematographersTableSection');
+  const cinematographersTbody = document.getElementById('cinematographersTbody');
+  const gameYearText7 = document.getElementById('gameYearText7');
+  const agentsPlaceholder = document.getElementById('agentsPlaceholder');
+  const agentsControls = document.getElementById('agentsControls');
+  const agentsSearchInput = document.getElementById('agentsSearchInput');
+  const agentsStatus = document.getElementById('agentsStatus');
+  const agentsTableSection = document.getElementById('agentsTableSection');
+  const agentsTbody = document.getElementById('agentsTbody');
+  const gameYearText8 = document.getElementById('gameYearText8');
+  // Directors UI
+  const directorsTableSection = document.getElementById('directorsTableSection');
+  const directorsTbody = document.getElementById('directorsTbody');
+  const directorsControls = document.getElementById('directorsControls');
+  const directorsSearchInput = document.getElementById('directorsSearchInput');
+  const directorsStatus = document.getElementById('directorsStatus');
+  const gameYearText2 = document.getElementById('gameYearText2');
+  // Producers UI
+  const producersTableSection = document.getElementById('producersTableSection');
+  const producersTbody = document.getElementById('producersTbody');
+  const producersControls = document.getElementById('producersControls');
+  const producersSearchInput = document.getElementById('producersSearchInput');
+  const producersStatus = document.getElementById('producersStatus');
+  const gameYearText3 = document.getElementById('gameYearText3');
+  // Writers UI
+  const writersTableSection = document.getElementById('writersTableSection');
+  const writersTbody = document.getElementById('writersTbody');
+  const writersControls = document.getElementById('writersControls');
+  const writersSearchInput = document.getElementById('writersSearchInput');
+  const writersStatus = document.getElementById('writersStatus');
+  const gameYearText4 = document.getElementById('gameYearText4');
+  // Editors UI
+  const editorsTableSection = document.getElementById('editorsTableSection');
+  const editorsTbody = document.getElementById('editorsTbody');
+  const editorsControls = document.getElementById('editorsControls');
+  const editorsSearchInput = document.getElementById('editorsSearchInput');
+  const editorsStatus = document.getElementById('editorsStatus');
+  const gameYearText5 = document.getElementById('gameYearText5');
 
   // State
   let saveObj = null;           // whole parsed save JSON
@@ -30,6 +98,33 @@
   let sortState = { key: 'skill', dir: 'desc' }; // default: acting skill, descending
   let gameYear = null;           // derived or user-provided
   let originalSaveName = null;   // keep original uploaded filename
+  let lastLoadedFile = null;     // remember last File for reload
+  // Change tracking
+  const changeLog = [];
+  const undoStack = [];
+  const redoStack = [];
+  // derived role lists (placeholders for future editors)
+  let directors = [];
+  let producers = [];
+  let writers = [];
+  let editors = [];
+  let composers = [];
+  let cinematographers = [];
+  let agents = [];
+  let movies = [];
+  // UI focus tracking
+  let focusedEntityId = null;
+
+  function markFocusedId(id) {
+    if (id == null) return;
+    focusedEntityId = id;
+    // Update existing DOM rows immediately without a full re-render
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach((tr) => {
+      const trId = tr.getAttribute('data-id');
+      tr.classList.toggle('row-focused', trId && String(trId) === String(id));
+    });
+  }
 
   const ART_COM_OPTIONS = ["0.000", "0.150", "0.300", "0.700", "1.000"]; // normalized, include 0 default
 
@@ -46,6 +141,90 @@
     const num = Number(String(value).replace(',', '.'));
     if (!isFinite(num)) return String(value); // leave as-is
     return num.toFixed(3);
+  }
+
+  function formatUnitToTen(value) {
+    if (value === undefined || value === null || value === '') return '';
+    const num = Number(String(value).replace(',', '.'));
+    if (!isFinite(num)) return '';
+    return (num * 10).toFixed(1);
+  }
+
+  function refreshChangeUI() {
+    if (changesPanel) changesPanel.hidden = changeLog.length === 0;
+    if (changesCount) changesCount.textContent = String(changeLog.length);
+    if (undoBtn) undoBtn.disabled = undoStack.length === 0;
+    if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+    if (downloadBtn) downloadBtn.disabled = (changeLog.length === 0 || !saveLoaded);
+  }
+
+  function pushChange(entry) {
+    changeLog.push(entry);
+    undoStack.push(entry);
+    redoStack.length = 0;
+    if (changesList) {
+      const li = document.createElement('li');
+      li.textContent = entry.message;
+      changesList.appendChild(li);
+    }
+    refreshChangeUI();
+  }
+
+  function applyField(obj, path, newVal) {
+    const parts = path.split('.');
+    let cur = obj, i = 0;
+    for (; i < parts.length - 1; i++) {
+      const k = parts[i];
+      if (cur[k] == null || typeof cur[k] !== 'object') cur[k] = {};
+      cur = cur[k];
+    }
+    const last = parts[i];
+    cur[last] = newVal;
+  }
+
+  function readField(obj, path) {
+    const parts = path.split('.');
+    let cur = obj;
+    for (const k of parts) {
+      if (cur == null) return undefined;
+      cur = cur[k];
+    }
+    return cur;
+  }
+
+  function recordEdit({ entity, label, path, oldValue, newValue }) {
+    if (oldValue === newValue) return;
+    pushChange({ message: `${label}: ${oldValue} → ${newValue} (${fullNameFor(entity) || entity.name || 'Unknown'})`,
+      undo: () => applyField(entity, path, oldValue),
+      redo: () => applyField(entity, path, newValue) });
+  }
+
+  function attachUndoRedo() {
+    if (undoBtn) undoBtn.addEventListener('click', () => {
+      const entry = undoStack.pop();
+      if (!entry) return;
+      entry.undo();
+      redoStack.push(entry);
+      // remove last applied change from log and UI
+      changeLog.pop();
+      if (changesList && changesList.lastChild) changesList.removeChild(changesList.lastChild);
+      refreshChangeUI();
+      // no resort; refresh visible tables only
+      render();
+      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
+    });
+    if (redoBtn) redoBtn.addEventListener('click', () => {
+      const entry = redoStack.pop();
+      if (!entry) return;
+      entry.redo();
+      undoStack.push(entry);
+      // append reapplied change to log and UI
+      changeLog.push(entry);
+      if (changesList) { const li = document.createElement('li'); li.textContent = entry.message; changesList.appendChild(li); }
+      refreshChangeUI();
+      render();
+      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
+    });
   }
 
   function normalizeArtCom(value) {
@@ -93,7 +272,7 @@
       if (typeof t.id !== 'string') t.id = tagId;
       if (typeof t.dateAdded !== 'string') t.dateAdded = "0001-01-01T00:00:00";
       if (typeof t.movieId !== 'number') t.movieId = 0;
-      if (typeof t.value !== 'string') t.value = normalizeArtCom(t.value) || "0.000";
+      if (typeof t.value !== 'string') t.value = normalizeDecimalString(t.value) || "0.000";
       if (typeof t.IsOverall !== 'boolean') t.IsOverall = false;
     }
     return container[tagId];
@@ -237,10 +416,36 @@
     return !!(prof && typeof prof === 'object' && ('Actor' in prof));
   }
 
+  function isRoleEntry(obj, role) {
+    const prof = obj && obj.professions;
+    return !!(prof && typeof prof === 'object' && (role in prof));
+  }
+
   function getTagValue(actor, tagId) {
     const container = actor.whiteTagsNEW || actor.whiteTagsNew;
     const raw = container && container[tagId] && container[tagId].value;
-    return normalizeArtCom(raw || '0.000');
+    return normalizeDecimalString(raw || '0.000');
+  }
+
+  function ensureArtComDatalist() {
+    let dl = document.getElementById('art-com-ticks');
+    if (!dl) {
+      dl = document.createElement('datalist');
+      dl.id = 'art-com-ticks';
+      for (const v of ART_COM_OPTIONS) {
+        const opt = document.createElement('option');
+        opt.value = v;
+        dl.appendChild(opt);
+      }
+      document.body.appendChild(dl);
+    }
+    return dl;
+  }
+
+  function getTagValueRaw(actor, tagId) {
+    const container = actor.whiteTagsNEW || actor.whiteTagsNew;
+    const raw = container && container[tagId] && container[tagId].value;
+    return normalizeDecimalString(raw || '0.000');
   }
 
   function getNumeric(value) {
@@ -281,6 +486,73 @@
     });
   }
 
+  // Directors sorting state and helpers
+  let directorsSortState = { key: 'skill', dir: 'desc' };
+  function sortDirectorsList(list) {
+    const dirMul = directorsSortState.dir === 'desc' ? -1 : 1;
+    const key = directorsSortState.key;
+    list.sort((a, b) => {
+      if (key === 'name') {
+        const an = fullNameFor(a).toLowerCase();
+        const bn = fullNameFor(b).toLowerCase();
+        return an.localeCompare(bn) * dirMul;
+      }
+      let av = 0, bv = 0;
+      if (key === 'skill') {
+        av = getNumeric(normalizeDecimalString(a.professions?.Director ?? ''));
+        bv = getNumeric(normalizeDecimalString(b.professions?.Director ?? ''));
+      } else if (key === 'age') {
+        av = getNumeric(getAge(a));
+        bv = getNumeric(getAge(b));
+      } else if (key === 'limit') {
+        av = getNumeric(normalizeDecimalString(a.limit ?? a.Limit ?? ''));
+        bv = getNumeric(normalizeDecimalString(b.limit ?? b.Limit ?? ''));
+      } else if (key === 'com') {
+        av = getNumeric(getTagValueRaw(a, 'COM'));
+        bv = getNumeric(getTagValueRaw(b, 'COM'));
+      } else if (key === 'art') {
+        av = getNumeric(getTagValueRaw(a, 'ART'));
+        bv = getNumeric(getTagValueRaw(b, 'ART'));
+      } else if (key === 'genres') {
+        const ag = establishedGenres(a) || '';
+        const bg = establishedGenres(b) || '';
+        return String(ag).localeCompare(String(bg)) * dirMul;
+      } else if (key === 'movies') {
+        const ac = Array.isArray(a.movies?.Director) ? a.movies.Director.length : 0;
+        const bc = Array.isArray(b.movies?.Director) ? b.movies.Director.length : 0;
+        av = ac; bv = bc;
+      }
+      if (av === bv) return 0;
+      return av < bv ? -1 * dirMul : 1 * dirMul;
+    });
+  }
+  function updateDirectorsSortIndicators() {
+    const ths = document.querySelectorAll('#directorsTable thead th');
+    ths.forEach((th) => {
+      th.classList.remove('sort-asc', 'sort-desc');
+      const key = th.getAttribute('data-sort-key');
+      if (!key) return;
+      if (key === directorsSortState.key) th.classList.add(directorsSortState.dir === 'desc' ? 'sort-desc' : 'sort-asc');
+    });
+  }
+
+  // Genres helper (simple): pick top N from whiteTagsNEW among known genre keys
+  const KNOWN_GENRES = new Set(['ACTION','ADVENTURE','DRAMA','COMEDY','ROMANCE','DETECTIVE','HORROR','WESTERN','FANTASY','SCIFI','MUSICAL','WAR','CRIME','THRILLER']);
+  function establishedGenres(entity, topN = 3) {
+    const w = entity && (entity.whiteTagsNEW || entity.whiteTagsNew);
+    if (!w || typeof w !== 'object') return '';
+    const pairs = [];
+    for (const [k, obj] of Object.entries(w)) {
+      if (!KNOWN_GENRES.has(k)) continue;
+      const v = Number(obj && obj.value);
+      if (!isFinite(v) || v <= 0) continue;
+      pairs.push([k, v]);
+    }
+    if (!pairs.length) return '';
+    pairs.sort((a,b) => b[1]-a[1]);
+    return pairs.slice(0, topN).map(p => p[0]).join(', ');
+  }
+
   function updateSortIndicators() {
     const ths = document.querySelectorAll('#actorsTable thead th');
     ths.forEach((th) => {
@@ -293,8 +565,60 @@
     });
   }
 
+  // Generic helpers for role tabs
+  function moviesCountForRole(obj, role) {
+    if (!obj || !obj.movies) return 0;
+    const m = obj.movies[role];
+    if (Array.isArray(m)) return m.length;
+    return 0;
+  }
+
+  function normalizeSkillForRole(obj, role) {
+    const cur = obj.professions?.[role];
+    return isFinite(Number(cur)) ? Number(cur) : 0;
+  }
+
+  // --- Movies extraction and helpers ---
+  function extractMovies(root) {
+    const visited = new WeakSet();
+    const queue = [root];
+    let safety=0;
+    while (queue.length && safety++ < 200000) {
+      const cur = queue.shift();
+      if (!cur || typeof cur !== 'object') continue;
+      if (visited.has(cur)) continue; visited.add(cur);
+      if (Array.isArray(cur)) {
+        if (cur.length && typeof cur[0] === 'object' && cur[0] && 'name' in cur[0] && 'stageResults' in cur[0]) return cur;
+        for (const it of cur) queue.push(it);
+        continue;
+      }
+      for (const v of Object.values(cur)) queue.push(v);
+    }
+    return [];
+  }
+
+  function parseYearFromDateTime(s) { if (typeof s !== 'string') return ''; const m = s.match(/^(\d{4})-/); return m ? m[1] : ''; }
+  function computeMovieArtCom(m) {
+    const sr = m && m.stageResults || {};
+    const script = sr.Script || {};
+    const baseline = Number(script.baseline || 0) || 0;
+    let totalArt = 0, totalCom = 0;
+    for (const key of ['Script','Preproduction','Production','Postproduction','Release']) {
+      const s = sr[key] || {};
+      const ra = (s.realArtValue != null ? s.realArtValue : s.artValue);
+      const rc = (s.realCommercialValue != null ? s.realCommercialValue : s.commercialValue);
+      const a = Number(ra || 0); const c = Number(rc || 0);
+      if (isFinite(a)) totalArt += a; if (isFinite(c)) totalCom += c;
+    }
+    return { art: (baseline + totalArt), com: (baseline + totalCom) };
+  }
+  function getMovieTotalIncome(m) { const rel = m && m.stageResults && m.stageResults.Release || {}; const val = Number(rel.totalIncome || 0); return isFinite(val) ? val : 0; }
+  function formatMoneyUSD(n) { if (!isFinite(n)) return ''; return `$${Math.round(n).toLocaleString()}`; }
+
   // Tabs
   function activateTab(name) {
+    const valid = new Set(['actors','directors','producers','writers','editors','movies','composers','cinematographers','agents']);
+    if (!valid.has(name)) name = 'actors';
     tabs.forEach(btn => {
       const match = btn.getAttribute('data-tab') === name;
       btn.classList.toggle('active', match);
@@ -305,8 +629,21 @@
       const match = id === `tab-${name}`;
       sec.classList.toggle('active', match);
     });
+    // reflect in URL hash for deep-linking and refresh persistence
+    const targetHash = `#${name}`;
+    if (location.hash !== targetHash) {
+      try { history.replaceState(null, '', targetHash); } catch (_) { location.hash = targetHash; }
+    }
     // When activating actors, ensure the table renders
     if (name === 'actors') render();
+    if (name === 'directors') renderDirectors();
+    if (name === 'producers') renderProducers();
+    if (name === 'writers') renderWriters();
+    if (name === 'editors') renderEditors();
+    if (name === 'composers') renderComposers();
+    if (name === 'cinematographers') renderCinematographers();
+    if (name === 'agents') renderAgents();
+    if (name === 'movies') renderMovies();
   }
 
   function render() {
@@ -328,6 +665,9 @@
     const frag = document.createDocumentFragment();
     filtered.forEach(actor => {
       const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(actor.id ?? ''));
+      tr.addEventListener('pointerdown', () => markFocusedId(actor.id));
+      if (focusedEntityId != null && String(focusedEntityId) === String(actor.id)) tr.classList.add('row-focused');
 
       // Name
       const tdName = document.createElement('td');
@@ -349,9 +689,12 @@
         const parts = parseBirthDateParts(actor.birthDate) || { day: 1, month: 1, year: 1 };
         const newYear = Math.floor(gameYear - Math.floor(newAge));
         const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = actor.birthDate;
         actor.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
-        render();
+        recordEdit({ entity: actor, label: 'Age', path: 'birthDate', oldValue: prev, newValue: actor.birthDate });
+        // no resort or re-render here
       });
+      ageInput.addEventListener('focus', () => markFocusedId(actor.id));
       tdAge.appendChild(ageInput);
       tr.appendChild(tdAge);
 
@@ -367,17 +710,38 @@
       skillRange.value = String(skillNum);
       const skillVal = document.createElement('span');
       skillVal.className = 'slider-val';
-      skillVal.textContent = normalizeDecimalString(skillNum);
+      skillVal.textContent = formatUnitToTen(skillNum);
       skillRange.addEventListener('input', () => {
-        const norm = Number(skillRange.value).toFixed(3);
         if (!actor.professions || typeof actor.professions !== 'object') actor.professions = {};
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(actor.professions.Actor ?? '');
+        const norm = Number(skillRange.value).toFixed(3);
         actor.professions.Actor = norm;
-        skillVal.textContent = norm;
+        skillVal.textContent = formatUnitToTen(norm);
+        // Auto-raise limit if skill exceeds current limit
+        const currentLimitNum = isFinite(Number(actor.limit ?? actor.Limit)) ? Number(actor.limit ?? actor.Limit) : 0;
+        if (Number(norm) > currentLimitNum) {
+          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(actor.limit ?? actor.Limit ?? '');
+          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(actor.limit ?? actor.Limit ?? '');
+          actor.limit = norm;
+          actor.Limit = norm;
+          limitRange.value = String(norm);
+          limitVal.textContent = formatUnitToTen(norm);
+          skillRange.dataset.autoLimitNew = norm;
+        }
       });
+      skillRange.addEventListener('focus', () => markFocusedId(actor.id));
       skillRange.addEventListener('change', () => {
-        // re-render so sorting reacts if sorting by skill
-        render();
+        const finalVal = Number(skillRange.value).toFixed(3);
+        const initialVal = skillRange.dataset.initial ?? String(finalVal);
+        delete skillRange.dataset.initial;
+        recordEdit({ entity: actor, label: 'Acting Skill', path: 'professions.Actor', oldValue: initialVal, newValue: finalVal });
+        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+          recordEdit({ entity: actor, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+        }
+        delete skillRange.dataset.autoLimitOld;
+        delete skillRange.dataset.autoLimitNew;
       });
+      // no change-triggered re-render
       skillWrap.appendChild(skillRange);
       skillWrap.appendChild(skillVal);
       tdSkill.appendChild(skillWrap);
@@ -395,53 +759,97 @@
       limitRange.value = String(limitNum);
       const limitVal = document.createElement('span');
       limitVal.className = 'slider-val';
-      limitVal.textContent = normalizeDecimalString(limitNum);
+      limitVal.textContent = formatUnitToTen(limitNum);
       limitRange.addEventListener('input', () => {
+        const skillFloor = isFinite(Number(actor.professions?.Actor)) ? Number(actor.professions.Actor) : 0;
+        if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(actor.limit ?? actor.Limit ?? '');
+        if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor);
         const norm = Number(limitRange.value).toFixed(3);
         actor.limit = norm;
         actor.Limit = norm;
-        limitVal.textContent = norm;
+        limitVal.textContent = formatUnitToTen(norm);
       });
+      limitRange.addEventListener('focus', () => markFocusedId(actor.id));
       limitRange.addEventListener('change', () => {
-        render();
+        const finalVal = Number(limitRange.value).toFixed(3);
+        const initialVal = limitRange.dataset.initial ?? String(finalVal);
+        delete limitRange.dataset.initial;
+        recordEdit({ entity: actor, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal });
       });
+      // no change-triggered re-render
       limitWrap.appendChild(limitRange);
       limitWrap.appendChild(limitVal);
       tdLimit.appendChild(limitWrap);
       tr.appendChild(tdLimit);
 
-      // ART
+      // ART (slider)
       const tdArt = document.createElement('td');
-      const artSel = document.createElement('select');
-      for (const val of ART_COM_OPTIONS) {
-        const opt = document.createElement('option');
-        opt.value = val; opt.textContent = val; artSel.appendChild(opt);
-      }
+      const artWrap = document.createElement('div');
+      artWrap.className = 'slider-cell';
+      const artRange = document.createElement('input');
+      artRange.type = 'range';
+      artRange.min = '0'; artRange.max = '1'; artRange.step = '0.01';
+      artRange.setAttribute('list', 'art-com-ticks');
+      ensureArtComDatalist();
       const artTag = ensureTag(actor, 'ART');
-      artSel.value = normalizeArtCom(artTag.value);
-      artSel.addEventListener('change', () => {
+      const artNum = isFinite(Number(artTag.value)) ? Number(artTag.value) : 0;
+      artRange.value = String(artNum);
+      const artVal = document.createElement('span');
+      artVal.className = 'slider-val';
+      artVal.textContent = formatUnitToTen(artNum);
+      artRange.addEventListener('input', () => {
         const t = ensureTag(actor, 'ART');
-        t.value = normalizeArtCom(artSel.value);
-        artSel.value = t.value;
+        if (!('initial' in artRange.dataset)) artRange.dataset.initial = String(t.value ?? '');
+        const norm = Number(artRange.value).toFixed(3);
+        t.value = norm;
+        artVal.textContent = formatUnitToTen(norm);
       });
-      tdArt.appendChild(artSel);
+      artRange.addEventListener('focus', () => markFocusedId(actor.id));
+      artRange.addEventListener('change', () => {
+        const t = ensureTag(actor, 'ART');
+        const finalVal = Number(artRange.value).toFixed(3);
+        const initialVal = artRange.dataset.initial ?? String(finalVal);
+        delete artRange.dataset.initial;
+        recordEdit({ entity: actor, label: 'ART', path: 'whiteTagsNEW.ART.value', oldValue: initialVal, newValue: finalVal });
+      });
+      artWrap.appendChild(artRange);
+      artWrap.appendChild(artVal);
+      tdArt.appendChild(artWrap);
       tr.appendChild(tdArt);
 
-      // COM
+      // COM (slider)
       const tdCom = document.createElement('td');
-      const comSel = document.createElement('select');
-      for (const val of ART_COM_OPTIONS) {
-        const opt = document.createElement('option');
-        opt.value = val; opt.textContent = val; comSel.appendChild(opt);
-      }
+      const comWrap = document.createElement('div');
+      comWrap.className = 'slider-cell';
+      const comRange = document.createElement('input');
+      comRange.type = 'range';
+      comRange.min = '0'; comRange.max = '1'; comRange.step = '0.01';
+      comRange.setAttribute('list', 'art-com-ticks');
+      ensureArtComDatalist();
       const comTag = ensureTag(actor, 'COM');
-      comSel.value = normalizeArtCom(comTag.value);
-      comSel.addEventListener('change', () => {
+      const comNum = isFinite(Number(comTag.value)) ? Number(comTag.value) : 0;
+      comRange.value = String(comNum);
+      const comVal = document.createElement('span');
+      comVal.className = 'slider-val';
+      comVal.textContent = formatUnitToTen(comNum);
+      comRange.addEventListener('input', () => {
         const t = ensureTag(actor, 'COM');
-        t.value = normalizeArtCom(comSel.value);
-        comSel.value = t.value;
+        if (!('initial' in comRange.dataset)) comRange.dataset.initial = String(t.value ?? '');
+        const norm = Number(comRange.value).toFixed(3);
+        t.value = norm;
+        comVal.textContent = formatUnitToTen(norm);
       });
-      tdCom.appendChild(comSel);
+      comRange.addEventListener('focus', () => markFocusedId(actor.id));
+      comRange.addEventListener('change', () => {
+        const t = ensureTag(actor, 'COM');
+        const finalVal = Number(comRange.value).toFixed(3);
+        const initialVal = comRange.dataset.initial ?? String(finalVal);
+        delete comRange.dataset.initial;
+        recordEdit({ entity: actor, label: 'COM', path: 'whiteTagsNEW.COM.value', oldValue: initialVal, newValue: finalVal });
+      });
+      comWrap.appendChild(comRange);
+      comWrap.appendChild(comVal);
+      tdCom.appendChild(comWrap);
       tr.appendChild(tdCom);
 
       frag.appendChild(tr);
@@ -462,13 +870,883 @@
     const computed = computeGameYearFromData(saveObj);
     if (computed) {
       gameYear = computed;
-      if (gameYearInput) gameYearInput.value = String(gameYear);
     }
+    const gy = gameYear ? String(gameYear) : '—';
+    if (gameYearText) gameYearText.textContent = gy;
+    if (gameYearText2) gameYearText2.textContent = gy;
+    if (gameYearText3) gameYearText3.textContent = gy;
+    if (gameYearText4) gameYearText4.textContent = gy;
+    if (gameYearText5) gameYearText5.textContent = gy;
+    if (gameYearText6) gameYearText6.textContent = gy;
+    if (gameYearText7) gameYearText7.textContent = gy;
+    if (gameYearText8) gameYearText8.textContent = gy;
     actors = charactersArr.filter(isActorEntry);
+    // derive other roles for placeholder tabs
+    directors = charactersArr.filter(obj => isRoleEntry(obj, 'Director'));
+    producers = charactersArr.filter(obj => isRoleEntry(obj, 'Producer'));
+    // Game uses 'Scriptwriter' and 'FilmEditor' keys
+    writers   = charactersArr.filter(obj => isRoleEntry(obj, 'Scriptwriter'));
+    editors   = charactersArr.filter(obj => isRoleEntry(obj, 'FilmEditor'));
+    composers = charactersArr.filter(obj => isRoleEntry(obj, 'Composer'));
+    cinematographers = charactersArr.filter(obj => isRoleEntry(obj, 'Cinematographer'));
+    agents = charactersArr.filter(obj => isRoleEntry(obj, 'Agent'));
+
+    // Clear placeholder messages
+    if (directorsPlaceholder) directorsPlaceholder.textContent = '';
+    if (producersPlaceholder) producersPlaceholder.textContent = '';
+    if (writersPlaceholder)   writersPlaceholder.textContent   = '';
+    if (editorsPlaceholder)   editorsPlaceholder.textContent   = '';
+    movies = extractMovies(saveObj);
+    if (moviesPlaceholder)    moviesPlaceholder.textContent    = '';
+    if (composersPlaceholder) composersPlaceholder.textContent = '';
+    if (cinematographersPlaceholder) cinematographersPlaceholder.textContent = '';
+    if (agentsPlaceholder) agentsPlaceholder.textContent = '';
     // initial default: acting skill, descending
     sortState = { key: 'skill', dir: 'desc' };
     updateSortIndicators();
     render();
+    // Render role tabs if that tab is active
+    const isDirectorsActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'directors');
+    if (isDirectorsActive) renderDirectors();
+    const isProducersActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'producers');
+    if (isProducersActive) renderProducers();
+    const isWritersActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'writers');
+    if (isWritersActive) renderWriters();
+    const isEditorsActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'editors');
+    if (isEditorsActive) renderEditors();
+    const isComposersActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'composers');
+    if (isComposersActive) renderComposers();
+    const isCinematographersActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'cinematographers');
+    if (isCinematographersActive) renderCinematographers();
+    const isAgentsActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'agents');
+    if (isAgentsActive) renderAgents();
+    const isMoviesActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'movies');
+    if (isMoviesActive) renderMovies();
+    // Collapse loaders if both files are loaded
+    if (loadersSection) {
+      loadersSection.style.display = (saveLoaded && nameMapLoaded) ? 'none' : '';
+    }
+  }
+
+  function renderDirectors() {
+    if (!saveLoaded || !directorsTbody) return;
+    if (directorsTableSection) directorsTableSection.hidden = false;
+    if (directorsControls) directorsControls.hidden = false;
+
+    // filter by search
+    const q = (directorsSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? directors.filter(a => fullNameFor(a).toLowerCase().includes(q)) : directors.slice();
+
+    // sort
+    sortDirectorsList(filtered);
+    updateDirectorsSortIndicators();
+
+    if (directorsStatus) directorsStatus.textContent = `${filtered.length} of ${directors.length} directors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+
+    const frag = document.createDocumentFragment();
+    filtered.forEach((d) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(d.id ?? ''));
+      tr.addEventListener('pointerdown', () => markFocusedId(d.id));
+      if (focusedEntityId != null && String(focusedEntityId) === String(d.id)) tr.classList.add('row-focused');
+
+      // Name
+      const tdName = document.createElement('td');
+      tdName.textContent = fullNameFor(d);
+      tr.appendChild(tdName);
+
+      // Age (readonly, derived)
+      const tdAge = document.createElement('td');
+      tdAge.textContent = getAge(d) === '' ? '' : String(getAge(d));
+      tr.appendChild(tdAge);
+
+      // Director Skill (slider)
+      const tdSkill = document.createElement('td');
+      const skillWrap = document.createElement('div');
+      skillWrap.className = 'slider-cell';
+      const skillRange = document.createElement('input');
+      skillRange.type = 'range';
+      skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
+      const currentSkill = d.professions?.Director;
+      const skillNum = isFinite(Number(currentSkill)) ? Number(currentSkill) : 0;
+      skillRange.value = String(skillNum);
+      const skillVal = document.createElement('span');
+      skillVal.className = 'slider-val';
+      skillVal.textContent = formatUnitToTen(skillNum);
+      skillRange.addEventListener('input', () => {
+        if (!d.professions || typeof d.professions !== 'object') d.professions = {};
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(d.professions.Director ?? '');
+        const norm = Number(skillRange.value).toFixed(3);
+        d.professions.Director = norm;
+        skillVal.textContent = formatUnitToTen(norm);
+        // Auto-raise limit if skill exceeds current limit
+        const currentLimitNum = isFinite(Number(d.limit ?? d.Limit)) ? Number(d.limit ?? d.Limit) : 0;
+        if (Number(norm) > currentLimitNum) {
+          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(d.limit ?? d.Limit ?? '');
+          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(d.limit ?? d.Limit ?? '');
+          d.limit = norm; d.Limit = norm;
+          limitRange.value = String(norm);
+          limitVal.textContent = formatUnitToTen(norm);
+          skillRange.dataset.autoLimitNew = norm;
+        }
+      });
+      skillRange.addEventListener('focus', () => markFocusedId(d.id));
+      skillRange.addEventListener('change', () => {
+        const finalVal = Number(skillRange.value).toFixed(3);
+        const initialVal = skillRange.dataset.initial ?? String(finalVal);
+        delete skillRange.dataset.initial;
+        recordEdit({ entity: d, label: 'Director Skill', path: 'professions.Director', oldValue: initialVal, newValue: finalVal });
+        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+          recordEdit({ entity: d, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+        }
+        delete skillRange.dataset.autoLimitOld;
+        delete skillRange.dataset.autoLimitNew;
+      });
+      // no change-triggered re-render
+      skillWrap.appendChild(skillRange);
+      skillWrap.appendChild(skillVal);
+      tdSkill.appendChild(skillWrap);
+      tr.appendChild(tdSkill);
+
+      // Limit (slider) - writes to both keys
+      const tdLimit = document.createElement('td');
+      const limitWrap = document.createElement('div');
+      limitWrap.className = 'slider-cell';
+      const limitRange = document.createElement('input');
+      limitRange.type = 'range';
+      limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
+      const currentLimit = d.limit ?? d.Limit;
+      const limitNum = isFinite(Number(currentLimit)) ? Number(currentLimit) : 0;
+      limitRange.value = String(limitNum);
+      const limitVal = document.createElement('span');
+      limitVal.className = 'slider-val';
+      limitVal.textContent = formatUnitToTen(limitNum);
+      limitRange.addEventListener('input', () => {
+        const skillFloor = isFinite(Number(d.professions?.Director)) ? Number(d.professions.Director) : 0;
+        if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(d.limit ?? d.Limit ?? '');
+        if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor);
+        const norm = Number(limitRange.value).toFixed(3);
+        d.limit = norm;
+        d.Limit = norm;
+        limitVal.textContent = formatUnitToTen(norm);
+      });
+      limitRange.addEventListener('focus', () => markFocusedId(d.id));
+      limitRange.addEventListener('change', () => {
+        const finalVal = Number(limitRange.value).toFixed(3);
+        const initialVal = limitRange.dataset.initial ?? String(finalVal);
+        delete limitRange.dataset.initial;
+        recordEdit({ entity: d, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal });
+      });
+      // no change-triggered re-render
+      limitWrap.appendChild(limitRange);
+      limitWrap.appendChild(limitVal);
+      tdLimit.appendChild(limitWrap);
+      tr.appendChild(tdLimit);
+
+      // COM (show only if non-zero)
+      const tdCom = document.createElement('td');
+      const comVal = getTagValueRaw(d, 'COM');
+      const comNum = Number(comVal);
+      tdCom.textContent = isFinite(comNum) && comNum > 0 ? comVal : '';
+      tr.appendChild(tdCom);
+
+      // ART (show only if non-zero)
+      const tdArt = document.createElement('td');
+      const artVal = getTagValueRaw(d, 'ART');
+      const artNum = Number(artVal);
+      tdArt.textContent = isFinite(artNum) && artNum > 0 ? artVal : '';
+      tr.appendChild(tdArt);
+
+      // Genres (derived from whiteTagsNEW, top few)
+      const tdGenres = document.createElement('td');
+      tdGenres.textContent = establishedGenres(d);
+      tr.appendChild(tdGenres);
+
+      // Movies count
+      const tdMovies = document.createElement('td');
+      const dirMovies = d.movies && Array.isArray(d.movies.Director) ? d.movies.Director : (d.movies && typeof d.movies.Director === 'object' && 'length' in d.movies.Director ? d.movies.Director : []);
+      let count = 0;
+      if (d.movies && d.movies.Director) {
+        if (Array.isArray(d.movies.Director)) count = d.movies.Director.length;
+        else if (d.movies.Director && typeof d.movies.Director === 'object' && Array.isArray(d.movies.Director)) count = d.movies.Director.length;
+      }
+      tdMovies.textContent = String(count);
+      tr.appendChild(tdMovies);
+
+      frag.appendChild(tr);
+    });
+
+    directorsTbody.replaceChildren(frag);
+  }
+
+  // --- Producers tab ---
+  let producersSortState = { key: 'skill', dir: 'desc' };
+  function sortProducersList(list) {
+    const dirMul = producersSortState.dir === 'desc' ? -1 : 1;
+    const key = producersSortState.key;
+    list.sort((a, b) => {
+      if (key === 'name') {
+        const an = fullNameFor(a).toLowerCase();
+        const bn = fullNameFor(b).toLowerCase();
+        return an.localeCompare(bn) * dirMul;
+      }
+      let av = 0, bv = 0;
+      if (key === 'skill') {
+        av = getNumeric(normalizeDecimalString(a.professions?.Producer ?? ''));
+        bv = getNumeric(normalizeDecimalString(b.professions?.Producer ?? ''));
+      } else if (key === 'age') {
+        av = getNumeric(getAge(a));
+        bv = getNumeric(getAge(b));
+      } else if (key === 'limit') {
+        av = getNumeric(normalizeDecimalString(a.limit ?? a.Limit ?? ''));
+        bv = getNumeric(normalizeDecimalString(b.limit ?? b.Limit ?? ''));
+      } else if (key === 'genres') {
+        // compare by joined genres string
+        av = establishedGenres(a) || '';
+        bv = establishedGenres(b) || '';
+        return String(av).localeCompare(String(bv)) * dirMul;
+      } else if (key === 'movies') {
+        av = moviesCountForRole(a, 'Producer');
+        bv = moviesCountForRole(b, 'Producer');
+      }
+      if (av === bv) return 0;
+      return av < bv ? -1 * dirMul : 1 * dirMul;
+    });
+  }
+  function updateProducersSortIndicators() {
+    const ths = document.querySelectorAll('#producersTable thead th');
+    ths.forEach((th) => {
+      th.classList.remove('sort-asc', 'sort-desc');
+      const key = th.getAttribute('data-sort-key');
+      if (!key) return;
+      if (key === producersSortState.key) th.classList.add(producersSortState.dir === 'desc' ? 'sort-desc' : 'sort-asc');
+    });
+  }
+  function renderProducers() {
+    if (!saveLoaded || !producersTbody) return;
+    if (producersTableSection) producersTableSection.hidden = false;
+    if (producersControls) producersControls.hidden = false;
+
+    const q = (producersSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? producers.filter(a => fullNameFor(a).toLowerCase().includes(q)) : producers.slice();
+    sortProducersList(filtered);
+    updateProducersSortIndicators();
+    if (producersStatus) producersStatus.textContent = `${filtered.length} of ${producers.length} producers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+
+    const frag = document.createDocumentFragment();
+    filtered.forEach((p) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(p.id ?? ''));
+      tr.addEventListener('pointerdown', () => markFocusedId(p.id));
+      if (focusedEntityId != null && String(focusedEntityId) === String(p.id)) tr.classList.add('row-focused');
+      const tdName = document.createElement('td');
+      tdName.textContent = fullNameFor(p); tr.appendChild(tdName);
+      const tdAge = document.createElement('td'); tdAge.textContent = getAge(p) === '' ? '' : String(getAge(p)); tr.appendChild(tdAge);
+      // Skill slider
+      const tdSkill = document.createElement('td');
+      const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
+      const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
+      const skillNum = normalizeSkillForRole(p, 'Producer'); skillRange.value = String(skillNum);
+      const skillVal = document.createElement('span'); skillVal.className = 'slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
+      skillRange.addEventListener('input', () => {
+        if (!p.professions || typeof p.professions !== 'object') p.professions = {};
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(p.professions.Producer ?? '');
+        const norm = Number(skillRange.value).toFixed(3);
+        p.professions.Producer = norm;
+        skillVal.textContent = formatUnitToTen(norm);
+        // Auto-raise limit if skill exceeds current limit
+        const currentLimitNum = isFinite(Number(p.limit ?? p.Limit)) ? Number(p.limit ?? p.Limit) : 0;
+        if (Number(norm) > currentLimitNum) {
+          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(p.limit ?? p.Limit ?? '');
+          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(p.limit ?? p.Limit ?? '');
+          p.limit = norm; p.Limit = norm;
+          limitRange.value = String(norm);
+          limitVal.textContent = formatUnitToTen(norm);
+          skillRange.dataset.autoLimitNew = norm;
+        }
+      });
+      skillRange.addEventListener('focus', () => markFocusedId(p.id));
+      skillRange.addEventListener('change', () => {
+        const finalVal = Number(skillRange.value).toFixed(3);
+        const initialVal = skillRange.dataset.initial ?? String(finalVal);
+        delete skillRange.dataset.initial;
+        recordEdit({ entity: p, label: 'Producer Skill', path: 'professions.Producer', oldValue: initialVal, newValue: finalVal });
+        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+          recordEdit({ entity: p, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+        }
+        delete skillRange.dataset.autoLimitOld;
+        delete skillRange.dataset.autoLimitNew;
+      });
+      // no change-triggered re-render
+      skillWrap.appendChild(skillRange); skillWrap.appendChild(skillVal); tdSkill.appendChild(skillWrap); tr.appendChild(tdSkill);
+      // Limit slider
+      const tdLimit = document.createElement('td');
+      const limitWrap = document.createElement('div'); limitWrap.className = 'slider-cell';
+      const limitRange = document.createElement('input'); limitRange.type = 'range'; limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
+      const limitNum = isFinite(Number(p.limit ?? p.Limit)) ? Number(p.limit ?? p.Limit) : 0; limitRange.value = String(limitNum);
+      const limitVal = document.createElement('span'); limitVal.className = 'slider-val'; limitVal.textContent = formatUnitToTen(limitNum);
+      limitRange.addEventListener('input', () => { const skillFloor = isFinite(Number(p.professions?.Producer)) ? Number(p.professions.Producer) : 0; if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(p.limit ?? p.Limit ?? ''); if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor); const norm = Number(limitRange.value).toFixed(3); p.limit = norm; p.Limit = norm; limitVal.textContent = formatUnitToTen(norm); });
+      limitRange.addEventListener('focus', () => markFocusedId(p.id));
+      limitRange.addEventListener('change', () => { const finalVal = Number(limitRange.value).toFixed(3); const initialVal = limitRange.dataset.initial ?? String(finalVal); delete limitRange.dataset.initial; recordEdit({ entity: p, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal }); });
+      // no change-triggered re-render
+      limitWrap.appendChild(limitRange); limitWrap.appendChild(limitVal); tdLimit.appendChild(limitWrap); tr.appendChild(tdLimit);
+      // Genres
+      const tdGenres = document.createElement('td'); tdGenres.textContent = establishedGenres(p); tr.appendChild(tdGenres);
+      // Movies count
+      const tdMovies = document.createElement('td'); tdMovies.textContent = String(moviesCountForRole(p, 'Producer')); tr.appendChild(tdMovies);
+      frag.appendChild(tr);
+    });
+    producersTbody.replaceChildren(frag);
+  }
+
+  // --- Writers tab ---
+  let writersSortState = { key: 'skill', dir: 'desc' };
+  function sortWritersList(list) {
+    const dirMul = writersSortState.dir === 'desc' ? -1 : 1;
+    const key = writersSortState.key;
+    list.sort((a, b) => {
+      if (key === 'name') {
+        const an = fullNameFor(a).toLowerCase();
+        const bn = fullNameFor(b).toLowerCase();
+        return an.localeCompare(bn) * dirMul;
+      }
+      let av = 0, bv = 0;
+      if (key === 'skill') {
+        av = getNumeric(normalizeDecimalString(a.professions?.Scriptwriter ?? ''));
+        bv = getNumeric(normalizeDecimalString(b.professions?.Scriptwriter ?? ''));
+      } else if (key === 'age') {
+        av = getNumeric(getAge(a));
+        bv = getNumeric(getAge(b));
+      } else if (key === 'limit') {
+        av = getNumeric(normalizeDecimalString(a.limit ?? a.Limit ?? ''));
+        bv = getNumeric(normalizeDecimalString(b.limit ?? b.Limit ?? ''));
+      } else if (key === 'movies') {
+        av = moviesCountForRole(a, 'Scriptwriter');
+        bv = moviesCountForRole(b, 'Scriptwriter');
+      }
+      if (av === bv) return 0;
+      return av < bv ? -1 * dirMul : 1 * dirMul;
+    });
+  }
+  function updateWritersSortIndicators() {
+    const ths = document.querySelectorAll('#writersTable thead th');
+    ths.forEach((th) => {
+      th.classList.remove('sort-asc', 'sort-desc');
+      const key = th.getAttribute('data-sort-key');
+      if (!key) return;
+      if (key === writersSortState.key) th.classList.add(writersSortState.dir === 'desc' ? 'sort-desc' : 'sort-asc');
+    });
+  }
+  function renderWriters() {
+    if (!saveLoaded || !writersTbody) return;
+    if (writersTableSection) writersTableSection.hidden = false;
+    if (writersControls) writersControls.hidden = false;
+
+    const q = (writersSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? writers.filter(a => fullNameFor(a).toLowerCase().includes(q)) : writers.slice();
+    sortWritersList(filtered);
+    updateWritersSortIndicators();
+    if (writersStatus) writersStatus.textContent = `${filtered.length} of ${writers.length} writers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+
+    const frag = document.createDocumentFragment();
+    filtered.forEach((w) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(w.id ?? ''));
+      tr.addEventListener('pointerdown', () => markFocusedId(w.id));
+      if (focusedEntityId != null && String(focusedEntityId) === String(w.id)) tr.classList.add('row-focused');
+      const tdName = document.createElement('td'); tdName.textContent = fullNameFor(w); tr.appendChild(tdName);
+      const tdAge = document.createElement('td'); tdAge.textContent = getAge(w) === '' ? '' : String(getAge(w)); tr.appendChild(tdAge);
+      // Skill slider
+      const tdSkill = document.createElement('td'); const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
+      const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
+      const skillNum = normalizeSkillForRole(w, 'Scriptwriter'); skillRange.value = String(skillNum);
+      const skillVal = document.createElement('span'); skillVal.className = 'slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
+      skillRange.addEventListener('input', () => {
+        if (!w.professions || typeof w.professions !== 'object') w.professions = {};
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(w.professions.Writer ?? w.professions.Scriptwriter ?? '');
+        const norm = Number(skillRange.value).toFixed(3);
+        w.professions.Writer = norm;
+        skillVal.textContent = formatUnitToTen(norm);
+        // Auto-raise limit if skill exceeds current limit
+        const currentLimitNum = isFinite(Number(w.limit ?? w.Limit)) ? Number(w.limit ?? w.Limit) : 0;
+        if (Number(norm) > currentLimitNum) {
+          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(w.limit ?? w.Limit ?? '');
+          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(w.limit ?? w.Limit ?? '');
+          w.limit = norm; w.Limit = norm;
+          limitRange.value = String(norm);
+          limitVal.textContent = formatUnitToTen(norm);
+          skillRange.dataset.autoLimitNew = norm;
+        }
+      });
+      skillRange.addEventListener('focus', () => markFocusedId(w.id));
+      skillRange.addEventListener('change', () => {
+        const finalVal = Number(skillRange.value).toFixed(3);
+        const initialVal = skillRange.dataset.initial ?? String(finalVal);
+        delete skillRange.dataset.initial;
+        recordEdit({ entity: w, label: 'Writer Skill', path: 'professions.Writer', oldValue: initialVal, newValue: finalVal });
+        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+          recordEdit({ entity: w, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+        }
+        delete skillRange.dataset.autoLimitOld;
+        delete skillRange.dataset.autoLimitNew;
+      });
+      // no change-triggered re-render
+      skillWrap.appendChild(skillRange); skillWrap.appendChild(skillVal); tdSkill.appendChild(skillWrap); tr.appendChild(tdSkill);
+      // Limit slider
+      const tdLimit = document.createElement('td'); const limitWrap = document.createElement('div'); limitWrap.className = 'slider-cell';
+      const limitRange = document.createElement('input'); limitRange.type = 'range'; limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
+      const limitNum = isFinite(Number(w.limit ?? w.Limit)) ? Number(w.limit ?? w.Limit) : 0; limitRange.value = String(limitNum);
+      const limitVal = document.createElement('span'); limitVal.className = 'slider-val'; limitVal.textContent = formatUnitToTen(limitNum);
+      limitRange.addEventListener('input', () => { const skillFloor = isFinite(Number(w.professions?.Writer ?? w.professions?.Scriptwriter)) ? Number(w.professions.Writer ?? w.professions.Scriptwriter) : 0; if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(w.limit ?? w.Limit ?? ''); if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor); const norm = Number(limitRange.value).toFixed(3); w.limit = norm; w.Limit = norm; limitVal.textContent = formatUnitToTen(norm); });
+      limitRange.addEventListener('focus', () => markFocusedId(w.id));
+      limitRange.addEventListener('change', () => { const finalVal = Number(limitRange.value).toFixed(3); const initialVal = limitRange.dataset.initial ?? String(finalVal); delete limitRange.dataset.initial; recordEdit({ entity: w, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal }); });
+      // no change-triggered re-render
+      limitWrap.appendChild(limitRange); limitWrap.appendChild(limitVal); tdLimit.appendChild(limitWrap); tr.appendChild(tdLimit);
+      const tdMovies = document.createElement('td'); tdMovies.textContent = String(moviesCountForRole(w, 'Scriptwriter')); tr.appendChild(tdMovies);
+      frag.appendChild(tr);
+    });
+    writersTbody.replaceChildren(frag);
+  }
+
+  // --- Editors tab ---
+  let editorsSortState = { key: 'skill', dir: 'desc' };
+  function sortEditorsList(list) {
+    const dirMul = editorsSortState.dir === 'desc' ? -1 : 1;
+    const key = editorsSortState.key;
+    list.sort((a, b) => {
+      if (key === 'name') {
+        const an = fullNameFor(a).toLowerCase();
+        const bn = fullNameFor(b).toLowerCase();
+        return an.localeCompare(bn) * dirMul;
+      }
+      let av = 0, bv = 0;
+      if (key === 'skill') {
+        av = getNumeric(normalizeDecimalString(a.professions?.FilmEditor ?? ''));
+        bv = getNumeric(normalizeDecimalString(b.professions?.FilmEditor ?? ''));
+      } else if (key === 'age') {
+        av = getNumeric(getAge(a));
+        bv = getNumeric(getAge(b));
+      } else if (key === 'limit') {
+        av = getNumeric(normalizeDecimalString(a.limit ?? a.Limit ?? ''));
+        bv = getNumeric(normalizeDecimalString(b.limit ?? b.Limit ?? ''));
+      } else if (key === 'movies') {
+        av = moviesCountForRole(a, 'FilmEditor');
+        bv = moviesCountForRole(b, 'FilmEditor');
+      }
+      if (av === bv) return 0;
+      return av < bv ? -1 * dirMul : 1 * dirMul;
+    });
+  }
+  function updateEditorsSortIndicators() {
+    const ths = document.querySelectorAll('#editorsTable thead th');
+    ths.forEach((th) => {
+      th.classList.remove('sort-asc', 'sort-desc');
+      const key = th.getAttribute('data-sort-key');
+      if (!key) return;
+      if (key === editorsSortState.key) th.classList.add(editorsSortState.dir === 'desc' ? 'sort-desc' : 'sort-asc');
+    });
+  }
+  function renderEditors() {
+    if (!saveLoaded || !editorsTbody) return;
+    if (editorsTableSection) editorsTableSection.hidden = false;
+    if (editorsControls) editorsControls.hidden = false;
+
+    const q = (editorsSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? editors.filter(a => fullNameFor(a).toLowerCase().includes(q)) : editors.slice();
+    sortEditorsList(filtered);
+    updateEditorsSortIndicators();
+    if (editorsStatus) editorsStatus.textContent = `${filtered.length} of ${editors.length} editors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+
+    const frag = document.createDocumentFragment();
+    filtered.forEach((ed) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(ed.id ?? ''));
+      tr.addEventListener('pointerdown', () => markFocusedId(ed.id));
+      if (focusedEntityId != null && String(focusedEntityId) === String(ed.id)) tr.classList.add('row-focused');
+      const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ed); tr.appendChild(tdName);
+      const tdAge = document.createElement('td'); tdAge.textContent = getAge(ed) === '' ? '' : String(getAge(ed)); tr.appendChild(tdAge);
+      // Skill slider
+      const tdSkill = document.createElement('td'); const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
+      const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
+      const skillNum = normalizeSkillForRole(ed, 'FilmEditor'); skillRange.value = String(skillNum);
+      const skillVal = document.createElement('span'); skillVal.className = 'slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
+      skillRange.addEventListener('input', () => {
+        if (!ed.professions || typeof ed.professions !== 'object') ed.professions = {};
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(ed.professions.Editor ?? ed.professions.FilmEditor ?? '');
+        const norm = Number(skillRange.value).toFixed(3);
+        ed.professions.Editor = norm;
+        skillVal.textContent = formatUnitToTen(norm);
+        // Auto-raise limit if skill exceeds current limit
+        const currentLimitNum = isFinite(Number(ed.limit ?? ed.Limit)) ? Number(ed.limit ?? ed.Limit) : 0;
+        if (Number(norm) > currentLimitNum) {
+          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(ed.limit ?? ed.Limit ?? '');
+          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(ed.limit ?? ed.Limit ?? '');
+          ed.limit = norm; ed.Limit = norm;
+          limitRange.value = String(norm);
+          limitVal.textContent = formatUnitToTen(norm);
+          skillRange.dataset.autoLimitNew = norm;
+        }
+      });
+      skillRange.addEventListener('change', () => {
+        const finalVal = Number(skillRange.value).toFixed(3);
+        const initialVal = skillRange.dataset.initial ?? String(finalVal);
+        delete skillRange.dataset.initial;
+        recordEdit({ entity: ed, label: 'Editor Skill', path: 'professions.Editor', oldValue: initialVal, newValue: finalVal });
+        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+          recordEdit({ entity: ed, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+        }
+        delete skillRange.dataset.autoLimitOld;
+        delete skillRange.dataset.autoLimitNew;
+      });
+      // no change-triggered re-render
+      skillWrap.appendChild(skillRange); skillWrap.appendChild(skillVal); tdSkill.appendChild(skillWrap); tr.appendChild(tdSkill);
+      // Limit slider
+      const tdLimit = document.createElement('td'); const limitWrap = document.createElement('div'); limitWrap.className = 'slider-cell';
+      const limitRange = document.createElement('input'); limitRange.type = 'range'; limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
+      const limitNum = isFinite(Number(ed.limit ?? ed.Limit)) ? Number(ed.limit ?? ed.Limit) : 0; limitRange.value = String(limitNum);
+      const limitVal = document.createElement('span'); limitVal.className = 'slider-val'; limitVal.textContent = formatUnitToTen(limitNum);
+      limitRange.addEventListener('input', () => { const skillFloor = isFinite(Number(ed.professions?.Editor ?? ed.professions?.FilmEditor)) ? Number(ed.professions.Editor ?? ed.professions.FilmEditor) : 0; if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(ed.limit ?? ed.Limit ?? ''); if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor); const norm = Number(limitRange.value).toFixed(3); ed.limit = norm; ed.Limit = norm; limitVal.textContent = formatUnitToTen(norm); });
+      limitRange.addEventListener('change', () => { const finalVal = Number(limitRange.value).toFixed(3); const initialVal = limitRange.dataset.initial ?? String(finalVal); delete limitRange.dataset.initial; recordEdit({ entity: ed, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal }); });
+      // no change-triggered re-render
+      limitWrap.appendChild(limitRange); limitWrap.appendChild(limitVal); tdLimit.appendChild(limitWrap); tr.appendChild(tdLimit);
+      const tdMovies = document.createElement('td'); tdMovies.textContent = String(moviesCountForRole(ed, 'FilmEditor')); tr.appendChild(tdMovies);
+      frag.appendChild(tr);
+    });
+    editorsTbody.replaceChildren(frag);
+  }
+  // --- Movies tab ---
+  let moviesSortState = { key: 'title', dir: 'asc' };
+  function sortMoviesList(list) {
+    const dirMul = moviesSortState.dir === 'desc' ? -1 : 1;
+    const key = moviesSortState.key;
+    list.sort((a, b) => {
+      if (key === 'title') {
+        const at = String(a.name || '').toLowerCase();
+        const bt = String(b.name || '').toLowerCase();
+        return at.localeCompare(bt) * dirMul;
+      } else if (key === 'year') {
+        const ay = parseInt(parseYearFromDateTime(a.realReleaseDate || a.scheduledRelease || ''), 10) || -Infinity;
+        const by = parseInt(parseYearFromDateTime(b.realReleaseDate || b.scheduledRelease || ''), 10) || -Infinity;
+        if (ay === by) return 0; return ay < by ? -1 * dirMul : 1 * dirMul;
+      } else if (key === 'art' || key === 'com') {
+        const av = computeMovieArtCom(a)[key];
+        const bv = computeMovieArtCom(b)[key];
+        if (av === bv) return 0; return av < bv ? -1 * dirMul : 1 * dirMul;
+      } else if (key === 'box') {
+        const av = getMovieTotalIncome(a);
+        const bv = getMovieTotalIncome(b);
+        if (av === bv) return 0; return av < bv ? -1 * dirMul : 1 * dirMul;
+      }
+      return 0;
+    });
+  }
+  function updateMoviesSortIndicators() {
+    const ths = document.querySelectorAll('#moviesTable thead th');
+    ths.forEach((th) => {
+      th.classList.remove('sort-asc', 'sort-desc');
+      const key = th.getAttribute('data-sort-key');
+      if (key && key === moviesSortState.key) th.classList.add(moviesSortState.dir === 'desc' ? 'sort-desc' : 'sort-asc');
+    });
+  }
+  function renderMovies() {
+    if (!saveLoaded || !moviesTbody) return;
+    if (moviesTableSection) moviesTableSection.hidden = false;
+    if (moviesControls) moviesControls.hidden = false;
+    const q = (moviesSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? movies.filter(m => String(m.name || '').toLowerCase().includes(q)) : movies.slice();
+    sortMoviesList(filtered);
+    updateMoviesSortIndicators();
+    if (moviesStatus) moviesStatus.textContent = `${filtered.length} of ${movies.length} movies shown`;
+    const frag = document.createDocumentFragment();
+    filtered.forEach((m) => {
+      const tr = document.createElement('tr');
+      const tdTitle = document.createElement('td'); tdTitle.textContent = String(m.name || ''); tr.appendChild(tdTitle);
+      const tdYear = document.createElement('td');
+      const yrStr = parseYearFromDateTime(m.realReleaseDate || m.scheduledRelease || '');
+      tdYear.textContent = (yrStr === '0001') ? '[unreleased]' : yrStr;
+      tr.appendChild(tdYear);
+      const ac = computeMovieArtCom(m);
+      const tdArt = document.createElement('td'); tdArt.textContent = formatUnitToTen((ac.art).toFixed(3)); tr.appendChild(tdArt);
+      const tdCom = document.createElement('td'); tdCom.textContent = formatUnitToTen((ac.com).toFixed(3)); tr.appendChild(tdCom);
+      const tdBox = document.createElement('td'); tdBox.textContent = formatMoneyUSD(getMovieTotalIncome(m)); tr.appendChild(tdBox);
+      frag.appendChild(tr);
+    });
+    moviesTbody.replaceChildren(frag);
+  }
+
+  // --- Composers tab ---
+  let composersSortState = { key: 'skill', dir: 'desc' };
+  function sortComposersList(list) {
+    const dirMul = composersSortState.dir === 'desc' ? -1 : 1;
+    const key = composersSortState.key;
+    list.sort((a, b) => {
+      if (key === 'name') return fullNameFor(a).toLowerCase().localeCompare(fullNameFor(b).toLowerCase()) * dirMul;
+      let av=0,bv=0;
+      if (key==='skill') { av = getNumeric(normalizeDecimalString(a.professions?.Composer ?? '')); bv = getNumeric(normalizeDecimalString(b.professions?.Composer ?? '')); }
+      else if (key==='age') { av = getNumeric(getAge(a)); bv = getNumeric(getAge(b)); }
+      else if (key==='limit') { av = getNumeric(normalizeDecimalString(a.limit ?? a.Limit ?? '')); bv = getNumeric(normalizeDecimalString(b.limit ?? b.Limit ?? '')); }
+      else if (key==='movies') { av = moviesCountForRole(a, 'Composer'); bv = moviesCountForRole(b, 'Composer'); }
+      if (av===bv) return 0; return av < bv ? -1*dirMul : 1*dirMul;
+    });
+  }
+  function updateComposersSortIndicators() {
+    const ths = document.querySelectorAll('#composersTable thead th');
+    ths.forEach((th)=>{ th.classList.remove('sort-asc','sort-desc'); const key = th.getAttribute('data-sort-key'); if (key && key===composersSortState.key) th.classList.add(composersSortState.dir==='desc'?'sort-desc':'sort-asc'); });
+  }
+  function renderComposers() {
+    if (!saveLoaded || !composersTbody) return;
+    if (composersTableSection) composersTableSection.hidden = false;
+    if (composersControls) composersControls.hidden = false;
+    const q = (composersSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? composers.filter(a => fullNameFor(a).toLowerCase().includes(q)) : composers.slice();
+    sortComposersList(filtered); updateComposersSortIndicators();
+    if (composersStatus) composersStatus.textContent = `${filtered.length} of ${composers.length} composers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    const frag = document.createDocumentFragment();
+    filtered.forEach((c)=>{
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(c.id ?? ''));
+      tr.addEventListener('pointerdown', () => markFocusedId(c.id));
+      if (focusedEntityId != null && String(focusedEntityId) === String(c.id)) tr.classList.add('row-focused');
+      const tdName = document.createElement('td'); tdName.textContent = fullNameFor(c); tr.appendChild(tdName);
+      const tdAge = document.createElement('td'); tdAge.textContent = getAge(c) === '' ? '' : String(getAge(c)); tr.appendChild(tdAge);
+      const tdSkill = document.createElement('td');
+      const skillWrap = document.createElement('div'); skillWrap.className='slider-cell';
+      const skillRange=document.createElement('input'); skillRange.type='range'; skillRange.min='0'; skillRange.max='1'; skillRange.step='0.01';
+      const skillNum = normalizeSkillForRole(c,'Composer'); skillRange.value=String(skillNum);
+      const skillVal=document.createElement('span'); skillVal.className='slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
+      skillRange.addEventListener('input',()=>{
+        if (!c.professions||typeof c.professions!=='object') c.professions={};
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(c.professions.Composer ?? '');
+        const norm=Number(skillRange.value).toFixed(3);
+        c.professions.Composer=norm;
+        skillVal.textContent=formatUnitToTen(norm);
+        // Auto-raise limit if skill exceeds current limit
+        const currentLimitNum = isFinite(Number(c.limit ?? c.Limit)) ? Number(c.limit ?? c.Limit) : 0;
+        if (Number(norm) > currentLimitNum) {
+          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(c.limit ?? c.Limit ?? '');
+          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(c.limit ?? c.Limit ?? '');
+          c.limit = norm; c.Limit = norm;
+          limitRange.value = String(norm);
+          limitVal.textContent = formatUnitToTen(norm);
+          skillRange.dataset.autoLimitNew = norm;
+        }
+      });
+      skillRange.addEventListener('focus', ()=> markFocusedId(c.id));
+      skillRange.addEventListener('change',()=>{
+        const finalVal = Number(skillRange.value).toFixed(3);
+        const initialVal = skillRange.dataset.initial ?? String(finalVal);
+        delete skillRange.dataset.initial;
+        recordEdit({ entity: c, label: 'Composer Skill', path: 'professions.Composer', oldValue: initialVal, newValue: finalVal });
+        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+          recordEdit({ entity: c, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+        }
+        delete skillRange.dataset.autoLimitOld;
+        delete skillRange.dataset.autoLimitNew;
+      });
+      // no change-triggered re-render
+      skillWrap.appendChild(skillRange); skillWrap.appendChild(skillVal); tdSkill.appendChild(skillWrap); tr.appendChild(tdSkill);
+
+      const tdLimit = document.createElement('td');
+      const limitWrap = document.createElement('div'); limitWrap.className='slider-cell';
+      const limitRange=document.createElement('input'); limitRange.type='range'; limitRange.min='0'; limitRange.max='1'; limitRange.step='0.01';
+      const limitNum=isFinite(Number(c.limit??c.Limit))?Number(c.limit??c.Limit):0; limitRange.value=String(limitNum);
+      const limitVal=document.createElement('span'); limitVal.className='slider-val'; limitVal.textContent=formatUnitToTen(limitNum);
+      limitRange.addEventListener('input',()=>{
+        const skillFloor=isFinite(Number(c.professions?.Composer))?Number(c.professions.Composer):0;
+        if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(c.limit ?? c.Limit ?? '');
+        if(Number(limitRange.value)<skillFloor) limitRange.value=String(skillFloor);
+        const norm=Number(limitRange.value).toFixed(3);
+        c.limit=norm; c.Limit=norm;
+        limitVal.textContent=formatUnitToTen(norm);
+      });
+      limitRange.addEventListener('focus', ()=> markFocusedId(c.id));
+      limitRange.addEventListener('change',()=>{
+        const finalVal = Number(limitRange.value).toFixed(3);
+        const initialVal = limitRange.dataset.initial ?? String(finalVal);
+        delete limitRange.dataset.initial;
+        recordEdit({ entity: c, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal });
+      });
+      // no change-triggered re-render
+      limitWrap.appendChild(limitRange); limitWrap.appendChild(limitVal); tdLimit.appendChild(limitWrap); tr.appendChild(tdLimit);
+      const tdMovies=document.createElement('td'); tdMovies.textContent=String(moviesCountForRole(c,'Composer')); tr.appendChild(tdMovies);
+      frag.appendChild(tr);
+    });
+    composersTbody.replaceChildren(frag);
+  }
+
+  // --- Cinematographers tab ---
+  let cinematographersSortState = { key: 'skill', dir: 'desc' };
+  function sortCinematographersList(list){
+    const dirMul = cinematographersSortState.dir==='desc'?-1:1; const key=cinematographersSortState.key;
+    list.sort((a,b)=>{ if(key==='name') return fullNameFor(a).toLowerCase().localeCompare(fullNameFor(b).toLowerCase())*dirMul; let av=0,bv=0; if(key==='skill'){ av=getNumeric(normalizeDecimalString(a.professions?.Cinematographer??'')); bv=getNumeric(normalizeDecimalString(b.professions?.Cinematographer??'')); } else if (key==='age'){ av=getNumeric(getAge(a)); bv=getNumeric(getAge(b)); } else if (key==='limit'){ av=getNumeric(normalizeDecimalString(a.limit??a.Limit??'')); bv=getNumeric(normalizeDecimalString(b.limit??b.Limit??'')); } else if (key==='movies'){ av=moviesCountForRole(a,'Cinematographer'); bv=moviesCountForRole(b,'Cinematographer'); } if (av===bv) return 0; return av<bv?-1*dirMul:1*dirMul; });
+  }
+  function updateCinematographersSortIndicators(){ const ths=document.querySelectorAll('#cinematographersTable thead th'); ths.forEach((th)=>{ th.classList.remove('sort-asc','sort-desc'); const key=th.getAttribute('data-sort-key'); if(key&&key===cinematographersSortState.key) th.classList.add(cinematographersSortState.dir==='desc'?'sort-desc':'sort-asc'); }); }
+  function renderCinematographers() {
+    if (!saveLoaded || !cinematographersTbody) return;
+    if (cinematographersTableSection) cinematographersTableSection.hidden = false;
+    if (cinematographersControls) cinematographersControls.hidden = false;
+
+    const q = (cinematographersSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? cinematographers.filter(a => fullNameFor(a).toLowerCase().includes(q)) : cinematographers.slice();
+    sortCinematographersList(filtered);
+    updateCinematographersSortIndicators();
+    if (cinematographersStatus) cinematographersStatus.textContent = `${filtered.length} of ${cinematographers.length} cinematographers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+
+    const frag = document.createDocumentFragment();
+    filtered.forEach((ci) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(ci.id ?? ''));
+      tr.addEventListener('pointerdown', () => markFocusedId(ci.id));
+      if (focusedEntityId != null && String(focusedEntityId) === String(ci.id)) tr.classList.add('row-focused');
+
+      const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ci); tr.appendChild(tdName);
+      const tdAge = document.createElement('td'); tdAge.textContent = getAge(ci) === '' ? '' : String(getAge(ci)); tr.appendChild(tdAge);
+
+      // Skill slider
+      const tdSkill = document.createElement('td');
+      const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
+      const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
+      const skillNum = normalizeSkillForRole(ci, 'Cinematographer'); skillRange.value = String(skillNum);
+      const skillVal = document.createElement('span'); skillVal.className = 'slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
+      skillRange.addEventListener('input', () => {
+        if (!ci.professions || typeof ci.professions !== 'object') ci.professions = {};
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(ci.professions.Cinematographer ?? '');
+        const norm = Number(skillRange.value).toFixed(3);
+        ci.professions.Cinematographer = norm;
+        skillVal.textContent = formatUnitToTen(norm);
+        // Auto-raise limit if skill exceeds current limit
+        const currentLimitNum = isFinite(Number(ci.limit ?? ci.Limit)) ? Number(ci.limit ?? ci.Limit) : 0;
+        if (Number(norm) > currentLimitNum) {
+          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(ci.limit ?? ci.Limit ?? '');
+          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(ci.limit ?? ci.Limit ?? '');
+          ci.limit = norm; ci.Limit = norm;
+          limitRange.value = String(norm);
+          limitVal.textContent = formatUnitToTen(norm);
+          skillRange.dataset.autoLimitNew = norm;
+        }
+      });
+      skillRange.addEventListener('focus', () => markFocusedId(ci.id));
+      skillRange.addEventListener('change', () => {
+        const finalVal = Number(skillRange.value).toFixed(3);
+        const initialVal = skillRange.dataset.initial ?? String(finalVal);
+        delete skillRange.dataset.initial;
+        recordEdit({ entity: ci, label: 'Cinematographer Skill', path: 'professions.Cinematographer', oldValue: initialVal, newValue: finalVal });
+        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+          recordEdit({ entity: ci, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+        }
+        delete skillRange.dataset.autoLimitOld; delete skillRange.dataset.autoLimitNew;
+      });
+      skillWrap.appendChild(skillRange); skillWrap.appendChild(skillVal); tdSkill.appendChild(skillWrap); tr.appendChild(tdSkill);
+
+      // Limit slider
+      const tdLimit = document.createElement('td');
+      const limitWrap = document.createElement('div'); limitWrap.className = 'slider-cell';
+      const limitRange = document.createElement('input'); limitRange.type = 'range'; limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
+      const limitNum = isFinite(Number(ci.limit ?? ci.Limit)) ? Number(ci.limit ?? ci.Limit) : 0; limitRange.value = String(limitNum);
+      const limitVal = document.createElement('span'); limitVal.className = 'slider-val'; limitVal.textContent = formatUnitToTen(limitNum);
+      limitRange.addEventListener('input', () => {
+        const skillFloor = isFinite(Number(ci.professions?.Cinematographer)) ? Number(ci.professions.Cinematographer) : 0;
+        if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(ci.limit ?? ci.Limit ?? '');
+        if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor);
+        const norm = Number(limitRange.value).toFixed(3);
+        ci.limit = norm; ci.Limit = norm;
+        limitVal.textContent = formatUnitToTen(norm);
+      });
+      limitRange.addEventListener('focus', () => markFocusedId(ci.id));
+      limitRange.addEventListener('change', () => {
+        const finalVal = Number(limitRange.value).toFixed(3);
+        const initialVal = limitRange.dataset.initial ?? String(finalVal);
+        delete limitRange.dataset.initial;
+        recordEdit({ entity: ci, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal });
+      });
+      limitWrap.appendChild(limitRange); limitWrap.appendChild(limitVal); tdLimit.appendChild(limitWrap); tr.appendChild(tdLimit);
+
+      const tdMovies = document.createElement('td'); tdMovies.textContent = String(moviesCountForRole(ci, 'Cinematographer')); tr.appendChild(tdMovies);
+      frag.appendChild(tr);
+    });
+    cinematographersTbody.replaceChildren(frag);
+  }
+
+  // --- Agents tab ---
+  let agentsSortState = { key: 'skill', dir: 'desc' };
+  function sortAgentsList(list){ const dirMul=agentsSortState.dir==='desc'?-1:1; const key=agentsSortState.key; list.sort((a,b)=>{ if(key==='name') return fullNameFor(a).toLowerCase().localeCompare(fullNameFor(b).toLowerCase())*dirMul; let av=0,bv=0; if(key==='skill'){ av=getNumeric(normalizeDecimalString(a.professions?.Agent??'')); bv=getNumeric(normalizeDecimalString(b.professions?.Agent??'')); } else if(key==='age'){ av=getNumeric(getAge(a)); bv=getNumeric(getAge(b)); } else if(key==='limit'){ av=getNumeric(normalizeDecimalString(a.limit??a.Limit??'')); bv=getNumeric(normalizeDecimalString(b.limit??b.Limit??'')); } else if(key==='movies'){ av=moviesCountForRole(a,'Agent'); bv=moviesCountForRole(b,'Agent'); } if(av===bv) return 0; return av<bv?-1*dirMul:1*dirMul; }); }
+  function updateAgentsSortIndicators(){ const ths=document.querySelectorAll('#agentsTable thead th'); ths.forEach((th)=>{ th.classList.remove('sort-asc','sort-desc'); const key=th.getAttribute('data-sort-key'); if(key&&key===agentsSortState.key) th.classList.add(agentsSortState.dir==='desc'?'sort-desc':'sort-asc'); }); }
+  function renderAgents() {
+    if (!saveLoaded || !agentsTbody) return;
+    if (agentsTableSection) agentsTableSection.hidden = false;
+    if (agentsControls) agentsControls.hidden = false;
+    const q = (agentsSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? agents.filter(a => fullNameFor(a).toLowerCase().includes(q)) : agents.slice();
+    sortAgentsList(filtered);
+    updateAgentsSortIndicators();
+    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${agents.length} agents shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    const frag = document.createDocumentFragment();
+    filtered.forEach((ag) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(ag.id ?? ''));
+      tr.addEventListener('pointerdown', () => markFocusedId(ag.id));
+      if (focusedEntityId != null && String(focusedEntityId) === String(ag.id)) tr.classList.add('row-focused');
+      const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ag); tr.appendChild(tdName);
+      const tdAge = document.createElement('td'); tdAge.textContent = getAge(ag) === '' ? '' : String(getAge(ag)); tr.appendChild(tdAge);
+      // Skill slider
+      const tdSkill = document.createElement('td');
+      const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
+      const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
+      const skillNum = normalizeSkillForRole(ag, 'Agent'); skillRange.value = String(skillNum);
+      const skillVal = document.createElement('span'); skillVal.className = 'slider-val'; skillVal.textContent = formatUnitToTen(skillNum);
+      skillRange.addEventListener('input', () => {
+        if (!ag.professions || typeof ag.professions !== 'object') ag.professions = {};
+        if (!('initial' in skillRange.dataset)) skillRange.dataset.initial = String(ag.professions.Agent ?? '');
+        const norm = Number(skillRange.value).toFixed(3);
+        ag.professions.Agent = norm;
+        skillVal.textContent = formatUnitToTen(norm);
+        const currentLimitNum = isFinite(Number(ag.limit ?? ag.Limit)) ? Number(ag.limit ?? ag.Limit) : 0;
+        if (Number(norm) > currentLimitNum) {
+          if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(ag.limit ?? ag.Limit ?? '');
+          if (!('autoLimitOld' in skillRange.dataset)) skillRange.dataset.autoLimitOld = String(ag.limit ?? ag.Limit ?? '');
+          ag.limit = norm; ag.Limit = norm;
+          limitRange.value = String(norm);
+          limitVal.textContent = formatUnitToTen(norm);
+          skillRange.dataset.autoLimitNew = norm;
+        }
+      });
+      skillRange.addEventListener('focus', () => markFocusedId(ag.id));
+      skillRange.addEventListener('change', () => {
+        const finalVal = Number(skillRange.value).toFixed(3);
+        const initialVal = skillRange.dataset.initial ?? String(finalVal);
+        delete skillRange.dataset.initial;
+        recordEdit({ entity: ag, label: 'Agent Skill', path: 'professions.Agent', oldValue: initialVal, newValue: finalVal });
+        if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
+          recordEdit({ entity: ag, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
+        }
+        delete skillRange.dataset.autoLimitOld; delete skillRange.dataset.autoLimitNew;
+      });
+      skillWrap.appendChild(skillRange); skillWrap.appendChild(skillVal); tdSkill.appendChild(skillWrap); tr.appendChild(tdSkill);
+      // Limit slider
+      const tdLimit = document.createElement('td'); const limitWrap = document.createElement('div'); limitWrap.className = 'slider-cell';
+      const limitRange = document.createElement('input'); limitRange.type = 'range'; limitRange.min = '0'; limitRange.max = '1'; limitRange.step = '0.01';
+      const limitNum = isFinite(Number(ag.limit ?? ag.Limit)) ? Number(ag.limit ?? ag.Limit) : 0; limitRange.value = String(limitNum);
+      const limitVal = document.createElement('span'); limitVal.className = 'slider-val'; limitVal.textContent = formatUnitToTen(limitNum);
+      limitRange.addEventListener('input', () => {
+        const skillFloor = isFinite(Number(ag.professions?.Agent)) ? Number(ag.professions.Agent) : 0;
+        if (!('initial' in limitRange.dataset)) limitRange.dataset.initial = String(ag.limit ?? ag.Limit ?? '');
+        if (Number(limitRange.value) < skillFloor) limitRange.value = String(skillFloor);
+        const norm = Number(limitRange.value).toFixed(3);
+        ag.limit = norm; ag.Limit = norm;
+        limitVal.textContent = formatUnitToTen(norm);
+      });
+      limitRange.addEventListener('focus', () => markFocusedId(ag.id));
+      limitRange.addEventListener('change', () => {
+        const finalVal = Number(limitRange.value).toFixed(3);
+        const initialVal = limitRange.dataset.initial ?? String(finalVal);
+        delete limitRange.dataset.initial;
+        recordEdit({ entity: ag, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal });
+      });
+      limitWrap.appendChild(limitRange); limitWrap.appendChild(limitVal); tdLimit.appendChild(limitWrap); tr.appendChild(tdLimit);
+      const tdMovies = document.createElement('td'); tdMovies.textContent = String(moviesCountForRole(ag, 'Agent')); tr.appendChild(tdMovies);
+      frag.appendChild(tr);
+    });
+    agentsTbody.replaceChildren(frag);
   }
 
   async function tryAutoLoadNames() {
@@ -488,6 +1766,7 @@
           names = data.locStrings;
           nameMapLoaded = true;
           namesMeta.textContent = `Loaded name map (locStrings: ${names.length}) from ${url}`;
+          if (loadersSection && saveLoaded && nameMapLoaded) loadersSection.style.display = 'none';
           render();
           return;
         }
@@ -508,7 +1787,10 @@
       saveObj = JSON.parse(text);
       saveLoaded = true;
       originalSaveName = file.name;
+      lastLoadedFile = file;
       saveMeta.textContent = `Loaded save: ${file.name} (${file.size.toLocaleString()} bytes)`;
+      if (reloadBtn) reloadBtn.disabled = false;
+      if (loadersSection && saveLoaded && nameMapLoaded) loadersSection.style.display = 'none';
       refreshAfterDataLoad();
     } catch (err) {
       console.error(err);
@@ -531,13 +1813,34 @@
       saveObj = JSON.parse(text);
       saveLoaded = true;
       originalSaveName = file.name;
+      lastLoadedFile = file;
       saveMeta.textContent = `Loaded save: ${file.name} (${file.size.toLocaleString()} bytes)`;
+      if (reloadBtn) reloadBtn.disabled = false;
+      if (loadersSection && saveLoaded && nameMapLoaded) loadersSection.style.display = 'none';
       refreshAfterDataLoad();
     } catch (err) {
       console.error(err);
       saveMeta.textContent = 'Failed to parse JSON save file.';
     }
   });
+
+  // Reload current save
+  if (reloadBtn) {
+    reloadBtn.addEventListener('click', async () => {
+      if (!lastLoadedFile) return;
+      try {
+        const text = await readFileAsText(lastLoadedFile);
+        saveObj = JSON.parse(text);
+        saveLoaded = true;
+        originalSaveName = lastLoadedFile.name;
+        saveMeta.textContent = `Reloaded save: ${lastLoadedFile.name} (${lastLoadedFile.size.toLocaleString()} bytes)`;
+        refreshAfterDataLoad();
+      } catch (err) {
+        console.error(err);
+        saveMeta.textContent = 'Failed to reload save file.';
+      }
+    });
+  }
 
   // Name file input fallback
   namesFileInput.addEventListener('change', async (e) => {
@@ -550,6 +1853,7 @@
         names = data.locStrings;
         nameMapLoaded = true;
         namesMeta.textContent = `Loaded name map (locStrings: ${names.length}) from ${file.name}`;
+        if (loadersSection && saveLoaded && nameMapLoaded) loadersSection.style.display = 'none';
         render();
       } else {
         namesMeta.textContent = 'Invalid CHARACTER_NAMES.json (missing locStrings array).';
@@ -562,14 +1866,19 @@
 
   // Search
   searchInput.addEventListener('input', () => render());
+  if (directorsSearchInput) directorsSearchInput.addEventListener('input', () => renderDirectors());
+  if (producersSearchInput) producersSearchInput.addEventListener('input', () => renderProducers());
+  if (writersSearchInput) writersSearchInput.addEventListener('input', () => renderWriters());
+  if (editorsSearchInput) editorsSearchInput.addEventListener('input', () => renderEditors());
+  if (composersSearchInput) composersSearchInput.addEventListener('input', () => renderComposers());
+  if (cinematographersSearchInput) cinematographersSearchInput.addEventListener('input', () => renderCinematographers());
+  if (agentsSearchInput) agentsSearchInput.addEventListener('input', () => renderAgents());
+  if (moviesSearchInput) moviesSearchInput.addEventListener('input', () => renderMovies());
+  if (composersSearchInput) composersSearchInput.addEventListener('input', () => renderComposers());
+  if (cinematographersSearchInput) cinematographersSearchInput.addEventListener('input', () => renderCinematographers());
+  if (agentsSearchInput) agentsSearchInput.addEventListener('input', () => renderAgents());
 
-  // Game year override
-  gameYearInput.addEventListener('change', () => {
-    const val = Number(gameYearInput.value);
-    if (!isFinite(val) || val < 1850 || val > 2100) return;
-    gameYear = Math.floor(val);
-    render();
-  });
+  // Game year: display-only (no inputs)
 
   // Sorting handlers
   (function attachSorting() {
@@ -592,6 +1901,115 @@
     });
   })();
 
+  // Directors sorting handlers
+  (function attachDirectorsSorting() {
+    const ths = document.querySelectorAll('#directorsTable thead th');
+    ths.forEach((th) => {
+      const key = th.getAttribute('data-sort-key');
+      if (!key) return;
+      th.addEventListener('click', () => {
+        if (directorsSortState.key === key) {
+          directorsSortState.dir = directorsSortState.dir === 'desc' ? 'asc' : 'desc';
+        } else {
+          directorsSortState.key = key;
+          directorsSortState.dir = 'desc';
+        }
+        updateDirectorsSortIndicators();
+        renderDirectors();
+      });
+    });
+  })();
+  // Movies sorting handlers
+  (function attachMoviesSorting(){
+    const ths = document.querySelectorAll('#moviesTable thead th');
+    ths.forEach((th)=>{
+      const key = th.getAttribute('data-sort-key'); if (!key) return;
+      th.addEventListener('click', () => {
+        if (moviesSortState.key === key) moviesSortState.dir = moviesSortState.dir === 'desc' ? 'asc' : 'desc';
+        else { moviesSortState.key = key; moviesSortState.dir = 'desc'; }
+        updateMoviesSortIndicators(); renderMovies();
+      });
+    });
+  })();
+  // Producers sorting handlers
+  (function attachProducersSorting() {
+    const ths = document.querySelectorAll('#producersTable thead th');
+    ths.forEach((th) => {
+      const key = th.getAttribute('data-sort-key');
+      if (!key) return;
+      th.addEventListener('click', () => {
+        if (producersSortState.key === key) producersSortState.dir = producersSortState.dir === 'desc' ? 'asc' : 'desc';
+        else { producersSortState.key = key; producersSortState.dir = 'desc'; }
+        updateProducersSortIndicators();
+        renderProducers();
+      });
+    });
+  })();
+  // Writers sorting handlers
+  (function attachWritersSorting() {
+    const ths = document.querySelectorAll('#writersTable thead th');
+    ths.forEach((th) => {
+      const key = th.getAttribute('data-sort-key');
+      if (!key) return;
+      th.addEventListener('click', () => {
+        if (writersSortState.key === key) writersSortState.dir = writersSortState.dir === 'desc' ? 'asc' : 'desc';
+        else { writersSortState.key = key; writersSortState.dir = 'desc'; }
+        updateWritersSortIndicators();
+        renderWriters();
+      });
+    });
+  })();
+  // Editors sorting handlers
+  (function attachEditorsSorting() {
+    const ths = document.querySelectorAll('#editorsTable thead th');
+    ths.forEach((th) => {
+      const key = th.getAttribute('data-sort-key');
+      if (!key) return;
+      th.addEventListener('click', () => {
+        if (editorsSortState.key === key) editorsSortState.dir = editorsSortState.dir === 'desc' ? 'asc' : 'desc';
+        else { editorsSortState.key = key; editorsSortState.dir = 'desc'; }
+        updateEditorsSortIndicators();
+        renderEditors();
+      });
+    });
+  })();
+  // Composers sorting handlers
+  (function attachComposersSorting(){
+    const ths=document.querySelectorAll('#composersTable thead th');
+    ths.forEach((th)=>{
+      const key=th.getAttribute('data-sort-key'); if(!key) return;
+      th.addEventListener('click',()=>{
+        if(composersSortState.key===key) composersSortState.dir = composersSortState.dir==='desc'?'asc':'desc';
+        else { composersSortState.key=key; composersSortState.dir='desc'; }
+        updateComposersSortIndicators(); renderComposers();
+      });
+    });
+  })();
+  // Cinematographers sorting handlers
+  (function attachCinematographersSorting(){
+    const ths=document.querySelectorAll('#cinematographersTable thead th');
+    ths.forEach((th)=>{
+      const key=th.getAttribute('data-sort-key'); if(!key) return;
+      th.addEventListener('click',()=>{
+        if(cinematographersSortState.key===key) cinematographersSortState.dir = cinematographersSortState.dir==='desc'?'asc':'desc';
+        else { cinematographersSortState.key=key; cinematographersSortState.dir='desc'; }
+        updateCinematographersSortIndicators(); renderCinematographers();
+      });
+    });
+  })();
+  // Agents sorting handlers
+  (function attachAgentsSorting(){
+    const ths=document.querySelectorAll('#agentsTable thead th');
+    ths.forEach((th)=>{
+      const key=th.getAttribute('data-sort-key'); if(!key) return;
+      th.addEventListener('click',()=>{
+        if(agentsSortState.key===key) agentsSortState.dir = agentsSortState.dir==='desc'?'asc':'desc';
+        else { agentsSortState.key=key; agentsSortState.dir='desc'; }
+        updateAgentsSortIndicators(); renderAgents();
+      });
+    });
+  })();
+
   // Tab handlers
   (function attachTabs() {
     tabs.forEach((btn) => {
@@ -600,8 +2018,13 @@
         activateTab(name);
       });
     });
-    // default active
-    activateTab('actors');
+    // initial active via URL hash (e.g., #directors)
+    const initial = (location.hash || '#actors').slice(1);
+    activateTab(initial);
+    window.addEventListener('hashchange', () => {
+      const n = (location.hash || '#actors').slice(1);
+      activateTab(n);
+    });
   })();
 
   // Download
@@ -620,5 +2043,7 @@
   });
 
   // Init
+  attachUndoRedo();
+  refreshChangeUI();
   tryAutoLoadNames();
 })();

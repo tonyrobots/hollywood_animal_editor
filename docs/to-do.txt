@@ -1,24 +1,32 @@
 Hollywood Animal — Save Editor: Next Steps / TODO
 
+Completed (this session)
+- Use formatUnitToTen for displaying skill levels and limits on all tabs
+  (editing still saves normalized 0–1 values).
+- Do not allow Limit to be set below current skill level in UI.
+- For Movies, display year "0001" as "[unreleased]".
+- Movies: show ratings in 0–10 format (internal 0–1 scaled).
+- Replace ART/COM selects with sliders (0–1, step 0.01) and tick marks at
+  0.000, 0.150, 0.300, 0.700, 1.000; display 0.0–10.0 values.
+- Change tracking panel with Undo/Redo; global Download button hidden until changes.
+- Avoid re-sorting while editing; sorting only updates on header clicks.
+- Auto-collapse loaders once save and name map are both loaded.
+
 Core Editing Expansion
-- Implement other talent tabs (filter by professions):
-  - Directors (professions.Director)
-  - Producers (professions.Producer)
-  - Writers (professions.Writer)
-  - Editors (professions.Editor)
-- Movies tab: list films with key fields (title, release date, art/com values where applicable) and basic edits.
-- Add a detail page/view for each entity (Actor, Director, Movie):
+- Add a detail page/view for each entity (Actor, Director, Movie, etc):
   - Show full record JSON with grouped sections (identity, professions, contracts, labels, tags, history)
   - Safe edits for additional fields (mood, attitude, selfEsteem, contracts)
   - Back link to list with deep-link support (hash routing)
 
+- Movies: show ratings in 0–10 format (internal 0–1 scaled). Note there is
+  a limiter that may cap the effective rating; audit the movie data object
+  for other useful fields to surface in the UI.
+
 UX / Quality
 - Add inline reset per row/field and a global “revert unsaved changes” action.
-- Provide undo/redo stack for recent edits.
-- Bulk operations (e.g., set ART/COM for selected items; adjust limits in range).
+- Provide per-field inline reset and global revert for all pending changes.
 - Keyboard navigation and accessibility passes (aria roles, focus order, labels).
 - Visual sort indicators already added; consider multi-column sort with modifier key.
-- Persist UI state (search query, sort, active tab, game year) to localStorage.
 - Tooltips on Age to show exact birthDate; show raw birthDate on hover.
 
 Data Handling

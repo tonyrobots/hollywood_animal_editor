@@ -2,11 +2,11 @@ Project: Hollywood Animal — Savegame Editor
 
 Purpose
 - Build a local, static web app to edit “Hollywood Animal” save files.
-- Tabs: Actors (implemented), Directors, Producers, Writers, Editors (placeholders), Movies (placeholder).
+- Tabs: Actors (implemented), Directors, Producers, Writers, Editors, Composers, Cinematographers, Agents (lists with skill/limit sliders), Movies (read-only table).
 - MVP scope (Actors):
   - Acting skill at `professions.Actor` (string number; slider input)
   - Limit at both `limit` and `Limit` (string number; slider input)
-  - ART and COM ratings under `whiteTagsNEW` with constrained options
+  - ART and COM ratings under `whiteTagsNEW` edited via sliders (0–1, 0.01 step) with tick marks at 0.000/0.150/0.300/0.700/1.000. Displayed as 0.0–10.0; saved normalized to three decimals.
   - Age as a derived field (edits `birthDate` year; game year auto‑detected, user‑overridable)
 
 Repository Layout
@@ -37,10 +37,10 @@ Editing Rules (MVP)
 - Limit:
   - Paths: `limit` and `Limit`
   - UI: slider 0–1, step 0.01. Treat as single value; write normalized value to both keys; add missing key for consistency.
+  - Constraint: Limit cannot go below the current skill value.
 - ART and COM (Commercial):
   - Paths: `whiteTagsNEW.ART.value` and `whiteTagsNEW.COM.value`
-  - Allowed values: "0.000", "0.150", "0.300", "0.700", "1.000" (default 0.000 if absent)
-  - If the tag entry does not exist, create it with safe defaults; do not mutate `overallValues` in MVP.
+  - Slider range 0–1, step 0.01; visuals show tick marks at canonical values; displayed as 0.0–10.0; saved normalized to three decimals. If the tag entry does not exist, create it with safe defaults; do not mutate `overallValues` in MVP.
 - Age / birthDate:
   - Display age from `gameYear - birthYear`; parse `birthDate` as `DD-MM-YYYY`.
   - Editing age updates only the year component in `birthDate`.
@@ -64,13 +64,14 @@ Static Web App (MVP)
   1) Drag‑and‑drop or file picker to load a save JSON.
   2) Robustly find the `characters` array and filter to `professions.Actor`.
   3) Resolve names via `CHARACTER_NAMES.json` and show a searchable table.
-  4) Editable controls per actor: Acting skill (slider), Limit (slider), ART/COM (dropdowns), Age (numeric, updates birthDate).
+  4) Editable controls per actor: Acting skill (slider), Limit (slider), ART/COM (sliders), Age (numeric, updates birthDate).
   5) Apply edits to in‑memory JSON.
   6) Export the modified save as a downloadable `.json` file (preserve original filename).
 - UX:
   - Search by any substring of full name.
-  - Sort by clicking headers (first click desc, second asc) with arrow indicators.
-  - Light validation; warn rather than block for atypical ranges.
+  - Sort by clicking headers (first click desc, second asc) with arrow indicators. Edits do not auto resort; click again to resort.
+  - Global Download button in header; hidden until a save is loaded and at least one change exists.
+  - Changes panel with running log and Undo/Redo; sliders record a single change per interaction.
 
 Testing & Validation
 - Use `docs/sample_save_actor_data_fixed.json` for quick iteration.

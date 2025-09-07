@@ -8,18 +8,23 @@
   </head>
   <body>
     <header>
-      <h1>Hollywood Animal — Save Editor (MVP)</h1>
-      <p>Edit actors: acting skill, limit, ART, COM.</p>
+      <div class="header-left">
+        <h1>Hollywood Animal — Save Editor (Alpha))</h1>
+        <p>Edit your save file for the Hollywood Animal game by Weappy</p>
+      </div>
+      <button id="downloadBtn" class="primary-cta" disabled>Download Edited Save</button>
     </header>
 
-    <nav class="tabs" role="tablist" aria-label="Primary">
-      <button class="tab active" role="tab" aria-selected="true" data-tab="actors">Actors</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="directors">Directors</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="producers">Producers</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="writers">Writers</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="editors">Editors</button>
-      <button class="tab" role="tab" aria-selected="false" data-tab="movies">Movies</button>
-    </nav>
+    <section id="changesPanel" class="changes" hidden>
+      <details open>
+        <summary>Changes (<span id="changesCount">0</span>)</summary>
+        <ul id="changesList"></ul>
+      </details>
+      <div class="changes-actions">
+        <button id="undoBtn" class="secondary-cta" disabled>Undo</button>
+        <button id="redoBtn" class="secondary-cta" disabled>Redo</button>
+      </div>
+    </section>
 
     <section id="loaders">
       <div class="loader">
@@ -27,6 +32,9 @@
         <div id="dropZone" class="drop-zone" tabindex="0" aria-label="Drop save file here">
           <p>Drag & drop save JSON here, or</p>
           <input type="file" id="saveFileInput" accept="application/json,.json" />
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+          <button id="reloadBtn" disabled>Reload Current Save</button>
         </div>
         <div id="saveMeta" class="meta"></div>
       </div>
@@ -39,15 +47,23 @@
       </div>
     </section>
 
+    <nav class="tabs" role="tablist" aria-label="Primary">
+      <button id="tabbtn-actors" class="tab active" role="tab" aria-selected="true" data-tab="actors" aria-controls="tab-actors">Actors</button>
+      <button id="tabbtn-directors" class="tab" role="tab" aria-selected="false" data-tab="directors" aria-controls="tab-directors">Directors</button>
+      <button id="tabbtn-producers" class="tab" role="tab" aria-selected="false" data-tab="producers" aria-controls="tab-producers">Producers</button>
+      <button id="tabbtn-writers" class="tab" role="tab" aria-selected="false" data-tab="writers" aria-controls="tab-writers">Writers</button>
+      <button id="tabbtn-editors" class="tab" role="tab" aria-selected="false" data-tab="editors" aria-controls="tab-editors">Editors</button>
+      <button id="tabbtn-composers" class="tab" role="tab" aria-selected="false" data-tab="composers" aria-controls="tab-composers">Composers</button>
+      <button id="tabbtn-cinematographers" class="tab" role="tab" aria-selected="false" data-tab="cinematographers" aria-controls="tab-cinematographers">Cinematographers</button>
+      <button id="tabbtn-agents" class="tab" role="tab" aria-selected="false" data-tab="agents" aria-controls="tab-agents">Agents</button>
+      <button id="tabbtn-movies" class="tab" role="tab" aria-selected="false" data-tab="movies" aria-controls="tab-movies">Movies</button>
+    </nav>
+
     <section id="tab-actors" class="tab-content active" role="tabpanel" aria-labelledby="tab-actors">
       <section id="controls" class="controls" hidden>
         <div class="control-row">
           <input type="text" id="searchInput" placeholder="Search actors by name..." />
-          <div style="display:flex; align-items:center; gap:6px;">
-            <label for="gameYearInput">Game Year:</label>
-            <input type="number" id="gameYearInput" min="1850" max="2100" style="width:100px" />
-          </div>
-          <button id="downloadBtn" disabled>Download Edited Save</button>
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText">—</span></div>
         </div>
         <div id="status" class="status"></div>
       </section>
@@ -69,20 +85,200 @@
       </section>
     </section>
 
-    <section id="tab-directors" class="tab-content" role="tabpanel" aria-labelledby="tab-directors">
-      <div class="placeholder">Directors editing coming soon.</div>
+    <section id="tab-directors" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-directors">
+      <div id="directorsPlaceholder" class="placeholder"></div>
+      <section id="directorsControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="directorsSearchInput" placeholder="Search directors by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText2">—</span></div>
+        </div>
+        <div id="directorsStatus" class="status"></div>
+      </section>
+      <section id="directorsTableSection" hidden>
+        <table id="directorsTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="skill">Director Skill</th>
+              <th data-sort-key="limit">Limit</th>
+              <th data-sort-key="com">COM</th>
+              <th data-sort-key="art">ART</th>
+              <th data-sort-key="genres">Genres</th>
+              <th data-sort-key="movies">Movies</th>
+            </tr>
+          </thead>
+          <tbody id="directorsTbody"></tbody>
+        </table>
+      </section>
     </section>
-    <section id="tab-producers" class="tab-content" role="tabpanel" aria-labelledby="tab-producers">
-      <div class="placeholder">Producers editing coming soon.</div>
+    <section id="tab-producers" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-producers">
+      <div id="producersPlaceholder" class="placeholder"></div>
+      <section id="producersControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="producersSearchInput" placeholder="Search producers by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText3">—</span></div>
+        </div>
+        <div id="producersStatus" class="status"></div>
+      </section>
+      <section id="producersTableSection" hidden>
+        <table id="producersTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="skill">Producer Skill</th>
+              <th data-sort-key="limit">Limit</th>
+              <th data-sort-key="genres">Genres</th>
+              <th data-sort-key="movies">Movies</th>
+            </tr>
+          </thead>
+          <tbody id="producersTbody"></tbody>
+        </table>
+      </section>
     </section>
-    <section id="tab-writers" class="tab-content" role="tabpanel" aria-labelledby="tab-writers">
-      <div class="placeholder">Writers editing coming soon.</div>
+    <section id="tab-writers" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-writers">
+      <div id="writersPlaceholder" class="placeholder"></div>
+      <section id="writersControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="writersSearchInput" placeholder="Search writers by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText4">—</span></div>
+        </div>
+        <div id="writersStatus" class="status"></div>
+      </section>
+      <section id="writersTableSection" hidden>
+        <table id="writersTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="skill">Writer Skill</th>
+              <th data-sort-key="limit">Limit</th>
+              <th data-sort-key="movies">Movies</th>
+            </tr>
+          </thead>
+          <tbody id="writersTbody"></tbody>
+        </table>
+      </section>
     </section>
-    <section id="tab-editors" class="tab-content" role="tabpanel" aria-labelledby="tab-editors">
-      <div class="placeholder">Editors editing coming soon.</div>
+    <section id="tab-editors" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-editors">
+      <div id="editorsPlaceholder" class="placeholder"></div>
+      <section id="editorsControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="editorsSearchInput" placeholder="Search editors by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText5">—</span></div>
+        </div>
+        <div id="editorsStatus" class="status"></div>
+      </section>
+      <section id="editorsTableSection" hidden>
+        <table id="editorsTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="skill">Editor Skill</th>
+              <th data-sort-key="limit">Limit</th>
+              <th data-sort-key="movies">Movies</th>
+            </tr>
+          </thead>
+          <tbody id="editorsTbody"></tbody>
+        </table>
+      </section>
     </section>
-    <section id="tab-movies" class="tab-content" role="tabpanel" aria-labelledby="tab-movies">
-      <div class="placeholder">Movies/films editing coming soon.</div>
+    <section id="tab-composers" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-composers">
+      <div id="composersPlaceholder" class="placeholder"></div>
+      <section id="composersControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="composersSearchInput" placeholder="Search composers by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText6">—</span></div>
+        </div>
+        <div id="composersStatus" class="status"></div>
+      </section>
+      <section id="composersTableSection" hidden>
+        <table id="composersTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="skill">Composer Skill</th>
+              <th data-sort-key="limit">Limit</th>
+              <th data-sort-key="movies">Movies</th>
+            </tr>
+          </thead>
+          <tbody id="composersTbody"></tbody>
+        </table>
+      </section>
+    </section>
+    <section id="tab-cinematographers" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-cinematographers">
+      <div id="cinematographersPlaceholder" class="placeholder"></div>
+      <section id="cinematographersControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="cinematographersSearchInput" placeholder="Search cinematographers by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText7">—</span></div>
+        </div>
+        <div id="cinematographersStatus" class="status"></div>
+      </section>
+      <section id="cinematographersTableSection" hidden>
+        <table id="cinematographersTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="skill">Cinematographer Skill</th>
+              <th data-sort-key="limit">Limit</th>
+              <th data-sort-key="movies">Movies</th>
+            </tr>
+          </thead>
+          <tbody id="cinematographersTbody"></tbody>
+        </table>
+      </section>
+    </section>
+    <section id="tab-agents" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-agents">
+      <div id="agentsPlaceholder" class="placeholder"></div>
+      <section id="agentsControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="agentsSearchInput" placeholder="Search agents by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText8">—</span></div>
+        </div>
+        <div id="agentsStatus" class="status"></div>
+      </section>
+      <section id="agentsTableSection" hidden>
+        <table id="agentsTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="skill">Agent Skill</th>
+              <th data-sort-key="limit">Limit</th>
+              <th data-sort-key="movies">Movies</th>
+            </tr>
+          </thead>
+          <tbody id="agentsTbody"></tbody>
+        </table>
+      </section>
+    </section>
+    <section id="tab-movies" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-movies">
+      <div id="moviesPlaceholder" class="placeholder"></div>
+      <section id="moviesControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="moviesSearchInput" placeholder="Search movies by title..." />
+          <div id="moviesStatus" class="status"></div>
+        </div>
+      </section>
+      <section id="moviesTableSection" hidden>
+        <table id="moviesTable">
+          <thead>
+            <tr>
+              <th style="min-width: 260px;" data-sort-key="title">Title</th>
+              <th data-sort-key="year">Year</th>
+              <th data-sort-key="art">ART</th>
+              <th data-sort-key="com">COM</th>
+              <th data-sort-key="box">Box Office</th>
+            </tr>
+          </thead>
+          <tbody id="moviesTbody"></tbody>
+        </table>
+      </section>
     </section>
 
     <footer>

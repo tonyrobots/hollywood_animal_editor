@@ -16,9 +16,10 @@ body{
   color:var(--text); background:var(--bg);
 }
 header, footer{padding:16px 20px}
-header{border-bottom:1px solid var(--border)}
+header{border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px}
+.header-left{display:flex; flex-direction:column}
 footer{border-top:1px solid var(--border); color:var(--muted)}
-h1{margin:0 0 6px 0; font-size:20px}
+h1{margin:0 0 6px 0; font-size:24px; font-weight:500}
 h2{margin:0 0 8px 0; font-size:16px}
 .tabs{display:flex; gap:8px; padding:10px 20px; border-bottom:1px solid var(--border); background:var(--panel)}
 .tab{background:transparent; color:var(--text); border:1px solid var(--border); border-bottom:none; padding:8px 12px; border-top-left-radius:6px; border-top-right-radius:6px; cursor:pointer}
@@ -36,18 +37,34 @@ input[type="text"]{min-width:280px}
 button{cursor:pointer}
 button:disabled{opacity:.6; cursor:not-allowed}
 
+.primary-cta{
+  background:var(--danger);
+  color:#fff;
+  border:1px solid var(--danger);
+  padding:12px 20px;
+  border-radius:10px;
+  font-weight:800;
+  font-size:17px;
+  letter-spacing:0.2px;
+}
+.primary-cta[disabled]{display:none}
+.primary-cta:hover:enabled{filter:brightness(1.06); transform:translateY(-1px)}
+.primary-cta:active:enabled{filter:brightness(0.98); transform:translateY(0)}
+.primary-cta:focus-visible{outline:3px solid rgba(255,107,107,.5); outline-offset:2px}
+
 #loaders{display:flex; gap:20px; padding:16px 20px; flex-wrap:wrap}
 .loader{flex:1; min-width:320px; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px}
 .drop-zone{border:2px dashed var(--border); border-radius:8px; padding:14px; text-align:center; color:var(--muted)}
 .drop-zone.drag{border-color:var(--accent); color:var(--text)}
 
-#actorsTable{width:100%; border-collapse:collapse}
-#actorsTable th, #actorsTable td{padding:8px 10px; border-bottom:1px solid var(--border)}
-#actorsTable th{user-select:none; cursor:pointer; position:relative}
-#actorsTable th.sort-asc::after{content:"\25B2"; /* ▲ */ color:var(--muted); display:inline-block; margin-left:6px; font-size:10px}
-#actorsTable th.sort-desc::after{content:"\25BC"; /* ▼ */ color:var(--muted); display:inline-block; margin-left:6px; font-size:10px}
-#actorsTable thead{position:sticky; top:0; background:var(--panel); z-index:1}
+#actorsTable, #directorsTable, #producersTable, #writersTable, #editorsTable, #composersTable, #cinematographersTable, #agentsTable, #moviesTable{width:100%; border-collapse:collapse}
+#actorsTable th, #actorsTable td, #directorsTable th, #directorsTable td, #producersTable th, #producersTable td, #writersTable th, #writersTable td, #editorsTable th, #editorsTable td, #composersTable th, #composersTable td, #cinematographersTable th, #cinematographersTable td, #agentsTable th, #agentsTable td, #moviesTable th, #moviesTable td{padding:8px 10px; border-bottom:1px solid var(--border)}
+#actorsTable th, #directorsTable th, #producersTable th, #writersTable th, #editorsTable th, #composersTable th, #cinematographersTable th, #agentsTable th, #moviesTable th{user-select:none; cursor:pointer; position:relative}
+#actorsTable th.sort-asc::after, #directorsTable th.sort-asc::after, #producersTable th.sort-asc::after, #writersTable th.sort-asc::after, #editorsTable th.sort-asc::after, #composersTable th.sort-asc::after, #cinematographersTable th.sort-asc::after, #agentsTable th.sort-asc::after, #moviesTable th.sort-asc::after{content:"\25B2"; /* ▲ */ color:var(--muted); display:inline-block; margin-left:6px; font-size:10px}
+#actorsTable th.sort-desc::after, #directorsTable th.sort-desc::after, #producersTable th.sort-desc::after, #writersTable th.sort-desc::after, #editorsTable th.sort-desc::after, #composersTable th.sort-desc::after, #cinematographersTable th.sort-desc::after, #agentsTable th.sort-desc::after, #moviesTable th.sort-desc::after{content:"\25BC"; /* ▼ */ color:var(--muted); display:inline-block; margin-left:6px; font-size:10px}
+#actorsTable thead, #directorsTable thead, #producersTable thead, #writersTable thead, #editorsTable thead, #composersTable thead, #cinematographersTable thead, #agentsTable thead, #moviesTable thead{position:sticky; top:0; background:var(--panel); z-index:1}
 tbody tr:hover{background:rgba(255,255,255,0.03)}
+tbody tr.row-focused{background:rgba(110,168,254,0.12)}
 td input[type="text"]{width:110px}
 td select{width:110px}
 td input[type="number"]{width:90px}
@@ -57,3 +74,10 @@ td input[type="range"]{width:160px}
 .placeholder{padding:16px 20px; color:var(--muted)}
 .status{margin-top:8px; color:var(--muted)}
 .note{margin:8px 0 0}
+
+.changes{padding:10px 20px; border-bottom:1px solid var(--border); background:var(--panel); display:flex; align-items:flex-start; justify-content:space-between; gap:16px}
+.changes details{width:100%}
+.changes summary{cursor:pointer; color:var(--muted)}
+.changes ul{margin:8px 0 0; padding-left:18px; max-height:140px; overflow:auto}
+.changes-actions{display:flex; gap:8px; align-items:center}
+.secondary-cta{background:#0e1016; color:var(--text); border:1px solid var(--border); padding:8px 10px; border-radius:6px; font-weight:600}
