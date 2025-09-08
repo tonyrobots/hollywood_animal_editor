@@ -779,12 +779,12 @@
     if (studioBudgetInput) {
       const num = Number(root?.budget);
       studioBudgetInput.value = isFinite(num) ? String(num) : '';
-      if (studioBudgetFmt) studioBudgetFmt.textContent = isFinite(num) ? num.toLocaleString() : '';
+      if (studioBudgetFmt) studioBudgetFmt.textContent = isFinite(num) ? `$${num.toLocaleString()}` : '';
     }
     if (studioCashInput) {
       const num = Number(root?.cash);
       studioCashInput.value = isFinite(num) ? String(num) : '';
-      if (studioCashFmt) studioCashFmt.textContent = isFinite(num) ? num.toLocaleString() : '';
+      if (studioCashFmt) studioCashFmt.textContent = isFinite(num) ? `$${num.toLocaleString()}` : '';
     }
     if (studioReputationInput) {
       const num = Number(root?.reputation);
@@ -1957,7 +1957,7 @@
       const root = studioRoot || saveObj || {};
       if (!('initial' in studioBudgetInput.dataset)) studioBudgetInput.dataset.initial = String(root?.budget ?? '');
       const val = Number(studioBudgetInput.value);
-      if (studioBudgetFmt) studioBudgetFmt.textContent = isFinite(val) ? val.toLocaleString() : '';
+      if (studioBudgetFmt) studioBudgetFmt.textContent = isFinite(val) ? `$${val.toLocaleString()}` : '';
     });
     studioBudgetInput.addEventListener('change', () => {
       if (!saveLoaded) return;
@@ -1969,7 +1969,7 @@
       const prev = root.budget;
       root.budget = parsed;
       recordEdit({ entity: root, label: 'Budget', path: 'budget', oldValue: prev, newValue: parsed, suppressEntityInLog: true });
-      if (studioBudgetFmt) studioBudgetFmt.textContent = parsed.toLocaleString();
+      if (studioBudgetFmt) studioBudgetFmt.textContent = `$${parsed.toLocaleString()}`;
     });
   }
   if (studioCashInput) {
@@ -1977,7 +1977,7 @@
       const root = studioRoot || saveObj || {};
       if (!('initial' in studioCashInput.dataset)) studioCashInput.dataset.initial = String(root?.cash ?? '');
       const val = Number(studioCashInput.value);
-      if (studioCashFmt) studioCashFmt.textContent = isFinite(val) ? val.toLocaleString() : '';
+      if (studioCashFmt) studioCashFmt.textContent = isFinite(val) ? `$${val.toLocaleString()}` : '';
     });
     studioCashInput.addEventListener('change', () => {
       if (!saveLoaded) return;
@@ -1989,7 +1989,7 @@
       const prev = root.cash;
       root.cash = parsed;
       recordEdit({ entity: root, label: 'Cash', path: 'cash', oldValue: prev, newValue: parsed, suppressEntityInLog: true });
-      if (studioCashFmt) studioCashFmt.textContent = parsed.toLocaleString();
+      if (studioCashFmt) studioCashFmt.textContent = `$${parsed.toLocaleString()}`;
     });
   }
   if (studioInfluenceInput) {

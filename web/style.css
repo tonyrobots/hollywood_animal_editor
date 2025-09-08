@@ -79,10 +79,10 @@ td input[type="range"]{width:160px}
 /* Studio layout */
 .studio-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px}
 .studio-field{background:#0e1016; border:1px solid var(--border); border-radius:10px; padding:12px}
-.studio-field label{display:block; font-weight:600; margin-bottom:6px}
+.studio-field label{display:flex; align-items:baseline; gap:8px; font-weight:700; margin-bottom:8px}
 .studio-field .value-row{display:flex; align-items:center; gap:8px}
 .studio-field input[type="number"]{flex:1; padding:12px 14px; font-size:16px; border-radius:8px}
-.studio-field .formatted-val{min-width:140px; text-align:right}
+.studio-field .formatted-val{margin-left:auto; opacity:.9}
 
 .changes{padding:10px 20px; border-bottom:1px solid var(--border); background:var(--panel); display:flex; align-items:flex-start; justify-content:space-between; gap:16px}
 .changes details{width:100%}
