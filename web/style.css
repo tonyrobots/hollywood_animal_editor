@@ -74,6 +74,15 @@ td input[type="range"]{width:160px}
 .placeholder{padding:16px 20px; color:var(--muted)}
 .status{margin-top:8px; color:var(--muted)}
 .note{margin:8px 0 0}
+.formatted-val{display:inline-block; min-width: 100px; margin-left:6px; color:var(--muted); font-variant-numeric: tabular-nums}
+
+/* Studio layout */
+.studio-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px}
+.studio-field{background:#0e1016; border:1px solid var(--border); border-radius:10px; padding:12px}
+.studio-field label{display:block; font-weight:600; margin-bottom:6px}
+.studio-field .value-row{display:flex; align-items:center; gap:8px}
+.studio-field input[type="number"]{flex:1; padding:12px 14px; font-size:16px; border-radius:8px}
+.studio-field .formatted-val{min-width:140px; text-align:right}
 
 .changes{padding:10px 20px; border-bottom:1px solid var(--border); background:var(--panel); display:flex; align-items:flex-start; justify-content:space-between; gap:16px}
 .changes details{width:100%}

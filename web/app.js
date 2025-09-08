@@ -21,6 +21,17 @@
   const tbody = document.getElementById('actorsTbody');
   const tabs = document.querySelectorAll('.tab');
   const tabContents = document.querySelectorAll('.tab-content');
+  // Studio (top-level fields)
+  const studioControls = document.getElementById('studioControls');
+  const studioBudgetInput = document.getElementById('studioBudgetInput');
+  const studioCashInput = document.getElementById('studioCashInput');
+  const studioReputationInput = document.getElementById('studioReputationInput');
+  const studioInfluenceInput = document.getElementById('studioInfluenceInput');
+  const studioStatus = document.getElementById('studioStatus');
+  const studioBudgetFmt = document.getElementById('studioBudgetFmt');
+  const studioCashFmt = document.getElementById('studioCashFmt');
+  const studioReputationFmt = document.getElementById('studioReputationFmt');
+  const studioInfluenceFmt = document.getElementById('studioInfluenceFmt');
   const changesPanel = document.getElementById('changesPanel');
   const changesList = document.getElementById('changesList');
   const changesCount = document.getElementById('changesCount');
@@ -103,6 +114,8 @@
   const changeLog = [];
   const undoStack = [];
   const redoStack = [];
+  // Studio root cache (object containing budget/cash/reputation/influence)
+  let studioRoot = null;
   // derived role lists (placeholders for future editors)
   let directors = [];
   let producers = [];
@@ -192,9 +205,10 @@
     return cur;
   }
 
-  function recordEdit({ entity, label, path, oldValue, newValue }) {
+  function recordEdit({ entity, label, path, oldValue, newValue, suppressEntityInLog }) {
     if (oldValue === newValue) return;
-    pushChange({ message: `${label}: ${oldValue} → ${newValue} (${fullNameFor(entity) || entity.name || 'Unknown'})`,
+    const suffix = suppressEntityInLog ? '' : ` (${fullNameFor(entity) || entity.name || 'Unknown'})`;
+    pushChange({ message: `${label}: ${oldValue} → ${newValue}${suffix}`,
       undo: () => applyField(entity, path, oldValue),
       redo: () => applyField(entity, path, newValue) });
   }
@@ -210,7 +224,7 @@
       if (changesList && changesList.lastChild) changesList.removeChild(changesList.lastChild);
       refreshChangeUI();
       // no resort; refresh visible tables only
-      render();
+      render(); renderStudio();
       renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
     });
     if (redoBtn) redoBtn.addEventListener('click', () => {
@@ -222,7 +236,7 @@
       changeLog.push(entry);
       if (changesList) { const li = document.createElement('li'); li.textContent = entry.message; changesList.appendChild(li); }
       refreshChangeUI();
-      render();
+      render(); renderStudio();
       renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
     });
   }
@@ -409,6 +423,29 @@
       }
     }
     return null;
+  }
+
+  function findStudioRoot(root) {
+    if (!root || typeof root !== 'object') return null;
+    const targetKeys = ['budget','cash','reputation','influence'];
+    const visited = new WeakSet();
+    const queue = [root];
+    let best = null; let bestScore = -1; let safety = 0;
+    while (queue.length && safety++ < 200000) {
+      const cur = queue.shift();
+      if (!cur || typeof cur !== 'object') continue;
+      if (visited.has(cur)) continue;
+      visited.add(cur);
+      if (!Array.isArray(cur)) {
+        let score = 0;
+        for (const k of targetKeys) {
+          if (Object.prototype.hasOwnProperty.call(cur, k)) score++;
+        }
+        if (score > bestScore) { best = cur; bestScore = score; if (score === targetKeys.length) break; }
+      }
+      for (const v of Array.isArray(cur) ? cur : Object.values(cur)) queue.push(v);
+    }
+    return bestScore > 0 ? best : null;
   }
 
   function isActorEntry(obj) {
@@ -704,7 +741,7 @@
 
   // Tabs
   function activateTab(name) {
-    const valid = new Set(['actors','directors','producers','writers','editors','movies','composers','cinematographers','agents']);
+    const valid = new Set(['studio','actors','directors','producers','writers','editors','movies','composers','cinematographers','agents']);
     if (!valid.has(name)) name = 'actors';
     tabs.forEach(btn => {
       const match = btn.getAttribute('data-tab') === name;
@@ -722,6 +759,7 @@
       try { history.replaceState(null, '', targetHash); } catch (_) { location.hash = targetHash; }
     }
     // When activating actors, ensure the table renders
+    if (name === 'studio') renderStudio();
     if (name === 'actors') render();
     if (name === 'directors') renderDirectors();
     if (name === 'producers') renderProducers();
@@ -731,6 +769,41 @@
     if (name === 'cinematographers') renderCinematographers();
     if (name === 'agents') renderAgents();
     if (name === 'movies') renderMovies();
+  }
+
+  function renderStudio() {
+    if (!saveLoaded) return;
+    if (studioControls) studioControls.hidden = false;
+    // Prefill inputs
+    const root = studioRoot || saveObj || {};
+    if (studioBudgetInput) {
+      const num = Number(root?.budget);
+      studioBudgetInput.value = isFinite(num) ? String(num) : '';
+      if (studioBudgetFmt) studioBudgetFmt.textContent = isFinite(num) ? num.toLocaleString() : '';
+    }
+    if (studioCashInput) {
+      const num = Number(root?.cash);
+      studioCashInput.value = isFinite(num) ? String(num) : '';
+      if (studioCashFmt) studioCashFmt.textContent = isFinite(num) ? num.toLocaleString() : '';
+    }
+    if (studioReputationInput) {
+      const num = Number(root?.reputation);
+      studioReputationInput.value = isFinite(num) ? num.toFixed(3) : '';
+      if (studioReputationFmt) {
+        if (isFinite(num)) {
+          const str = Number(num.toFixed(3)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+          studioReputationFmt.textContent = str;
+        } else {
+          studioReputationFmt.textContent = '';
+        }
+      }
+    }
+    if (studioInfluenceInput) {
+      const num = Number(root?.influence);
+      studioInfluenceInput.value = isFinite(num) ? String(num) : '';
+      if (studioInfluenceFmt) studioInfluenceFmt.textContent = isFinite(num) ? num.toLocaleString() : '';
+    }
+    if (studioStatus) studioStatus.textContent = 'Edit studio-level values. Reputation saves as string with three decimals.';
   }
 
   function render() {
@@ -869,6 +942,7 @@
   function refreshAfterDataLoad() {
     if (!saveLoaded) return;
     // Derive characters/actors view
+    studioRoot = findStudioRoot(saveObj) || saveObj;
     charactersArr = extractCharacters(saveObj);
     if (!Array.isArray(charactersArr)) {
       saveMeta.textContent = 'Error: Could not find characters array in save file.';
@@ -913,7 +987,10 @@
     sortState = { key: 'skill', dir: 'desc' };
     updateSortIndicators();
     render();
+    renderStudio();
     // Render role tabs if that tab is active
+    const isStudioActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'studio');
+    if (isStudioActive) renderStudio();
     const isDirectorsActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'directors');
     if (isDirectorsActive) renderDirectors();
     const isProducersActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'producers');
@@ -1835,13 +1912,15 @@
   // Reload current save
   if (reloadBtn) {
     reloadBtn.addEventListener('click', async () => {
-      if (!lastLoadedFile) return;
+      const candidate = (saveFileInput && saveFileInput.files && saveFileInput.files[0]) ? saveFileInput.files[0] : lastLoadedFile;
+      if (!candidate) return;
       try {
-        const text = await readFileAsText(lastLoadedFile);
+        const text = await readFileAsText(candidate);
         saveObj = JSON.parse(text);
         saveLoaded = true;
-        originalSaveName = lastLoadedFile.name;
-        saveMeta.textContent = `Reloaded save: ${lastLoadedFile.name} (${lastLoadedFile.size.toLocaleString()} bytes)`;
+        originalSaveName = candidate.name;
+        lastLoadedFile = candidate;
+        saveMeta.textContent = `Reloaded save: ${candidate.name} (${candidate.size.toLocaleString()} bytes)`;
         refreshAfterDataLoad();
       } catch (err) {
         console.error(err);
@@ -1871,6 +1950,98 @@
       namesMeta.textContent = 'Failed to parse CHARACTER_NAMES.json.';
     }
   });
+
+  // Studio inputs
+  if (studioBudgetInput) {
+    studioBudgetInput.addEventListener('input', () => {
+      const root = studioRoot || saveObj || {};
+      if (!('initial' in studioBudgetInput.dataset)) studioBudgetInput.dataset.initial = String(root?.budget ?? '');
+      const val = Number(studioBudgetInput.value);
+      if (studioBudgetFmt) studioBudgetFmt.textContent = isFinite(val) ? val.toLocaleString() : '';
+    });
+    studioBudgetInput.addEventListener('change', () => {
+      if (!saveLoaded) return;
+      const root = studioRoot || saveObj || {};
+      const initialVal = studioBudgetInput.dataset.initial ?? String(root?.budget ?? '');
+      delete studioBudgetInput.dataset.initial;
+      const parsed = Math.round(Number(studioBudgetInput.value));
+      if (!isFinite(parsed)) { renderStudio(); return; }
+      const prev = root.budget;
+      root.budget = parsed;
+      recordEdit({ entity: root, label: 'Budget', path: 'budget', oldValue: prev, newValue: parsed, suppressEntityInLog: true });
+      if (studioBudgetFmt) studioBudgetFmt.textContent = parsed.toLocaleString();
+    });
+  }
+  if (studioCashInput) {
+    studioCashInput.addEventListener('input', () => {
+      const root = studioRoot || saveObj || {};
+      if (!('initial' in studioCashInput.dataset)) studioCashInput.dataset.initial = String(root?.cash ?? '');
+      const val = Number(studioCashInput.value);
+      if (studioCashFmt) studioCashFmt.textContent = isFinite(val) ? val.toLocaleString() : '';
+    });
+    studioCashInput.addEventListener('change', () => {
+      if (!saveLoaded) return;
+      const root = studioRoot || saveObj || {};
+      const initialVal = studioCashInput.dataset.initial ?? String(root?.cash ?? '');
+      delete studioCashInput.dataset.initial;
+      const parsed = Math.round(Number(studioCashInput.value));
+      if (!isFinite(parsed)) { renderStudio(); return; }
+      const prev = root.cash;
+      root.cash = parsed;
+      recordEdit({ entity: root, label: 'Cash', path: 'cash', oldValue: prev, newValue: parsed, suppressEntityInLog: true });
+      if (studioCashFmt) studioCashFmt.textContent = parsed.toLocaleString();
+    });
+  }
+  if (studioInfluenceInput) {
+    studioInfluenceInput.addEventListener('input', () => {
+      const root = studioRoot || saveObj || {};
+      if (!('initial' in studioInfluenceInput.dataset)) studioInfluenceInput.dataset.initial = String(root?.influence ?? '');
+      const val = Number(studioInfluenceInput.value);
+      if (studioInfluenceFmt) studioInfluenceFmt.textContent = isFinite(val) ? val.toLocaleString() : '';
+    });
+    studioInfluenceInput.addEventListener('change', () => {
+      if (!saveLoaded) return;
+      const root = studioRoot || saveObj || {};
+      const initialVal = studioInfluenceInput.dataset.initial ?? String(root?.influence ?? '');
+      delete studioInfluenceInput.dataset.initial;
+      const parsed = Math.round(Number(studioInfluenceInput.value));
+      if (!isFinite(parsed)) { renderStudio(); return; }
+      const prev = root.influence;
+      root.influence = parsed;
+      recordEdit({ entity: root, label: 'Influence', path: 'influence', oldValue: prev, newValue: parsed, suppressEntityInLog: true });
+      if (studioInfluenceFmt) studioInfluenceFmt.textContent = parsed.toLocaleString();
+    });
+  }
+  if (studioReputationInput) {
+    studioReputationInput.addEventListener('input', () => {
+      const root = studioRoot || saveObj || {};
+      if (!('initial' in studioReputationInput.dataset)) studioReputationInput.dataset.initial = String(root?.reputation ?? '');
+      const val = Number(studioReputationInput.value);
+      if (studioReputationFmt) {
+        if (isFinite(val)) {
+          const str = Number(val.toFixed(3)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+          studioReputationFmt.textContent = str;
+        } else {
+          studioReputationFmt.textContent = '';
+        }
+      }
+    });
+    studioReputationInput.addEventListener('change', () => {
+      if (!saveLoaded) return;
+      const root = studioRoot || saveObj || {};
+      const initialVal = studioReputationInput.dataset.initial ?? String(root?.reputation ?? '');
+      delete studioReputationInput.dataset.initial;
+      const num = Number(studioReputationInput.value);
+      if (!isFinite(num)) { renderStudio(); return; }
+      const norm = num.toFixed(3);
+      const prev = root.reputation;
+      root.reputation = norm;
+      // ensure input displays normalized value
+      studioReputationInput.value = norm;
+      recordEdit({ entity: root, label: 'Reputation', path: 'reputation', oldValue: prev, newValue: norm, suppressEntityInLog: true });
+      if (studioReputationFmt) studioReputationFmt.textContent = Number(norm).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+    });
+  }
 
   // Search
   searchInput.addEventListener('input', () => render());
@@ -2027,10 +2198,10 @@
       });
     });
     // initial active via URL hash (e.g., #directors)
-    const initial = (location.hash || '#actors').slice(1);
+    const initial = (location.hash || '#studio').slice(1);
     activateTab(initial);
     window.addEventListener('hashchange', () => {
-      const n = (location.hash || '#actors').slice(1);
+      const n = (location.hash || '#studio').slice(1);
       activateTab(n);
     });
   })();

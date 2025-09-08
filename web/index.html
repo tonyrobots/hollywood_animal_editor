@@ -48,7 +48,8 @@
     </section>
 
     <nav class="tabs" role="tablist" aria-label="Primary">
-      <button id="tabbtn-actors" class="tab active" role="tab" aria-selected="true" data-tab="actors" aria-controls="tab-actors">Actors</button>
+      <button id="tabbtn-studio" class="tab active" role="tab" aria-selected="true" data-tab="studio" aria-controls="tab-studio">Studio</button>
+      <button id="tabbtn-actors" class="tab" role="tab" aria-selected="false" data-tab="actors" aria-controls="tab-actors">Actors</button>
       <button id="tabbtn-directors" class="tab" role="tab" aria-selected="false" data-tab="directors" aria-controls="tab-directors">Directors</button>
       <button id="tabbtn-producers" class="tab" role="tab" aria-selected="false" data-tab="producers" aria-controls="tab-producers">Producers</button>
       <button id="tabbtn-writers" class="tab" role="tab" aria-selected="false" data-tab="writers" aria-controls="tab-writers">Writers</button>
@@ -59,7 +60,43 @@
       <button id="tabbtn-movies" class="tab" role="tab" aria-selected="false" data-tab="movies" aria-controls="tab-movies">Movies</button>
     </nav>
 
-    <section id="tab-actors" class="tab-content active" role="tabpanel" aria-labelledby="tab-actors">
+    <section id="tab-studio" class="tab-content active" role="tabpanel" aria-labelledby="tabbtn-studio">
+      <section id="studioControls" class="controls" hidden>
+        <div class="studio-grid">
+          <div class="studio-field">
+            <label for="studioBudgetInput">Budget</label>
+            <div class="value-row">
+              <input type="number" id="studioBudgetInput" placeholder="Budget" />
+              <span class="formatted-val" id="studioBudgetFmt"></span>
+            </div>
+          </div>
+          <div class="studio-field">
+            <label for="studioCashInput">Cash</label>
+            <div class="value-row">
+              <input type="number" id="studioCashInput" placeholder="Cash" />
+              <span class="formatted-val" id="studioCashFmt"></span>
+            </div>
+          </div>
+          <div class="studio-field">
+            <label for="studioReputationInput">Reputation</label>
+            <div class="value-row">
+              <input type="number" id="studioReputationInput" step="0.001" placeholder="Reputation" />
+              <span class="formatted-val" id="studioReputationFmt"></span>
+            </div>
+          </div>
+          <div class="studio-field">
+            <label for="studioInfluenceInput">Influence</label>
+            <div class="value-row">
+              <input type="number" id="studioInfluenceInput" placeholder="Influence" />
+              <span class="formatted-val" id="studioInfluenceFmt"></span>
+            </div>
+          </div>
+        </div>
+        <div id="studioStatus" class="status"></div>
+      </section>
+    </section>
+
+    <section id="tab-actors" class="tab-content" role="tabpanel" aria-labelledby="tab-actors">
       <section id="controls" class="controls" hidden>
         <div class="control-row">
           <input type="text" id="searchInput" placeholder="Search actors by name..." />
