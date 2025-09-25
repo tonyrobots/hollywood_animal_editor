@@ -110,8 +110,8 @@
               <th data-sort-key="age">Age</th>
               <th data-sort-key="skill">Acting Skill</th>
               <th data-sort-key="limit">Limit</th>
-              <th data-sort-key="art">ART</th>
-              <th data-sort-key="com">COM</th>
+              <th data-sort-key="art">Artistic Appeal</th>
+              <th data-sort-key="com">Commercial Appeal</th>
             </tr>
           </thead>
           <tbody id="actorsTbody"></tbody>
@@ -136,8 +136,8 @@
               <th data-sort-key="age">Age</th>
               <th data-sort-key="skill">Director Skill</th>
               <th data-sort-key="limit">Limit</th>
-              <th data-sort-key="com">COM</th>
-              <th data-sort-key="art">ART</th>
+              <th data-sort-key="com">Commercial Appeal</th>
+              <th data-sort-key="art">Artistic Appeal</th>
               <th data-sort-key="genres">Genres</th>
               <th data-sort-key="movies">Movies</th>
             </tr>
@@ -305,8 +305,8 @@
             <tr>
               <th style="min-width: 260px;" data-sort-key="title">Title</th>
               <th data-sort-key="year">Year</th>
-              <th data-sort-key="art">ART</th>
-              <th data-sort-key="com">COM</th>
+              <th data-sort-key="art">Artistic Appeal</th>
+              <th data-sort-key="com">Commercial Appeal</th>
               <th data-sort-key="box">Box Office</th>
             </tr>
           </thead>
@@ -314,6 +314,86 @@
         </table>
       </section>
     </section>
+
+    <!-- Advanced Detail Editor Overlay -->
+    <div id="detailOverlay" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="overlay-dialog">
+        <div class="overlay-header">
+          <h3 id="detailTitle">Advanced Editor</h3>
+          <button id="detailCloseBtn" aria-label="Close">✕</button>
+        </div>
+        <p class="overlay-warning">For advanced users only. Editing raw data may break your save if used incorrectly. Proceed with caution and make backups.</p>
+        <div class="overlay-meta">
+          <div><strong>Name:</strong> <span id="detailName">—</span></div>
+          <div><strong>ID:</strong> <span id="detailId">—</span></div>
+          <div id="detailStatus" class="status"></div>
+        </div>
+        <div id="detailForm">
+          <div class="controls" style="border:none; background:transparent; padding:8px 14px;">
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label for="detailCustomName">Custom Name</label>
+                <div class="value-row"><input type="text" id="detailCustomName" placeholder="Custom name (optional)" /></div>
+              </div>
+              <div class="detail-field">
+                <label>Gender</label>
+                <div class="value-row">
+                  <label class="muted"><input type="radio" name="detailGender" id="detailGender0" value="0" /> Male</label>
+                  <label class="muted"><input type="radio" name="detailGender" id="detailGender1" value="1" /> Female</label>
+                </div>
+              </div>
+              <div class="detail-field">
+                <label for="detailStudioId">Studio <span class="muted">(PL = Player Studio)</span></label>
+                <div class="value-row">
+                  <select id="detailStudioId"></select>
+                </div>
+              </div>
+              <div class="detail-field">
+                <label for="detailMood">Happiness <span class="formatted-val" id="detailMoodFmt"></span></label>
+                <div class="value-row"><input type="range" id="detailMood" min="-1" max="1" step="0.001" /><span class="detail-slider-val" id="detailMoodNum"></span></div>
+              </div>
+              <div class="detail-field">
+                <label for="detailAttitude">Loyalty <span class="formatted-val" id="detailAttitudeFmt"></span></label>
+                <div class="value-row"><input type="range" id="detailAttitude" min="-1" max="1" step="0.001" /><span class="detail-slider-val" id="detailAttitudeNum"></span></div>
+              </div>
+              <div class="detail-field">
+                <label for="detailSelfEsteem">Self Esteem <span class="formatted-val" id="detailSelfEsteemFmt"></span></label>
+                <div class="value-row"><input type="range" id="detailSelfEsteem" min="-1" max="1" step="0.001" /><span class="detail-slider-val" id="detailSelfEsteemNum"></span></div>
+              </div>
+              <div class="detail-field">
+                <label for="detailReadiness">Readiness for Tricks</label>
+                <div class="value-row"><input type="number" id="detailReadiness" /></div>
+              </div>
+              <div class="detail-field">
+                <label for="detailSkill">Skill <span class="formatted-val" id="detailSkillFmt"></span></label>
+                <div class="value-row"><input type="range" id="detailSkill" min="0" max="1" step="0.001" /><span class="detail-slider-val" id="detailSkillNum"></span></div>
+              </div>
+              <div class="detail-field">
+                <label for="detailLimit">Limit <span class="formatted-val" id="detailLimitFmt"></span></label>
+                <div class="value-row"><input type="range" id="detailLimit" min="0" max="1" step="0.001" /><span class="detail-slider-val" id="detailLimitNum"></span></div>
+              </div>
+              <div class="detail-field" id="detailArtWrap" hidden>
+                <label for="detailArt">Artistic Appeal <span class="formatted-val" id="detailArtFmt"></span></label>
+                <div class="value-row"><input type="range" id="detailArt" min="0" max="1" step="0.001" list="art-com-ticks" /><span class="detail-slider-val" id="detailArtNum"></span></div>
+              </div>
+              <div class="detail-field" id="detailComWrap" hidden>
+                <label for="detailCom">Commercial Appeal <span class="formatted-val" id="detailComFmt"></span></label>
+                <div class="value-row"><input type="range" id="detailCom" min="0" max="1" step="0.001" list="art-com-ticks" /><span class="detail-slider-val" id="detailComNum"></span></div>
+              </div>
+            </div>
+            <a id="detailAdvancedLink" class="danger-link" href="javascript:void(0)">Direct JSON edit (advanced users only!)</a>
+          </div>
+        </div>
+        <textarea id="detailJson" spellcheck="false" hidden></textarea>
+        <div class="overlay-actions">
+          <button id="detailFormatBtn" class="secondary-cta">Format</button>
+          <button id="detailCopyBtn" class="secondary-cta">Copy JSON</button>
+          <span style="flex:1"></span>
+          <button id="detailCancelBtn">Cancel</button>
+          <button id="detailApplyBtn" class="primary-cta">Apply Changes</button>
+        </div>
+      </div>
+    </div>
 
     <footer>
       <p class="note">Tip: If opening this file directly (file://), browsers may block auto-loading <code>data/CHARACTER_NAMES.json</code>. Use the Name Map loader above or serve locally (e.g., <code>python -m http.server</code>).</p>

@@ -1,0 +1,336 @@
+{
+  "meta": {
+    "source": "/home/tonyz/projects/hollywood_animal_editor/docs/sample_save.json",
+    "count": 12
+  },
+  "characters": [
+    {
+      "movies": {},
+      "Limit": "0.900",
+      "whiteTagsNEW": {},
+      "gender": 1,
+      "firstNameId": "258",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 65,
+      "birthDate": "01-01-1899",
+      "professions": {
+        "Actor": "0.810"
+      },
+      "limit": "0.900",
+      "lastNameId": "654"
+    },
+    {
+      "movies": {},
+      "Limit": "0.500",
+      "whiteTagsNEW": {},
+      "gender": 1,
+      "firstNameId": "942",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 12,
+      "birthDate": "17-08-1897",
+      "professions": {
+        "Actor": "0.500"
+      },
+      "limit": "0.500",
+      "lastNameId": "943"
+    },
+    {
+      "movies": {
+        "Actor": [
+          56
+        ]
+      },
+      "Limit": "1.000",
+      "whiteTagsNEW": {},
+      "gender": 1,
+      "firstNameId": "947",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 16,
+      "birthDate": "27-11-1886",
+      "professions": {
+        "Actor": "0.350"
+      },
+      "limit": "1.000",
+      "lastNameId": "914"
+    },
+    {
+      "movies": {
+        "Actor": [
+          6,
+          28,
+          36,
+          77
+        ]
+      },
+      "Limit": "0.800",
+      "whiteTagsNEW": {
+        "ROMANCE": {
+          "overallValues": [
+            {
+              "movieId": 0,
+              "sourceType": 0,
+              "value": "0.000",
+              "dateAdded": "1929-02-18T00:00:00"
+            },
+            {
+              "movieId": 0,
+              "sourceType": 5,
+              "value": "1.190",
+              "dateAdded": "1929-02-18T00:00:00"
+            },
+            {
+              "movieId": 0,
+              "sourceType": 4,
+              "value": "1.190",
+              "dateAdded": "1929-04-15T00:00:00"
+            }
+          ],
+          "id": "ROMANCE",
+          "dateAdded": "1929-02-18T00:00:00",
+          "movieId": 0,
+          "value": "2.380",
+          "IsOverall": false
+        }
+      },
+      "gender": 1,
+      "firstNameId": "934",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 8,
+      "birthDate": "05-06-1886",
+      "professions": {
+        "Actor": "0.780"
+      },
+      "limit": "0.800",
+      "lastNameId": "935"
+    },
+    {
+      "movies": {},
+      "Limit": "0.400",
+      "whiteTagsNEW": {},
+      "gender": 1,
+      "firstNameId": "280",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 45,
+      "birthDate": "25-07-1934",
+      "professions": {
+        "Actor": "0.400"
+      },
+      "limit": "0.400",
+      "lastNameId": "544"
+    },
+    {
+      "movies": {
+        "Actor": [
+          21,
+          26,
+          57,
+          74,
+          75
+        ]
+      },
+      "Limit": "0.800",
+      "whiteTagsNEW": {
+        "COM": {
+          "overallValues": [
+            {
+              "movieId": 0,
+              "sourceType": 0,
+              "value": "0.130",
+              "dateAdded": "0001-01-01T00:00:00"
+            }
+          ],
+          "id": "COM",
+          "dateAdded": "1928-12-24T00:00:00",
+          "movieId": 0,
+          "value": "0.130",
+          "IsOverall": false
+        },
+        "ROMANCE": {
+          "overallValues": [
+            {
+              "movieId": 0,
+              "sourceType": 0,
+              "value": "0.000",
+              "dateAdded": "1929-02-25T00:00:00"
+            },
+            {
+              "movieId": 26,
+              "sourceType": 5,
+              "value": "1.190",
+              "dateAdded": "1929-02-25T00:00:00"
+            }
+          ],
+          "id": "ROMANCE",
+          "dateAdded": "1929-02-25T00:00:00",
+          "movieId": 0,
+          "value": "1.190",
+          "IsOverall": false
+        }
+      },
+      "gender": 0,
+      "firstNameId": "930",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 6,
+      "birthDate": "22-03-1881",
+      "professions": {
+        "Actor": "0.780"
+      },
+      "limit": "0.800",
+      "lastNameId": "931"
+    },
+    {
+      "movies": {
+        "Actor": [
+          32,
+          29,
+          57,
+          75,
+          83
+        ]
+      },
+      "Limit": "0.800",
+      "whiteTagsNEW": {
+        "ROMANCE": {
+          "overallValues": [
+            {
+              "movieId": 0,
+              "sourceType": 0,
+              "value": "0.000",
+              "dateAdded": "1929-02-18T00:00:00"
+            },
+            {
+              "movieId": 0,
+              "sourceType": 5,
+              "value": "1.190",
+              "dateAdded": "1929-02-18T00:00:00"
+            },
+            {
+              "movieId": 0,
+              "sourceType": 4,
+              "value": "1.190",
+              "dateAdded": "1929-04-15T00:00:00"
+            }
+          ],
+          "id": "ROMANCE",
+          "dateAdded": "1929-02-18T00:00:00",
+          "movieId": 0,
+          "value": "2.380",
+          "IsOverall": false
+        }
+      },
+      "gender": 1,
+      "firstNameId": "932",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 7,
+      "birthDate": "01-02-1898",
+      "professions": {
+        "Actor": "0.790"
+      },
+      "limit": "0.800",
+      "lastNameId": "933"
+    },
+    {
+      "movies": {},
+      "Limit": "0.900",
+      "whiteTagsNEW": {},
+      "gender": 1,
+      "firstNameId": "959",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 23,
+      "birthDate": "10-04-1902",
+      "professions": {
+        "Actor": "0.290"
+      },
+      "limit": "0.900",
+      "lastNameId": "960"
+    },
+    {
+      "movies": {},
+      "Limit": "0.700",
+      "whiteTagsNEW": {
+        "COM": {
+          "overallValues": [
+            {
+              "movieId": 0,
+              "sourceType": 0,
+              "value": "0.300",
+              "dateAdded": "0001-01-01T00:00:00"
+            }
+          ],
+          "id": "COM",
+          "dateAdded": "1928-01-20T00:00:00",
+          "movieId": 0,
+          "value": "0.300",
+          "IsOverall": false
+        }
+      },
+      "gender": 0,
+      "firstNameId": "992",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 40,
+      "birthDate": "25-07-1914",
+      "professions": {
+        "Actor": "0.700"
+      },
+      "limit": "0.700",
+      "lastNameId": "993"
+    },
+    {
+      "movies": {},
+      "Limit": "0.700",
+      "whiteTagsNEW": {},
+      "gender": 1,
+      "firstNameId": "961",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 24,
+      "birthDate": "25-07-1887",
+      "professions": {
+        "Actor": "0.180"
+      },
+      "limit": "0.700",
+      "lastNameId": "916"
+    },
+    {
+      "movies": {},
+      "Limit": "0.200",
+      "whiteTagsNEW": {},
+      "gender": 1,
+      "firstNameId": "913",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 14,
+      "birthDate": "25-07-1910",
+      "professions": {
+        "Actor": "0.010"
+      },
+      "limit": "0.200",
+      "lastNameId": "944"
+    },
+    {
+      "movies": {},
+      "Limit": "0.500",
+      "whiteTagsNEW": {},
+      "gender": 0,
+      "firstNameId": "956",
+      "whiteTags": {},
+      "deathDate": "01-01-0001",
+      "id": 21,
+      "birthDate": "20-09-1876",
+      "professions": {
+        "Actor": "0.250"
+      },
+      "limit": "0.500",
+      "lastNameId": "957"
+    }
+  ]
+}

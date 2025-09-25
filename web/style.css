@@ -90,3 +90,22 @@ td input[type="range"]{width:160px}
 .changes ul{margin:8px 0 0; padding-left:18px; max-height:140px; overflow:auto}
 .changes-actions{display:flex; gap:8px; align-items:center}
 .secondary-cta{background:#0e1016; color:var(--text); border:1px solid var(--border); padding:8px 10px; border-radius:6px; font-weight:600}
+
+/* Advanced detail editor overlay */
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:1000}
+.overlay[hidden]{display:none}
+.overlay-dialog{width:min(1100px, 92vw); max-height:90vh; background:#0e1016; border:1px solid var(--border); border-radius:10px; display:flex; flex-direction:column}
+.overlay-header{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; border-bottom:1px solid var(--border)}
+.overlay-warning{color:var(--warn); margin:12px 14px 0 14px}
+.overlay-meta{display:flex; gap:12px; flex-wrap:wrap; padding:8px 14px; color:var(--muted)}
+#detailJson{flex:1; min-height:320px; margin:8px 14px; padding:10px; background:#0f1115; color:var(--text); border:1px solid var(--border); border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px}
+.overlay-actions{display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--border)}
+.danger-link{color:var(--danger); text-decoration:underline; margin-top:8px; display:inline-block}
+
+/* Detail form grid */
+.detail-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px}
+.detail-field{background:#0e1016; border:1px solid var(--border); border-radius:10px; padding:10px}
+.detail-field label{display:flex; align-items:baseline; gap:8px; font-weight:700; margin-bottom:6px}
+.detail-field .value-row{display:flex; align-items:center; gap:8px}
+.detail-slider-val{margin-left:auto; font-size:16px; font-weight:800; letter-spacing:0.3px; min-width:60px; text-align:right}
+.muted{color:var(--muted)}

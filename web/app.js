@@ -37,6 +37,49 @@
   const changesCount = document.getElementById('changesCount');
   const undoBtn = document.getElementById('undoBtn');
   const redoBtn = document.getElementById('redoBtn');
+  // Detail overlay DOM
+  const detailOverlay = document.getElementById('detailOverlay');
+  const detailTitle = document.getElementById('detailTitle');
+  const detailCloseBtn = document.getElementById('detailCloseBtn');
+  const detailCancelBtn = document.getElementById('detailCancelBtn');
+  const detailApplyBtn = document.getElementById('detailApplyBtn');
+  const detailFormatBtn = document.getElementById('detailFormatBtn');
+  const detailCopyBtn = document.getElementById('detailCopyBtn');
+  const detailJson = document.getElementById('detailJson');
+  const detailName = document.getElementById('detailName');
+  const detailId = document.getElementById('detailId');
+  const detailStatus = document.getElementById('detailStatus');
+  // Detail form controls
+  const detailForm = document.getElementById('detailForm');
+  const detailCustomName = document.getElementById('detailCustomName');
+  const detailGender0 = document.getElementById('detailGender0');
+  const detailGender1 = document.getElementById('detailGender1');
+  const detailStudioId = document.getElementById('detailStudioId');
+  const detailMood = document.getElementById('detailMood');
+  const detailAttitude = document.getElementById('detailAttitude');
+  const detailSelfEsteem = document.getElementById('detailSelfEsteem');
+  const detailReadiness = document.getElementById('detailReadiness');
+  const detailSkill = document.getElementById('detailSkill');
+  const detailLimit = document.getElementById('detailLimit');
+  const detailArt = document.getElementById('detailArt');
+  const detailCom = document.getElementById('detailCom');
+  const detailArtWrap = document.getElementById('detailArtWrap');
+  const detailComWrap = document.getElementById('detailComWrap');
+  const detailAdvancedLink = document.getElementById('detailAdvancedLink');
+  const detailMoodFmt = document.getElementById('detailMoodFmt');
+  const detailAttitudeFmt = document.getElementById('detailAttitudeFmt');
+  const detailSelfEsteemFmt = document.getElementById('detailSelfEsteemFmt');
+  const detailSkillFmt = document.getElementById('detailSkillFmt');
+  const detailLimitFmt = document.getElementById('detailLimitFmt');
+  const detailArtFmt = document.getElementById('detailArtFmt');
+  const detailComFmt = document.getElementById('detailComFmt');
+  const detailMoodNum = document.getElementById('detailMoodNum');
+  const detailAttitudeNum = document.getElementById('detailAttitudeNum');
+  const detailSelfEsteemNum = document.getElementById('detailSelfEsteemNum');
+  const detailSkillNum = document.getElementById('detailSkillNum');
+  const detailLimitNum = document.getElementById('detailLimitNum');
+  const detailArtNum = document.getElementById('detailArtNum');
+  const detailComNum = document.getElementById('detailComNum');
   // placeholders for other tabs
   const directorsPlaceholder = document.getElementById('directorsPlaceholder');
   const producersPlaceholder = document.getElementById('producersPlaceholder');
@@ -127,6 +170,7 @@
   let movies = [];
   // UI focus tracking
   let focusedEntityId = null;
+  let detailEntity = null; // currently opened entity for advanced edit
 
   function markFocusedId(id) {
     if (id == null) return;
@@ -156,6 +200,58 @@
     return num.toFixed(3);
   }
 
+  // Lightweight schema validation for new-format saves. Non-blocking: surfaces warnings in UI.
+  function validateBirthDateString(dateStr) {
+    if (typeof dateStr !== 'string') return false;
+    // Expected DD-MM-YYYY (e.g., 01-01-1899) or 01-01-0001 placeholder
+    return /^\d{2}-\d{2}-\d{4}$/.test(dateStr);
+  }
+
+  function isThreeDecimalString(value) {
+    if (value === undefined || value === null) return false;
+    const s = String(value);
+    // Accept plain decimal string; we will write back normalized three-decimal strings
+    return /^-?\d+(?:[\.,]\d+)?$/.test(s);
+  }
+
+  function validateTalentEntry(entity) {
+    const msgs = [];
+    if (typeof entity !== 'object' || !entity) { msgs.push('Entity is not an object'); return msgs; }
+    if (typeof entity.id !== 'number') msgs.push('Missing numeric id');
+    if (typeof entity.firstNameId !== 'string') msgs.push('Missing string firstNameId');
+    if (typeof entity.lastNameId !== 'string') msgs.push('Missing string lastNameId');
+    if (!validateBirthDateString(entity.birthDate)) msgs.push('birthDate not in DD-MM-YYYY');
+    if (!entity.professions || typeof entity.professions !== 'object') msgs.push('Missing professions object');
+    if (!isThreeDecimalString(entity.limit ?? entity.Limit)) msgs.push('Missing limit/Limit decimal');
+    // If Actor, ensure Actor key exists
+    if (entity.professions && ('Actor' in entity.professions)) {
+      if (!isThreeDecimalString(entity.professions.Actor)) msgs.push('Actor skill not a decimal string');
+    }
+    // Tags container may be empty; just check type
+    if (entity.whiteTagsNEW && typeof entity.whiteTagsNEW !== 'object') msgs.push('whiteTagsNEW present but not an object');
+    return msgs;
+  }
+
+  function validateSaveSchema(root) {
+    const result = { ok: true, warnings: [] };
+    const chars = extractCharacters(root);
+    if (!Array.isArray(chars)) {
+      result.ok = false;
+      result.warnings.push('Could not locate characters array.');
+      return result;
+    }
+    // Validate up to first 10 entries to keep it fast
+    const sample = chars.slice(0, 10);
+    for (let i = 0; i < sample.length; i++) {
+      const msgs = validateTalentEntry(sample[i]);
+      if (msgs.length) {
+        result.ok = false; // treat as schema deviation
+        result.warnings.push(`characters[${i}]: ${msgs.join('; ')}`);
+      }
+    }
+    return result;
+  }
+
   function formatUnitToTen(value) {
     if (value === undefined || value === null || value === '') return '';
     const num = Number(String(value).replace(',', '.'));
@@ -183,6 +279,94 @@
     refreshChangeUI();
   }
 
+  function openDetailEditor(entity) {
+    detailEntity = entity;
+    if (!detailEntity) return;
+    detailTitle.textContent = 'Character Details';
+    detailName.textContent = (detailEntity.customName && String(detailEntity.customName).trim()) || fullNameFor(detailEntity) || detailEntity.name || 'Unknown';
+    detailId.textContent = String(detailEntity.id ?? '—');
+    detailStatus.textContent = '';
+    // Populate form fields
+    if (detailForm) {
+      detailCustomName.value = String(detailEntity.customName ?? '');
+      if (String(detailEntity.gender) === '1') { detailGender1.checked = true; } else { detailGender0.checked = true; }
+      // Populate studio select
+      if (detailStudioId && detailStudioId.tagName === 'SELECT') {
+        detailStudioId.innerHTML = '';
+        const playerStudioName = findFirstValueByKey(saveObj, 'StudioName');
+        const presets = [
+          { value: '', label: 'None' },
+          { value: 'PL', label: `PL - ${playerStudioName ? String(playerStudioName) : 'Player Studio'}` },
+          { value: 'EM', label: 'EM - Evergreen Movies' },
+          { value: 'GB', label: 'GB - Gerstein Bros.' },
+          { value: 'MA', label: 'MA - Marginese' },
+          { value: 'SU', label: 'SU - Supreme' },
+          { value: 'HE', label: 'HE - Hephaestus' },
+        ];
+        const current = entity.studioId == null ? '' : String(entity.studioId);
+        let found = presets.some(p => p.value === current || (current === '' && p.value === ''));
+        for (const p of presets) {
+          const opt = document.createElement('option'); opt.value = p.value; opt.textContent = p.label; detailStudioId.appendChild(opt);
+        }
+        // Add unknown current code if not in presets
+        if (!found && current !== '') {
+          const optU = document.createElement('option'); optU.value = current; optU.textContent = `${current} - Unknown Studio`; detailStudioId.appendChild(optU);
+        }
+        detailStudioId.value = current;
+      }
+      detailMood.value = String(Number(detailEntity.mood ?? 0).toFixed(3));
+      detailAttitude.value = String(Number(detailEntity.attitude ?? 0).toFixed(3));
+      detailSelfEsteem.value = String(Number(detailEntity.selfEsteem ?? 0).toFixed(3));
+      // Readiness (integer-ish scalar)
+      if (detailReadiness) detailReadiness.value = detailEntity.readinessForTricks == null ? '' : String(detailEntity.readinessForTricks);
+      if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToTen(Number(detailEntity.mood ?? 0));
+      if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToTen(Number(detailEntity.attitude ?? 0));
+      if (detailSelfEsteemFmt) detailSelfEsteemFmt.textContent = formatUnitToTen(Number(detailEntity.selfEsteem ?? 0));
+      if (detailMoodNum) detailMoodNum.textContent = String(Number(detailEntity.mood ?? 0).toFixed(3));
+      if (detailAttitudeNum) detailAttitudeNum.textContent = String(Number(detailEntity.attitude ?? 0).toFixed(3));
+      if (detailSelfEsteemNum) detailSelfEsteemNum.textContent = String(Number(detailEntity.selfEsteem ?? 0).toFixed(3));
+      // Skill/Limit (best effort role detection: prefer Actor, else any present key)
+      const prof = detailEntity.professions || {};
+      const writeKey = ('Actor' in prof) ? 'Actor' : (Object.keys(prof)[0] || 'Actor');
+      detailSkill.dataset.writeKey = writeKey;
+      const curSkill = Number(prof[writeKey] ?? 0);
+      detailSkill.value = String(curSkill.toFixed(3));
+      const lim = Number(detailEntity.limit ?? detailEntity.Limit ?? 0);
+      detailLimit.value = String(lim.toFixed(3));
+      if (detailSkillFmt) detailSkillFmt.textContent = formatUnitToTen(curSkill);
+      if (detailLimitFmt) detailLimitFmt.textContent = formatUnitToTen(lim);
+      if (detailSkillNum) detailSkillNum.textContent = String(curSkill.toFixed(3));
+      if (detailLimitNum) detailLimitNum.textContent = String(lim.toFixed(3));
+      // ART/COM toggle only for actors
+      const isActor = ('Actor' in prof);
+      if (detailArtWrap) detailArtWrap.hidden = !isActor;
+      if (detailComWrap) detailComWrap.hidden = !isActor;
+      if (isActor) {
+        const artTag = ensureTag(detailEntity, 'ART');
+        const comTag = ensureTag(detailEntity, 'COM');
+        const artNum = Number(artTag.value ?? 0);
+        const comNum = Number(comTag.value ?? 0);
+        detailArt.value = String(artNum.toFixed(3));
+        detailCom.value = String(comNum.toFixed(3));
+        if (detailArtFmt) detailArtFmt.textContent = formatUnitToTen(artNum);
+        if (detailComFmt) detailComFmt.textContent = formatUnitToTen(comNum);
+        if (detailArtNum) detailArtNum.textContent = String(artNum.toFixed(3));
+        if (detailComNum) detailComNum.textContent = String(comNum.toFixed(3));
+      }
+      // Hide JSON by default
+      if (detailJson) detailJson.hidden = true;
+      if (detailForm) detailForm.hidden = false;
+    }
+    detailOverlay.hidden = false;
+  }
+
+  function closeDetailEditor() {
+    detailOverlay.hidden = true;
+    detailEntity = null;
+    if (detailJson) detailJson.value = '';
+    if (detailStatus) detailStatus.textContent = '';
+  }
+
   function applyField(obj, path, newVal) {
     const parts = path.split('.');
     let cur = obj, i = 0;
@@ -205,8 +389,8 @@
     return cur;
   }
 
-  function recordEdit({ entity, label, path, oldValue, newValue, suppressEntityInLog }) {
-    if (oldValue === newValue) return;
+  function recordEdit({ entity, label, path, oldValue, newValue, suppressEntityInLog, force }) {
+    if (!force && oldValue === newValue) return;
     const suffix = suppressEntityInLog ? '' : ` (${fullNameFor(entity) || entity.name || 'Unknown'})`;
     pushChange({ message: `${label}: ${oldValue} → ${newValue}${suffix}`,
       undo: () => applyField(entity, path, oldValue),
@@ -240,6 +424,193 @@
       renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
     });
   }
+
+  // Detail editor events
+  if (detailCloseBtn) detailCloseBtn.addEventListener('click', closeDetailEditor);
+  if (detailCancelBtn) detailCancelBtn.addEventListener('click', closeDetailEditor);
+  if (detailOverlay) detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) closeDetailEditor(); });
+  if (detailFormatBtn) detailFormatBtn.addEventListener('click', () => {
+    if (detailJson.hidden) { detailStatus.textContent = 'Open JSON editor first (use the red link).'; return; }
+    try { const obj = JSON.parse(detailJson.value); detailJson.value = JSON.stringify(obj, null, 2); detailStatus.textContent = 'Formatted.'; }
+    catch { detailStatus.textContent = 'Invalid JSON. Cannot format.'; }
+  });
+  if (detailCopyBtn) detailCopyBtn.addEventListener('click', async () => {
+    if (detailJson.hidden) { detailStatus.textContent = 'Open JSON editor first (use the red link).'; return; }
+    try { await navigator.clipboard.writeText(detailJson.value); detailStatus.textContent = 'Copied to clipboard.'; }
+    catch { detailStatus.textContent = 'Copy failed.'; }
+  });
+  if (detailAdvancedLink) detailAdvancedLink.addEventListener('click', () => {
+    // Populate JSON with current entity snapshot and toggle visibility
+    try { const safe = JSON.parse(JSON.stringify(detailEntity)); detailJson.value = JSON.stringify(safe, null, 2); }
+    catch { detailJson.value = '{\n  "error": "Could not serialize entity"\n}'; }
+    if (detailJson) detailJson.hidden = false;
+    if (detailForm) detailForm.hidden = true;
+    detailTitle.textContent = 'Advanced Editor';
+  });
+
+  // Detail sliders: live display updates (x10) without recording changes until Apply
+  if (detailMood) detailMood.addEventListener('input', () => {
+    if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToTen(Number(detailMood.value));
+    if (detailMoodNum) detailMoodNum.textContent = String(Number(detailMood.value).toFixed(3));
+  });
+  if (detailAttitude) detailAttitude.addEventListener('input', () => {
+    if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToTen(Number(detailAttitude.value));
+    if (detailAttitudeNum) detailAttitudeNum.textContent = String(Number(detailAttitude.value).toFixed(3));
+  });
+  if (detailSelfEsteem) detailSelfEsteem.addEventListener('input', () => {
+    if (detailSelfEsteemFmt) detailSelfEsteemFmt.textContent = formatUnitToTen(Number(detailSelfEsteem.value));
+    if (detailSelfEsteemNum) detailSelfEsteemNum.textContent = String(Number(detailSelfEsteem.value).toFixed(3));
+  });
+  if (detailSkill) detailSkill.addEventListener('input', () => {
+    if (detailSkillFmt) detailSkillFmt.textContent = formatUnitToTen(Number(detailSkill.value));
+    if (detailSkillNum) detailSkillNum.textContent = String(Number(detailSkill.value).toFixed(3));
+    // auto-clamp limit display to skill if below
+    if (detailLimit && Number(detailLimit.value) < Number(detailSkill.value)) {
+      detailLimit.value = String(Number(detailSkill.value).toFixed(3));
+      if (detailLimitFmt) detailLimitFmt.textContent = formatUnitToTen(Number(detailLimit.value));
+      if (detailLimitNum) detailLimitNum.textContent = String(Number(detailLimit.value).toFixed(3));
+    }
+  });
+  if (detailLimit) detailLimit.addEventListener('input', () => {
+    if (detailLimitFmt) detailLimitFmt.textContent = formatUnitToTen(Number(detailLimit.value));
+    if (detailLimitNum) detailLimitNum.textContent = String(Number(detailLimit.value).toFixed(3));
+  });
+  if (detailArt) detailArt.addEventListener('input', () => {
+    if (detailArtFmt) detailArtFmt.textContent = formatUnitToTen(Number(detailArt.value));
+    if (detailArtNum) detailArtNum.textContent = String(Number(detailArt.value).toFixed(3));
+  });
+  if (detailCom) detailCom.addEventListener('input', () => {
+    if (detailComFmt) detailComFmt.textContent = formatUnitToTen(Number(detailCom.value));
+    if (detailComNum) detailComNum.textContent = String(Number(detailCom.value).toFixed(3));
+  });
+  if (detailApplyBtn) detailApplyBtn.addEventListener('click', () => {
+    if (!detailEntity) return;
+    // If JSON is visible, apply from JSON; else apply from form
+    if (!detailJson.hidden) {
+      let parsed;
+      try { parsed = JSON.parse(detailJson.value); }
+      catch { detailStatus.textContent = 'Invalid JSON. Please fix errors before applying.'; return; }
+      if (parsed && parsed.id !== undefined && String(parsed.id) !== String(detailEntity.id)) { detailStatus.textContent = 'ID mismatch. Cannot change entity id.'; return; }
+      try {
+        const before = JSON.parse(JSON.stringify(detailEntity));
+        for (const k of Object.keys(detailEntity)) delete detailEntity[k];
+        for (const [k, v] of Object.entries(parsed)) detailEntity[k] = v;
+        const lim = normalizeDecimalString(detailEntity.limit ?? detailEntity.Limit ?? '');
+        if (lim) { detailEntity.limit = lim; detailEntity.Limit = lim; }
+        recordEdit({ entity: detailEntity, label: 'Advanced edit applied', path: 'self', oldValue: '[complex]', newValue: '[complex]', force: true });
+        const snapshotOld = before;
+        const snapshotNew = JSON.parse(JSON.stringify(detailEntity));
+        const target = detailEntity;
+        changeLog[changeLog.length - 1].undo = () => { for (const k of Object.keys(target)) delete target[k]; Object.assign(target, JSON.parse(JSON.stringify(snapshotOld))); };
+        changeLog[changeLog.length - 1].redo = () => { for (const k of Object.keys(target)) delete target[k]; Object.assign(target, JSON.parse(JSON.stringify(snapshotNew))); };
+        detailStatus.textContent = 'Applied. Review table for changes.';
+      } catch (_) {
+        detailStatus.textContent = 'Failed to apply changes.';
+        return;
+      }
+    } else {
+      // Apply from form
+      const before = JSON.parse(JSON.stringify(detailEntity));
+      const writeKey = detailSkill.dataset.writeKey || 'Actor';
+      // Scalars
+      detailEntity.customName = String(detailCustomName.value || '').trim() || null;
+      detailEntity.gender = detailGender1.checked ? 1 : 0;
+      if (detailStudioId && detailStudioId.tagName === 'SELECT') {
+        const studioRaw = String(detailStudioId.value || '').trim();
+        detailEntity.studioId = studioRaw === '' ? null : studioRaw;
+      }
+      const mood = Number(detailMood.value); const attitude = Number(detailAttitude.value); const se = Number(detailSelfEsteem.value);
+      if (isFinite(mood)) detailEntity.mood = mood.toFixed(3);
+      if (isFinite(attitude)) detailEntity.attitude = attitude.toFixed(3);
+      if (isFinite(se)) detailEntity.selfEsteem = se.toFixed(3);
+      const ready = Number(detailReadiness.value); if (isFinite(ready)) detailEntity.readinessForTricks = Math.round(ready);
+      // Skill/Limit
+      if (!detailEntity.professions || typeof detailEntity.professions !== 'object') detailEntity.professions = {};
+      const skill = Number(detailSkill.value); if (isFinite(skill)) detailEntity.professions[writeKey] = skill.toFixed(3);
+      let lim = Number(detailLimit.value); if (!isFinite(lim)) lim = Number(detailEntity.limit ?? detailEntity.Limit ?? 0);
+      const skillNum = Number(detailEntity.professions[writeKey] ?? 0);
+      if (lim < skillNum) lim = skillNum; // clamp
+      detailEntity.limit = lim.toFixed(3); detailEntity.Limit = lim.toFixed(3);
+      // ART/COM (only normalize and write if slider value changed vs original)
+      if (writeKey === 'Actor') {
+        const art = Number(detailArt.value); const com = Number(detailCom.value);
+        const beforeArtVal = before.whiteTagsNEW?.ART?.value;
+        const beforeComVal = before.whiteTagsNEW?.COM?.value;
+        if (isFinite(art)) {
+          const artFixed = art.toFixed(3);
+          if (artFixed !== String(beforeArtVal ?? '')) {
+            ensureTag(detailEntity, 'ART').value = normalizeDecimalString(art);
+          }
+        }
+        if (isFinite(com)) {
+          const comFixed = com.toFixed(3);
+          if (comFixed !== String(beforeComVal ?? '')) {
+            ensureTag(detailEntity, 'COM').value = normalizeDecimalString(com);
+          }
+        }
+      }
+      // Sequential change records (like list-level): compare before vs after and emit entries
+      const after = detailEntity;
+      // helpers to read old/new values safely
+      const get = (obj, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
+      // Custom Name
+      if ((before.customName ?? '') !== (after.customName ?? '')) {
+        recordEdit({ entity: after, label: 'Custom Name', path: 'customName', oldValue: before.customName ?? '', newValue: after.customName ?? '' });
+      }
+      // Gender
+      if ((before.gender ?? 0) !== (after.gender ?? 0)) {
+        recordEdit({ entity: after, label: 'Gender', path: 'gender', oldValue: String(before.gender ?? ''), newValue: String(after.gender ?? '') });
+      }
+      // Studio
+      if ((before.studioId ?? '') !== (after.studioId ?? '')) {
+        recordEdit({ entity: after, label: 'Studio', path: 'studioId', oldValue: before.studioId ?? '', newValue: after.studioId ?? '' });
+      }
+      // Happiness (mood)
+      if ((before.mood ?? '') !== (after.mood ?? '')) {
+        recordEdit({ entity: after, label: 'Happiness', path: 'mood', oldValue: before.mood ?? '', newValue: after.mood ?? '' });
+      }
+      // Loyalty (attitude)
+      if ((before.attitude ?? '') !== (after.attitude ?? '')) {
+        recordEdit({ entity: after, label: 'Loyalty', path: 'attitude', oldValue: before.attitude ?? '', newValue: after.attitude ?? '' });
+      }
+      // Self Esteem
+      if ((before.selfEsteem ?? '') !== (after.selfEsteem ?? '')) {
+        recordEdit({ entity: after, label: 'Self Esteem', path: 'selfEsteem', oldValue: before.selfEsteem ?? '', newValue: after.selfEsteem ?? '' });
+      }
+      // Readiness for Tricks
+      if ((before.readinessForTricks ?? '') !== (after.readinessForTricks ?? '')) {
+        recordEdit({ entity: after, label: 'Readiness for Tricks', path: 'readinessForTricks', oldValue: String(before.readinessForTricks ?? ''), newValue: String(after.readinessForTricks ?? '') });
+      }
+      // Skill
+      const beforeSkill = get(before, `professions.${writeKey}`);
+      const afterSkill = get(after, `professions.${writeKey}`);
+      if (String(beforeSkill ?? '') !== String(afterSkill ?? '')) {
+        recordEdit({ entity: after, label: 'Skill', path: `professions.${writeKey}`, oldValue: beforeSkill ?? '', newValue: afterSkill ?? '' });
+      }
+      // Limit (only record `limit`; runtime keeps `Limit` in sync)
+      if (String(before.limit ?? '') !== String(after.limit ?? '')) {
+        recordEdit({ entity: after, label: 'Limit', path: 'limit', oldValue: before.limit ?? '', newValue: after.limit ?? '' });
+      }
+      // ART/COM (actors only)
+      if (writeKey === 'Actor') {
+        const beforeArt = before.whiteTagsNEW?.ART?.value;
+        const afterArt = after.whiteTagsNEW?.ART?.value;
+        if (String(beforeArt ?? '') !== String(afterArt ?? '')) {
+          recordEdit({ entity: after, label: 'Artistic Appeal', path: 'whiteTagsNEW.ART.value', oldValue: beforeArt ?? '', newValue: afterArt ?? '' });
+        }
+        const beforeCom = before.whiteTagsNEW?.COM?.value;
+        const afterCom = after.whiteTagsNEW?.COM?.value;
+        if (String(beforeCom ?? '') !== String(afterCom ?? '')) {
+          recordEdit({ entity: after, label: 'Commercial Appeal', path: 'whiteTagsNEW.COM.value', oldValue: beforeCom ?? '', newValue: afterCom ?? '' });
+        }
+      }
+      detailStatus.textContent = 'Applied. Review table for changes.';
+    }
+    // Rerender active views
+    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies(); renderStudio();
+    // Close overlay after applying
+    closeDetailEditor();
+  });
 
   function normalizeArtCom(value) {
     if (value === undefined || value === null || value === '') return '';
@@ -345,6 +716,24 @@
     return null;
   }
 
+  // Find first occurrence of a key in the save tree and return its value
+  function findFirstValueByKey(root, targetKey) {
+    if (!root || typeof root !== 'object') return undefined;
+    const visited = new WeakSet();
+    const queue = [root];
+    let safety = 0;
+    while (queue.length && safety++ < 300000) {
+      const cur = queue.shift();
+      if (!cur || typeof cur !== 'object') continue;
+      if (visited.has(cur)) continue; visited.add(cur);
+      if (!Array.isArray(cur) && Object.prototype.hasOwnProperty.call(cur, targetKey)) {
+        return cur[targetKey];
+      }
+      for (const v of Array.isArray(cur) ? cur : Object.values(cur)) queue.push(v);
+    }
+    return undefined;
+  }
+
   function parseBirthDateParts(s) {
     if (typeof s !== 'string') return null;
     const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
@@ -378,10 +767,11 @@
   }
 
   function fullNameFor(actor) {
+    const cn = actor && actor.customName && String(actor.customName).trim();
+    if (cn) return cn;
     const f = getNameById(actor.firstNameId);
     const l = getNameById(actor.lastNameId);
     if (f || l) return `${f || ''}${f && l ? ' ' : ''}${l || ''}`.trim();
-    // fallback when name map not loaded
     const fi = actor.firstNameId ?? '?';
     const li = actor.lastNameId ?? '?';
     return `Unknown Name (${fi} ${li})`;
@@ -826,6 +1216,10 @@
     filtered.forEach(actor => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-id', String(actor.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(actor);
+      });
       tr.addEventListener('pointerdown', () => markFocusedId(actor.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(actor.id)) tr.classList.add('row-focused');
 
@@ -891,7 +1285,7 @@
         const finalVal = Number(artRange.value).toFixed(3);
         const initialVal = artRange.dataset.initial ?? String(finalVal);
         delete artRange.dataset.initial;
-        recordEdit({ entity: actor, label: 'ART', path: 'whiteTagsNEW.ART.value', oldValue: initialVal, newValue: finalVal });
+        recordEdit({ entity: actor, label: 'Artistic Appeal', path: 'whiteTagsNEW.ART.value', oldValue: initialVal, newValue: finalVal });
       });
       artWrap.appendChild(artRange);
       artWrap.appendChild(artVal);
@@ -926,7 +1320,7 @@
         const finalVal = Number(comRange.value).toFixed(3);
         const initialVal = comRange.dataset.initial ?? String(finalVal);
         delete comRange.dataset.initial;
-        recordEdit({ entity: actor, label: 'COM', path: 'whiteTagsNEW.COM.value', oldValue: initialVal, newValue: finalVal });
+        recordEdit({ entity: actor, label: 'Commercial Appeal', path: 'whiteTagsNEW.COM.value', oldValue: initialVal, newValue: finalVal });
       });
       comWrap.appendChild(comRange);
       comWrap.appendChild(comVal);
@@ -947,6 +1341,12 @@
     if (!Array.isArray(charactersArr)) {
       saveMeta.textContent = 'Error: Could not find characters array in save file.';
       return;
+    }
+    // Schema validation (non-blocking; shows warnings if any)
+    const schemaCheck = validateSaveSchema(saveObj);
+    if (schemaCheck && schemaCheck.warnings && schemaCheck.warnings.length) {
+      const note = ` | Schema warnings: ${schemaCheck.warnings.slice(0, 3).join(' | ')}${schemaCheck.warnings.length > 3 ? ' …' : ''}`;
+      saveMeta.textContent = (saveMeta.textContent || 'Loaded save') + note;
     }
     // compute game year if possible and reflect in UI
     const computed = computeGameYearFromData(saveObj);
@@ -1222,6 +1622,10 @@
     filtered.forEach((p) => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-id', String(p.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(p);
+      });
       tr.addEventListener('pointerdown', () => markFocusedId(p.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(p.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td');
@@ -1337,6 +1741,10 @@
     filtered.forEach((w) => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-id', String(w.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(w);
+      });
       tr.addEventListener('pointerdown', () => markFocusedId(w.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(w.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(w); tr.appendChild(tdName);
@@ -1446,6 +1854,10 @@
     filtered.forEach((ed) => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-id', String(ed.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(ed);
+      });
       tr.addEventListener('pointerdown', () => markFocusedId(ed.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(ed.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ed); tr.appendChild(tdName);
@@ -1590,6 +2002,10 @@
     filtered.forEach((c)=>{
       const tr = document.createElement('tr');
       tr.setAttribute('data-id', String(c.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(c);
+      });
       tr.addEventListener('pointerdown', () => markFocusedId(c.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(c.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(c); tr.appendChild(tdName);
@@ -1681,6 +2097,10 @@
     filtered.forEach((ci) => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-id', String(ci.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(ci);
+      });
       tr.addEventListener('pointerdown', () => markFocusedId(ci.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(ci.id)) tr.classList.add('row-focused');
 
@@ -1769,6 +2189,10 @@
     filtered.forEach((ag) => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-id', String(ag.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(ag);
+      });
       tr.addEventListener('pointerdown', () => markFocusedId(ag.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(ag.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ag); tr.appendChild(tdName);

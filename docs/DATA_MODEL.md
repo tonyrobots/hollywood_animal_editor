@@ -1,10 +1,20 @@
-Hollywood Animal Save Schema Notes (MVP Focus)
+Hollywood Animal Save Schema Notes
 
 This file summarizes the relevant parts of the save schema used by the web editor. It captures practical field names, where data lives, and role-name quirks observed in the provided samples.
 
 Top-Level
 - Root object contains nested structures; the characters array may appear directly at `stateJson.characters` or deeper. The app does a breadth‑first search to find an array of `Data.GameObject.Character.TalentData` entries.
 - Game year detection: scanned from `gameDate` fields and other timestamps to derive a plausible year for age calculations.
+
+New Format (2025-09) Notes
+- Latest saves remain compatible with the MVP editor. The following were verified unchanged:
+  - `characters` array items are `Data.GameObject.Character.TalentData`.
+  - `professions` values are string decimals in [0,1]; writers/editors keys remain `Scriptwriter` and `FilmEditor`.
+  - `limit` and `Limit` both present and equal; the editor keeps them synchronized.
+  - `whiteTagsNEW` structure and ART/COM tags unchanged; values remain string decimals (may exceed 1.000 in some categories).
+  - `birthDate` remains `DD-MM-YYYY`.
+- The app includes a lightweight schema check on load that surfaces warnings; it does not block editing.
+- JSON with UTF‑8 BOM is handled gracefully.
 
 Characters Array
 - Entry type: `Data.GameObject.Character.TalentData`.
@@ -27,10 +37,10 @@ Characters Array
 - Movies participation per role under `movies` object:
   - `movies.Actor`, `movies.Director`, `movies.Producer`, `movies.Scriptwriter`, `movies.FilmEditor` (arrays of movie IDs when present).
 
-Actor Fields (MVP editable)
+Actor Fields (editable)
 - Acting skill: `professions.Actor` (string decimal like "0.800").
 - Limit: `limit` and `Limit` — keep synchronized (strings, three decimals).
-- ART/COM tags: under `whiteTagsNEW`
+- Artistic/Commercial Appeal tags: under `whiteTagsNEW`
   - Location: `whiteTagsNEW.ART.value`, `whiteTagsNEW.COM.value`.
   - Entry shape:
     - `overallValues`: [] (array), `id` (string), `dateAdded` (string), `movieId` (number), `value` (string), `IsOverall` (boolean)
@@ -68,6 +78,9 @@ Names
   - `locStrings`: array of strings (IDs index into this array for first and last names).
 - The app supports manual upload for name fallback.
 
+Samples
+- `docs/new_format/actor_only_sample.json` provides a slim actor-only sample extracted from a full new-format save for testing and validation.
+
 Tags (`whiteTagsNEW`)
 - Container key is `whiteTagsNEW` (some saves may have `whiteTagsNew`; the app normalizes to `whiteTagsNEW`).
 - Tag record shape (observed):
@@ -80,17 +93,21 @@ Tags (`whiteTagsNEW`)
 
 Numeric Formats
 - The editor normalizes numeric strings to exactly three decimals for edited fields (skills and limits). Unedited fields are preserved as in the source.
-- ART/COM actor options snap to the allowed set; other roles are left unchanged.
+- ART/COM (labeled as Artistic/Commercial Appeal in UI) snap to the allowed set for actors; other roles are left unchanged.
 
 Known Quirks / Notes
 - Writers/Editors key names differ from UI labels:
   - Writers → `Scriptwriter`
   - Editors → `FilmEditor`
-- Many talent entries do not have ART/COM. The app creates missing tags for actors only (MVP) with safe defaults.
+- Many talent entries do not have ART/COM. The app creates missing tags for actors only with safe defaults.
 - Large saves (10–25+ MB): parsing is done in‑browser; future streaming/targeted parsing could be explored.
 
 Identifiers Recap
 - Roles (professions): `Actor`, `Director`, `Producer`, `Scriptwriter`, `FilmEditor`.
 - Movies role keys: same as the profession string for the role when present under `movies`.
+
+Studio Identifiers
+- `studioId` values observed: `PL` (player studio), `EM` (Evergreen Movies), `GB` (Gerstein Bros.), `MA` (Marginese), `SU` (Supreme), `HE` (Hephaestus). Unknown codes may appear; the editor will show them as “CODE – Unknown Studio”.
+- Player studio display name is available under `StudioName` somewhere in the save; the app locates the first occurrence to label the `PL` option in the Studio selector.
 
 This document is meant as a living reference; update it as additional entity types or fields are added to the editor.

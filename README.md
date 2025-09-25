@@ -1,9 +1,9 @@
-Hollywood Animal — Savegame Editor (MVP)
+Hollywood Animal — Savegame Editor
 
 Overview
 - Local, static web app to edit “Hollywood Animal” save files.
 - Tabs: Actors (implemented), Directors, Producers, Writers, Editors, Composers, Cinematographers, Agents (lists with sliders), Movies (read-only table).
-- MVP supports editing Actors:
+- Editing Support (Actors and other professions):
   - Acting Skill (`professions.Actor`) via slider (0–1, step 0.01)
   - Limit (`limit` and `Limit` kept in sync) via slider (0–1, step 0.01)
   - ART and COM ratings under `whiteTagsNEW` (sliders with tick marks; UI shows 0.0–10.0, saves normalized strings)
@@ -34,7 +34,7 @@ Using the Editor
 5) Edit Fields (Actors tab)
    - Acting Skill: slider (0–1, 0.01 step). Writes to `professions.Actor` (string, three decimals).
    - Limit: slider (0–1, 0.01 step). Writes to `limit` and `Limit` (strings, three decimals). Cannot go below current skill.
-   - ART & COM: sliders under `whiteTagsNEW.ART/COM.value` with tick marks at 0.000/0.150/0.300/0.700/1.000; UI shows 0.0–10.0.
+   - Artistic Appeal & Commercial Appeal: sliders under `whiteTagsNEW.ART/COM.value` with tick marks at 0.000/0.150/0.300/0.700/1.000; UI shows 0.0–10.0.
    - Age: numeric input shows `gameYear - birthYear`. Edit to adjust `birthDate` year (keeps day/month).
    - Game Year: auto-detected from save (prefers `gameDate`); override in the control if needed.
 6) Changes & Download
@@ -45,6 +45,14 @@ Notes
 - Large Saves: Browsers handle ~25MB JSON, but initial load may take a moment.
 - Numeric Formatting: Values are stored as strings with three decimals (e.g., "0.700"). UI displays many values as 0.0–10.0 for readability.
 - Minimal Changes: The editor only modifies fields you adjust; other content is preserved as-is.
+
+New Save Format Compatibility (2025-09)
+- Confirmed compatible with latest saves (e.g., version 0.8.50.21EA). No data model changes required for the MVP features.
+- Keys verified unchanged for our scope: `characters` array of `Data.GameObject.Character.TalentData`, `professions.Actor`, `limit` and `Limit`, `whiteTagsNEW` (with ART/COM entries — labeled as Artistic/Commercial Appeal in UI), `birthDate` as `DD-MM-YYYY`.
+- The app now performs a lightweight schema check on load and surfaces warnings in the status area (non-blocking).
+- UTF‑8 BOM in JSON is tolerated on import; exports are pretty-printed for readability.
+- Small new-format sample provided: `docs/new_format/actor_only_sample.json` (first ~12 actors, slimmed).
+- Tabs present include Directors, Producers, Writers (`Scriptwriter`), Editors (`FilmEditor`), Composers, Cinematographers, Agents, and Movies. (Some extra game professions like `CptPR` or `CptLawyer` may appear in saves but are not currently edited.)
 
 Repository Structure
 - `web/` — static web app (open `web/index.html`).
@@ -60,3 +68,9 @@ Troubleshooting
 
 License
 - For personal use; no game assets are distributed beyond the name map provided in this repo for convenience.
+
+Detail View & Advanced Editor
+- Click any row (outside inputs) to open a detail overlay.
+- Friendly form exposes: Custom Name (overrides ID lookups), Gender, Studio, Happiness (mood), Loyalty (attitude), Self Esteem, Readiness for Tricks, Skill, Limit, and for actors: Artistic/Commercial Appeal. Sliders show x10 formatted values; Skill ≤ Limit enforced; `limit`/`Limit` kept in sync.
+- Studio picker includes: None, PL (Player Studio; labeled from `StudioName` in save when present), EM (Evergreen Movies), GB (Gerstein Bros.), MA (Marginese), SU (Supreme), HE (Hephaestus); unknown codes are appended as “CODE – Unknown Studio”.
+- A red “Direct JSON edit (advanced users only!)” link toggles the raw JSON editor. Actions: Format/Copy/Apply. Apply is undoable and closes the overlay.

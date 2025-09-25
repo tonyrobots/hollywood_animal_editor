@@ -1,0 +1,384 @@
+[
+    {
+        "$type": "Data.GameObject.Character.TalentData, Assembly-CSharp",
+        "movies": {
+            "Actor": [
+                52,
+                61,
+                101,
+                156,
+                202,
+                243,
+                293,
+                311,
+                302,
+                383,
+                417
+            ]
+        },
+        "activeOrPlannedMovies": {
+            "Actor": [
+                417
+            ]
+        },
+        "labels": [
+            "SIMPLE",
+            "JUNKIE",
+            "UNTOUCHABLE",
+            "IMMORTAL"
+        ],
+        "whiteTags": {},
+        "whiteTagsNEW": {
+            "ART": {
+                "overallValues": [
+                    {
+                        "movieId": 0,
+                        "sourceType": 0,
+                        "value": "0.180",
+                        "dateAdded": "0001-01-01T00:00:00"
+                    }
+                ],
+                "id": "ART",
+                "dateAdded": "1928-10-06T00:00:00",
+                "movieId": 0,
+                "value": "0.180",
+                "IsOverall": false
+            },
+            "COMEDY": {
+                "overallValues": [
+                    {
+                        "movieId": 0,
+                        "sourceType": 0,
+                        "value": "0.000",
+                        "dateAdded": "1930-03-10T00:00:00"
+                    },
+                    {
+                        "movieId": 52,
+                        "sourceType": 4,
+                        "value": "1.020",
+                        "dateAdded": "1930-03-10T00:00:00"
+                    },
+                    {
+                        "movieId": 156,
+                        "sourceType": 4,
+                        "value": "1.700",
+                        "dateAdded": "1932-10-10T00:00:00"
+                    },
+                    {
+                        "movieId": 101,
+                        "sourceType": 4,
+                        "value": "0.680",
+                        "dateAdded": "1933-11-28T00:00:00"
+                    },
+                    {
+                        "movieId": 293,
+                        "sourceType": 5,
+                        "value": "1.360",
+                        "dateAdded": "1935-01-14T00:00:00"
+                    },
+                    {
+                        "movieId": 293,
+                        "sourceType": 4,
+                        "value": "1.360",
+                        "dateAdded": "1935-04-08T00:00:00"
+                    }
+                ],
+                "id": "COMEDY",
+                "dateAdded": "1930-03-10T00:00:00",
+                "movieId": 0,
+                "value": "6.120",
+                "IsOverall": false
+            }
+        },
+        "blackTags": [],
+        "recentTags": [],
+        "recentTagsNEW": [
+            {
+                "id": "SUPPORTINGCHARACTER_FEMME_FATALE",
+                "dateAdded": "1937-02-08T00:00:00",
+                "movieId": 383,
+                "value": "1.000"
+            },
+            {
+                "id": "ADVENTURE",
+                "dateAdded": "1937-02-08T00:00:00",
+                "movieId": 383,
+                "value": "0.600"
+            }
+        ],
+        "fakeRecents": [],
+        "recentRolesForFakeFilmographyNEW": [
+            {
+                "id": "SUPPORTINGCHARACTER_FEMME_FATALE",
+                "dateAdded": "1927-05-03T00:00:00",
+                "movieId": 0,
+                "value": "1.000"
+            }
+        ],
+        "scandals": [],
+        "nextTagResearchDurationRandomOffset": -1,
+        "lastResearchedTagCathegory": "",
+        "lastDateScriptGenerated": "0001-01-01T00:00:00",
+        "skillBeforeWriting": "0.000",
+        "mayHaveSins": null,
+        "aSins": [],
+        "lastVacation": "0001-01-01T00:00:00",
+        "pHChkFrom": 0,
+        "processHistory": [
+            {
+                "start": "0001-01-01T00:00:00",
+                "end": "0001-01-01T00:00:00",
+                "prevBreak": -1,
+                "key": "Preproduction52"
+            }
+        ],
+        "nominations": [],
+        "polluxes": [],
+        "customName": null,
+        "portraitBaseId": 43,
+        "imprisonedSince": "01-01-0001",
+        "professions": {
+            "Actor": "0.800"
+        },
+        "mood": "1.000",
+        "attitude": "1.000",
+        "selfEsteem": "0.311",
+        "xp": 0,
+        "contract": {
+            "contractType": 1,
+            "amount": 1,
+            "startAmount": 3,
+            "is5050": false,
+            "payed5050": false,
+            "initialFee": "156000.000",
+            "monthlySalary": "0.000",
+            "weightToSalary": "171600.000",
+            "raiseIgn": false,
+            "raiseCool": 0,
+            "raiseBonus": 0,
+            "ultimatumCool": 0,
+            "leaveCool": 0,
+            "offers": [
+                {
+                    "Item1": "INITIAL_FEE",
+                    "Item2": "156000.000"
+                }
+            ],
+            "extension": null,
+            "assignedProjects": [
+                417
+            ],
+            "dateOfSigning": "1935-06-07T00:00:00",
+            "Is5050": false,
+            "FeeWith5050": "156000.000",
+            "SecondPay": 78000
+        },
+        "previousContract": null,
+        "dossier": null,
+        "lastDossierUpdate": null,
+        "studioId": "PL",
+        "employmentHistory": [],
+        "offendedStateWasShown": false,
+        "offenceHistory": [],
+        "negotiationBonuses": [],
+        "temporaryStates": [],
+        "causeOfLeave": 0,
+        "killerId": null,
+        "isShady": false,
+        "sexualPreference": 0,
+        "limitations": 0,
+        "readinessForTricks": 2,
+        "willRevoverMoodAttitudeOnServicesRegain": false,
+        "prefIlGift": 14,
+        "tillNextGft": 3,
+        "strikes": 0,
+        "giftHistory": [],
+        "delayedImprisonmentDays": 0,
+        "wasImprisoned": false,
+        "leftPrisonDate": "0001-01-01T00:00:00",
+        "isImmune": false,
+        "vividImageExirationDate": "0001-01-01T00:00:00",
+        "sophisticatedImageExirationDate": "0001-01-01T00:00:00",
+        "isProspectiveTalent": false,
+        "daysWithSuicideLowMood": 0,
+        "futureDeathDate": "0001-01-01T00:00:00",
+        "futureCauseOfDeath": 1,
+        "isOnTheHook": false,
+        "id": 47,
+        "firstNameId": "280",
+        "lastNameId": "656",
+        "birthDate": "25-07-1902",
+        "deathDate": "01-01-0001",
+        "gender": 1,
+        "type": 1,
+        "biography": {
+            "currentMarriageId": -1,
+            "marriageHistory": [],
+            "childrenIds": [],
+            "parentIds": [],
+            "lastBirth": "01-01-0001",
+            "marriageUnchecked": true,
+            "birthUnchecked": true
+        },
+        "state": 1026,
+        "causeOfDeath": 0,
+        "nationality": 0,
+        "limit": "0.800",
+        "Limit": "0.800"
+    },
+    {
+        "$type": "Data.GameObject.Character.TalentData, Assembly-CSharp",
+        "movies": {
+            "Actor": [
+                98
+            ]
+        },
+        "activeOrPlannedMovies": {},
+        "labels": [
+            "ARROGANT"
+        ],
+        "whiteTags": {},
+        "whiteTagsNEW": {},
+        "blackTags": [],
+        "recentTags": [],
+        "recentTagsNEW": [
+            {
+                "id": "SUPPORTINGCHARACTER_DAMSEL_IN_DISTRESS",
+                "dateAdded": "1930-11-10T00:00:00",
+                "movieId": 98,
+                "value": "1.000"
+            },
+            {
+                "id": "DRAMA",
+                "dateAdded": "1930-11-10T00:00:00",
+                "movieId": 98,
+                "value": "0.400"
+            },
+            {
+                "id": "COMEDY",
+                "dateAdded": "1930-11-10T00:00:00",
+                "movieId": 98,
+                "value": "0.350"
+            }
+        ],
+        "fakeRecents": [],
+        "recentRolesForFakeFilmographyNEW": [
+            {
+                "id": "SUPPORTINGCHARACTER_DAMSEL_IN_DISTRESS",
+                "dateAdded": "1930-11-10T00:00:00",
+                "movieId": 98,
+                "value": "1.000"
+            }
+        ],
+        "scandals": [],
+        "nextTagResearchDurationRandomOffset": -1,
+        "lastResearchedTagCathegory": "",
+        "lastDateScriptGenerated": "0001-01-01T00:00:00",
+        "skillBeforeWriting": "0.000",
+        "mayHaveSins": false,
+        "aSins": [],
+        "lastVacation": "0001-01-01T00:00:00",
+        "pHChkFrom": 0,
+        "processHistory": [
+            {
+                "start": "0001-01-01T00:00:00",
+                "end": "0001-01-01T00:00:00",
+                "prevBreak": -1,
+                "key": "Release98"
+            }
+        ],
+        "nominations": [],
+        "polluxes": [],
+        "customName": null,
+        "portraitBaseId": 188,
+        "imprisonedSince": "01-01-0001",
+        "professions": {
+            "Actor": "0.300"
+        },
+        "mood": "0.870",
+        "attitude": "0.938",
+        "selfEsteem": "-0.847",
+        "xp": 100,
+        "contract": null,
+        "previousContract": {
+            "contractType": 0,
+            "amount": 3,
+            "startAmount": 3,
+            "is5050": false,
+            "payed5050": false,
+            "initialFee": "6075.000",
+            "monthlySalary": "0.000",
+            "weightToSalary": "1.000",
+            "raiseIgn": false,
+            "raiseCool": 0,
+            "raiseBonus": 0,
+            "ultimatumCool": 0,
+            "leaveCool": 0,
+            "offers": [],
+            "extension": null,
+            "assignedProjects": null,
+            "dateOfSigning": "1930-05-12T00:00:00",
+            "Is5050": false,
+            "FeeWith5050": "6075.000",
+            "SecondPay": 3038
+        },
+        "dossier": null,
+        "lastDossierUpdate": null,
+        "studioId": null,
+        "employmentHistory": [
+            {
+                "studioId": "MA",
+                "start": "12-05-1930",
+                "end": "13-05-1933",
+                "wasWorkingUnderTorture": false
+            }
+        ],
+        "offendedStateWasShown": false,
+        "offenceHistory": [],
+        "negotiationBonuses": [],
+        "temporaryStates": [],
+        "causeOfLeave": 0,
+        "killerId": null,
+        "isShady": true,
+        "sexualPreference": 0,
+        "limitations": 0,
+        "readinessForTricks": 0,
+        "willRevoverMoodAttitudeOnServicesRegain": false,
+        "prefIlGift": 14,
+        "tillNextGft": 4,
+        "strikes": 0,
+        "giftHistory": [],
+        "delayedImprisonmentDays": 0,
+        "wasImprisoned": false,
+        "leftPrisonDate": "0001-01-01T00:00:00",
+        "isImmune": false,
+        "vividImageExirationDate": "0001-01-01T00:00:00",
+        "sophisticatedImageExirationDate": "0001-01-01T00:00:00",
+        "isProspectiveTalent": false,
+        "daysWithSuicideLowMood": 0,
+        "futureDeathDate": "0001-01-01T00:00:00",
+        "futureCauseOfDeath": 1,
+        "isOnTheHook": false,
+        "id": 1728,
+        "firstNameId": "29",
+        "lastNameId": "707",
+        "birthDate": "04-06-1905",
+        "deathDate": "01-01-0001",
+        "gender": 0,
+        "type": 1,
+        "biography": {
+            "currentMarriageId": -1,
+            "marriageHistory": [],
+            "childrenIds": [],
+            "parentIds": [],
+            "lastBirth": "01-01-0001",
+            "marriageUnchecked": true,
+            "birthUnchecked": true
+        },
+        "state": 68,
+        "causeOfDeath": 0,
+        "nationality": 0,
+        "limit": "0.300",
+        "Limit": "0.300"
+    }
+]

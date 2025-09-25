@@ -2,12 +2,8 @@ Project: Hollywood Animal — Savegame Editor
 
 Purpose
 - Build a local, static web app to edit “Hollywood Animal” save files.
-- Tabs: Actors (implemented), Directors, Producers, Writers, Editors, Composers, Cinematographers, Agents (lists with skill/limit sliders), Movies (read-only table).
-- MVP scope (Actors):
-  - Acting skill at `professions.Actor` (string number; slider input)
-  - Limit at both `limit` and `Limit` (string number; slider input)
-  - ART and COM ratings under `whiteTagsNEW` edited via sliders (0–1, 0.01 step) with tick marks at 0.000/0.150/0.300/0.700/1.000. Displayed as 0.0–10.0; saved normalized to three decimals.
-  - Age as a derived field (edits `birthDate` year; game year auto‑detected, user‑overridable)
+- Tabs: Actors, Directors, Producers, Writers, Editors, Composers, Cinematographers, Agents (lists with skill/limit sliders), Movies (read-only table).
+- Editing capabilities include profession skills and limits across roles, ART/COM for actors, and a detail view with advanced JSON editing.
 
 Repository Layout
 - `docs/`
@@ -31,20 +27,23 @@ Target Data Model (actors)
     - Tag entry shape: `overallValues`: [], `id`, `dateAdded`, `movieId: 0`, `value`, `IsOverall: false`
 
 Editing Rules (MVP)
-- Acting skill:
-  - Path: `professions.Actor`
-  - UI: slider 0–1, step 0.01. Save as string normalized to three decimals.
+Editing Rules
+- Acting skill (actors and other roles):
+  - Path for actors: `professions.Actor` (other roles analogous)
+  - UI: slider 0–1, step 0.01. Saved as string normalized to three decimals.
 - Limit:
   - Paths: `limit` and `Limit`
-  - UI: slider 0–1, step 0.01. Treat as single value; write normalized value to both keys; add missing key for consistency.
+  - UI: slider 0–1, step 0.01. Treated as a single value; write normalized value to both keys; add missing key for consistency.
   - Constraint: Limit cannot go below the current skill value.
-- ART and COM (Commercial):
+- Artistic/Commercial Appeal (formerly ART/COM in UI copy):
   - Paths: `whiteTagsNEW.ART.value` and `whiteTagsNEW.COM.value`
-  - Slider range 0–1, step 0.01; visuals show tick marks at canonical values; displayed as 0.0–10.0; saved normalized to three decimals. If the tag entry does not exist, create it with safe defaults; do not mutate `overallValues` in MVP.
+  - Slider range 0–1, step 0.01; visuals show tick marks at 0.000/0.150/0.300/0.700/1.000; UI shows 0.0–10.0; saved normalized to three decimals. If a tag entry does not exist for actors, create it with safe defaults; do not mutate `overallValues`.
 - Age / birthDate:
   - Display age from `gameYear - birthYear`; parse `birthDate` as `DD-MM-YYYY`.
   - Editing age updates only the year component in `birthDate`.
   - `gameYear` is auto‑detected by scanning `gameDate`/timestamps; user can override.
+ - Studio:
+  - `studioId` is edited via a dropdown with known codes (None, PL, EM, GB, MA, SU, HE). Unknown codes are preserved and surfaced as “CODE – Unknown Studio”. The `PL` label is populated from the save's `StudioName` when available.
 
 Name Resolution
 - The app fetches the canonical copy at `web/data/CHARACTER_NAMES.json`. Manual upload is available as a fallback.
@@ -58,14 +57,14 @@ File Handling Guidelines
   - Write numeric fields as strings with exactly three decimals ("0.300").
   - Maintain both `limit` and `Limit` in sync.
 
-Static Web App (MVP)
+Static Web App
 - No server required. Works offline from `index.html`.
 - Flow:
   1) Drag‑and‑drop or file picker to load a save JSON.
   2) Robustly find the `characters` array and filter to `professions.Actor`.
   3) Resolve names via `CHARACTER_NAMES.json` and show a searchable table.
-  4) Editable controls per actor: Acting skill (slider), Limit (slider), ART/COM (sliders), Age (numeric, updates birthDate).
-  5) Apply edits to in‑memory JSON.
+  4) Editable controls per entity: acting/role skill (slider), limit (slider), for actors: Artistic/Commercial Appeal (sliders), Age (numeric updates birthDate).
+  5) Row click opens a detail overlay with friendly controls plus a toggle to a raw JSON editor (advanced). Apply saves and closes the overlay; Undo/Redo supported.
   6) Export the modified save as a downloadable `.json` file (preserve original filename).
 - UX:
   - Search by any substring of full name.
@@ -74,7 +73,7 @@ Static Web App (MVP)
   - Changes panel with running log and Undo/Redo; sliders record a single change per interaction.
 
 Testing & Validation
-- Use `docs/sample_save_actor_data_fixed.json` for quick iteration.
+- Use `docs/new_format/actor_only_sample.json` for quick iteration with the latest save format; `docs/sample_save_actor_data_fixed.json` remains for reference.
 - Spot‑check a few name IDs against the name map.
 - With large saves, sanity‑check memory and interaction latency after load.
 
@@ -83,9 +82,7 @@ Known Unknowns / TODOs
 - Verify whether `dateAdded` needs a specific value when creating `ART`/`COM` tags.
 - Decide whether to preserve original numeric precision vs normalization (current: normalize to three decimals).
 - Consider streaming or targeted JSON extraction of `characters` for very large saves.
-- Implement additional tabs (Directors, Producers, Writers, Editors) and Movies editor.
-- Add a detail view per entity with expanded fields (contracts, labels, etc.).
-- Provide undo/redo, bulk edits, and keyboard navigation.
+- Confirm any additional studio codes beyond PL/EM/GB/MA/SU/HE and their display names.
 
 Workflow Tips for Agents
 - Keep changes scoped; avoid touching unrelated save content.
