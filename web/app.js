@@ -525,10 +525,11 @@
       // Scalars
       detailEntity.customName = String(detailCustomName.value || '').trim() || null;
       detailEntity.gender = detailGender1.checked ? 1 : 0;
-      if (detailStudioId && detailStudioId.tagName === 'SELECT') {
-        const studioRaw = String(detailStudioId.value || '').trim();
-        detailEntity.studioId = studioRaw === '' ? null : studioRaw;
-      }
+      // Studio selection temporarily disabled (read-only). Leave logic intact for future re-enable.
+      // if (detailStudioId && detailStudioId.tagName === 'SELECT') {
+      //   const studioRaw = String(detailStudioId.value || '').trim();
+      //   detailEntity.studioId = studioRaw === '' ? null : studioRaw;
+      // }
       const mood = Number(detailMood.value); const attitude = Number(detailAttitude.value); const se = Number(detailSelfEsteem.value);
       if (isFinite(mood)) detailEntity.mood = mood.toFixed(3);
       if (isFinite(attitude)) detailEntity.attitude = attitude.toFixed(3);
@@ -580,9 +581,10 @@
         recordEdit({ entity: after, label: 'Gender', path: 'gender', oldValue: String(before.gender ?? ''), newValue: String(after.gender ?? '') });
       }
       // Studio
-      if ((before.studioId ?? '') !== (after.studioId ?? '')) {
-        recordEdit({ entity: after, label: 'Studio', path: 'studioId', oldValue: before.studioId ?? '', newValue: after.studioId ?? '' });
-      }
+      // Studio edits disabled for now
+      // if ((before.studioId ?? '') !== (after.studioId ?? '')) {
+      //   recordEdit({ entity: after, label: 'Studio', path: 'studioId', oldValue: before.studioId ?? '', newValue: after.studioId ?? '' });
+      // }
       // Happiness (mood)
       if ((before.mood ?? '') !== (after.mood ?? '')) {
         recordEdit({ entity: after, label: 'Happiness', path: 'mood', oldValue: before.mood ?? '', newValue: after.mood ?? '' });
