@@ -2549,6 +2549,61 @@
     });
   })();
 
+  // Executives helpers and renderer
+  function executiveDepartmentFor(obj) {
+    const prof = obj.professions || {};
+    const known = [
+      ['CptHR','HR'],
+      ['CptLawyer','Legal'],
+      ['CptFinancier','Finance'],
+      ['CptPR','PR'],
+      ['LieutRelease','Distribution'],
+      ['LieutTech','Engineering'],
+      ['LieutServices','Services'],
+      ['LieutProduction','Production'],
+      ['LieutPost','Post-Production'],
+      ['LieutPre','Pre-Production']
+    ];
+    for (const [key,label] of known) if (key in prof) return label;
+    const first = Object.keys(prof).find(k => k.startsWith('Cpt') || k.startsWith('Lieut'));
+    return first || 'Executive';
+  }
+  function getExecutiveRoleKey(obj){ const prof=obj.professions||{}; return Object.keys(prof).find(k=>k.startsWith('Lieut')||k.startsWith('Cpt')) || null; }
+  function getExecutiveSkill(obj){ const key=getExecutiveRoleKey(obj); const val= key? obj.professions[key]: '0'; return getNumeric(normalizeDecimalString(val)); }
+  let executivesSortState = { key: 'skill', dir: 'desc' };
+  function sortExecutivesList(list){ const dirMul=executivesSortState.dir==='desc'?-1:1; const key=executivesSortState.key; list.sort((a,b)=>{ if(key==='name') return fullNameFor(a).toLowerCase().localeCompare(fullNameFor(b).toLowerCase())*dirMul; let av=0,bv=0; if(key==='dept'){ return executiveDepartmentFor(a).localeCompare(executiveDepartmentFor(b))*dirMul; } else if(key==='skill'){ av=getExecutiveSkill(a); bv=getExecutiveSkill(b); } else if(key==='age'){ av=getNumeric(getAge(a)); bv=getNumeric(getAge(b)); } else if(key==='limit'){ av=getNumeric(normalizeDecimalString(a.limit??a.Limit??'')); bv=getNumeric(normalizeDecimalString(b.limit??b.Limit??'')); } if(av===bv) return 0; return av<bv?-1*dirMul:1*dirMul; }); }
+  function updateExecutivesSortIndicators(){ const ths=document.querySelectorAll('#executivesTable thead th'); ths.forEach((th)=>{ th.classList.remove('sort-asc','sort-desc'); const key=th.getAttribute('data-sort-key'); if(key&&key===executivesSortState.key) th.classList.add(executivesSortState.dir==='desc'?'sort-desc':'sort-asc'); }); }
+  function renderExecutives(){
+    if (!saveLoaded || !executivesTbody) return;
+    if (executivesTableSection) executivesTableSection.hidden = false;
+    if (executivesControls) executivesControls.hidden = false;
+    const q = (executivesSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q ? executives.filter(a => fullNameFor(a).toLowerCase().includes(q)) : executives.slice();
+    sortExecutivesList(filtered);
+    updateExecutivesSortIndicators();
+    if (executivesStatus) executivesStatus.textContent = `${filtered.length} of ${executives.length} executives shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    const frag = document.createDocumentFragment();
+    filtered.forEach((ex) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(ex.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(ex);
+      });
+      tr.addEventListener('pointerdown', () => markFocusedId(ex.id));
+      const tdName=document.createElement('td'); tdName.textContent=fullNameFor(ex); tr.appendChild(tdName);
+      const tdAge=document.createElement('td'); tdAge.textContent= getAge(ex)===''? '': String(getAge(ex)); tr.appendChild(tdAge);
+      const tdDept=document.createElement('td'); tdDept.textContent=executiveDepartmentFor(ex); tr.appendChild(tdDept);
+      const tdSkill=document.createElement('td'); const sw=document.createElement('div'); sw.className='slider-cell'; const r=document.createElement('input'); r.type='range'; r.min='0'; r.max='1'; r.step='0.01'; const skillVal=getExecutiveSkill(ex); r.value=String(skillVal); const sv=document.createElement('span'); sv.className='slider-val'; sv.textContent=formatUnitToTen(skillVal); sw.appendChild(r); sw.appendChild(sv); tdSkill.appendChild(sw); tr.appendChild(tdSkill);
+      r.addEventListener('input', ()=>{ const key=getExecutiveRoleKey(ex); if(!key) return; if(!('initial' in r.dataset)) r.dataset.initial = String(ex.professions?.[key] ?? ''); const norm=Number(r.value).toFixed(3); ex.professions[key]=norm; sv.textContent=formatUnitToTen(norm); });
+      r.addEventListener('change', ()=>{ const key=getExecutiveRoleKey(ex); if(!key) return; const finalVal=Number(r.value).toFixed(3); const initialVal=r.dataset.initial ?? String(finalVal); delete r.dataset.initial; recordEdit({ entity: ex, label: 'Executive Skill', path: `professions.${key}`, oldValue: initialVal, newValue: finalVal }); });
+      const tdLimit=document.createElement('td'); const lw=document.createElement('div'); lw.className='slider-cell'; const lr=document.createElement('input'); lr.type='range'; lr.min='0'; lr.max='1'; lr.step='0.01'; const limitNum=isFinite(Number(ex.limit??ex.Limit))?Number(ex.limit??ex.Limit):0; lr.value=String(limitNum); const lv=document.createElement('span'); lv.className='slider-val'; lv.textContent=formatUnitToTen(limitNum); lw.appendChild(lr); lw.appendChild(lv); tdLimit.appendChild(lw); tr.appendChild(tdLimit);
+      lr.addEventListener('input', ()=>{ const k=getExecutiveRoleKey(ex); const skillFloor=isFinite(Number(ex.professions?.[k]))?Number(ex.professions[k]):0; if(!('initial' in lr.dataset)) lr.dataset.initial=String(ex.limit??ex.Limit??''); if(Number(lr.value)<skillFloor) lr.value=String(skillFloor); const norm=Number(lr.value).toFixed(3); ex.limit=norm; ex.Limit=norm; lv.textContent=formatUnitToTen(norm); });
+      lr.addEventListener('change', ()=>{ const finalVal=Number(lr.value).toFixed(3); const initialVal=lr.dataset.initial ?? String(finalVal); delete lr.dataset.initial; recordEdit({ entity: ex, label: 'Limit', path: 'limit', oldValue: initialVal, newValue: finalVal }); });
+      frag.appendChild(tr);
+    });
+    executivesTbody.replaceChildren(frag);
+  }
   // Directors sorting handlers
   (function attachDirectorsSorting() {
     const ths = document.querySelectorAll('#directorsTable thead th');
