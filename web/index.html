@@ -58,6 +58,7 @@
       <button id="tabbtn-composers" class="tab" role="tab" aria-selected="false" data-tab="composers" aria-controls="tab-composers">Composers</button>
       <button id="tabbtn-cinematographers" class="tab" role="tab" aria-selected="false" data-tab="cinematographers" aria-controls="tab-cinematographers">Cinematographers</button>
       <button id="tabbtn-agents" class="tab" role="tab" aria-selected="false" data-tab="agents" aria-controls="tab-agents">Security Agents</button>
+      <button id="tabbtn-executives" class="tab" role="tab" aria-selected="false" data-tab="executives" aria-controls="tab-executives">Executives</button>
       <button id="tabbtn-movies" class="tab" role="tab" aria-selected="false" data-tab="movies" aria-controls="tab-movies">Movies</button>
     </nav>
 
@@ -288,6 +289,30 @@
             </tr>
           </thead>
           <tbody id="agentsTbody"></tbody>
+        </table>
+      </section>
+    </section>
+    <section id="tab-executives" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-executives">
+      <div id="executivesPlaceholder" class="placeholder"></div>
+      <section id="executivesControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="executivesSearchInput" placeholder="Search executives by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText9">—</span></div>
+        </div>
+        <div id="executivesStatus" class="status"></div>
+      </section>
+      <section id="executivesTableSection" hidden>
+        <table id="executivesTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="dept">Department</th>
+              <th data-sort-key="skill">Role Skill</th>
+              <th data-sort-key="limit">Limit</th>
+            </tr>
+          </thead>
+          <tbody id="executivesTbody"></tbody>
         </table>
       </section>
     </section>

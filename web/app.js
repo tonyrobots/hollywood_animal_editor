@@ -114,6 +114,14 @@
   const agentsTableSection = document.getElementById('agentsTableSection');
   const agentsTbody = document.getElementById('agentsTbody');
   const gameYearText8 = document.getElementById('gameYearText8');
+  // Executives UI
+  const executivesPlaceholder = document.getElementById('executivesPlaceholder');
+  const executivesControls = document.getElementById('executivesControls');
+  const executivesSearchInput = document.getElementById('executivesSearchInput');
+  const executivesStatus = document.getElementById('executivesStatus');
+  const executivesTableSection = document.getElementById('executivesTableSection');
+  const executivesTbody = document.getElementById('executivesTbody');
+  const gameYearText9 = document.getElementById('gameYearText9');
   // Directors UI
   const directorsTableSection = document.getElementById('directorsTableSection');
   const directorsTbody = document.getElementById('directorsTbody');
@@ -147,6 +155,7 @@
   let saveObj = null;           // whole parsed save JSON
   let charactersArr = null;     // reference to the characters array in saveObj
   let actors = [];              // derived list of actor objects
+  let executives = [];          // derived list of executive objects (Lieut* and Cpt*)
   let names = [];               // CHARACTER_NAMES.locStrings array
   let nameMapLoaded = false;
   let saveLoaded = false;
@@ -419,7 +428,7 @@
       refreshChangeUI();
       // no resort; refresh visible tables only
       render(); renderStudio();
-      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
+      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies();
     });
     if (redoBtn) redoBtn.addEventListener('click', () => {
       const entry = redoStack.pop();
@@ -431,7 +440,7 @@
       if (changesList) { const li = document.createElement('li'); li.textContent = entry.message; changesList.appendChild(li); }
       refreshChangeUI();
       render(); renderStudio();
-      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
+      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies();
     });
   }
 
@@ -631,7 +640,7 @@
       detailStatus.textContent = 'Applied. Review table for changes.';
     }
     // Rerender active views
-    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies(); renderStudio();
+    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies(); renderStudio();
     // Close overlay after applying
     closeDetailEditor();
   });
@@ -865,6 +874,12 @@
   function isActorEntry(obj) {
     const prof = obj && obj.professions;
     return !!(prof && typeof prof === 'object' && ('Actor' in prof));
+  }
+
+  function isExecutiveEntry(obj) {
+    const prof = obj && obj.professions;
+    if (!prof || typeof prof !== 'object') return false;
+    return Object.keys(prof).some(k => k.startsWith('Lieut') || k.startsWith('Cpt'));
   }
 
   function isRoleEntry(obj, role) {
@@ -1155,7 +1170,7 @@
 
   // Tabs
   function activateTab(name) {
-    const valid = new Set(['studio','actors','directors','producers','writers','editors','movies','composers','cinematographers','agents']);
+    const valid = new Set(['studio','actors','directors','producers','writers','editors','movies','composers','cinematographers','agents','executives']);
     if (!valid.has(name)) name = 'actors';
     tabs.forEach(btn => {
       const match = btn.getAttribute('data-tab') === name;
@@ -1175,6 +1190,7 @@
     // When activating actors, ensure the table renders
     if (name === 'studio') renderStudio();
     if (name === 'actors') render();
+    if (name === 'executives') renderExecutives();
     if (name === 'directors') renderDirectors();
     if (name === 'producers') renderProducers();
     if (name === 'writers') renderWriters();
@@ -1386,6 +1402,7 @@
     if (gameYearText6) gameYearText6.textContent = gy;
     if (gameYearText7) gameYearText7.textContent = gy;
     if (gameYearText8) gameYearText8.textContent = gy;
+    if (gameYearText9) gameYearText9.textContent = gy;
     actors = charactersArr.filter(isActorEntry);
     // derive other roles for placeholder tabs
     directors = charactersArr.filter(obj => isRoleEntry(obj, 'Director'));
@@ -1396,6 +1413,7 @@
     composers = charactersArr.filter(obj => isRoleEntry(obj, 'Composer'));
     cinematographers = charactersArr.filter(obj => isRoleEntry(obj, 'Cinematographer'));
     agents = charactersArr.filter(obj => isRoleEntry(obj, 'Agent'));
+    executives = charactersArr.filter(obj => isExecutiveEntry(obj));
 
     // Clear placeholder messages
     if (directorsPlaceholder) directorsPlaceholder.textContent = '';
@@ -1431,6 +1449,8 @@
     if (isAgentsActive) renderAgents();
     const isMoviesActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'movies');
     if (isMoviesActive) renderMovies();
+    const isExecutivesActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'executives');
+    if (isExecutivesActive) renderExecutives();
     // Collapse loaders if both files are loaded
     if (loadersSection) {
       loadersSection.style.display = (saveLoaded && nameMapLoaded) ? 'none' : '';
@@ -2500,6 +2520,7 @@
   if (composersSearchInput) composersSearchInput.addEventListener('input', () => renderComposers());
   if (cinematographersSearchInput) cinematographersSearchInput.addEventListener('input', () => renderCinematographers());
   if (agentsSearchInput) agentsSearchInput.addEventListener('input', () => renderAgents());
+  if (executivesSearchInput) executivesSearchInput.addEventListener('input', () => renderExecutives());
   if (moviesSearchInput) moviesSearchInput.addEventListener('input', () => renderMovies());
   if (composersSearchInput) composersSearchInput.addEventListener('input', () => renderComposers());
   if (cinematographersSearchInput) cinematographersSearchInput.addEventListener('input', () => renderCinematographers());
@@ -2633,6 +2654,18 @@
         if(agentsSortState.key===key) agentsSortState.dir = agentsSortState.dir==='desc'?'asc':'desc';
         else { agentsSortState.key=key; agentsSortState.dir='desc'; }
         updateAgentsSortIndicators(); renderAgents();
+      });
+    });
+  })();
+  // Executives sorting handlers
+  (function attachExecutivesSorting(){
+    const ths=document.querySelectorAll('#executivesTable thead th');
+    ths.forEach((th)=>{
+      const key=th.getAttribute('data-sort-key'); if(!key) return;
+      th.addEventListener('click',()=>{
+        if(executivesSortState.key===key) executivesSortState.dir = executivesSortState.dir==='desc'?'asc':'desc';
+        else { executivesSortState.key=key; executivesSortState.dir='desc'; }
+        updateExecutivesSortIndicators(); renderExecutives();
       });
     });
   })();
