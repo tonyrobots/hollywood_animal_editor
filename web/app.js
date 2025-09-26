@@ -2652,10 +2652,11 @@
     if (executivesTableSection) executivesTableSection.hidden = false;
     if (executivesControls) executivesControls.hidden = false;
     const q = (executivesSearchInput?.value || '').toLowerCase().trim();
-    const filtered = q ? executives.filter(a => fullNameFor(a).toLowerCase().includes(q)) : executives.slice();
+    const base = executives.filter(ex => Number(ex.state) === 2);
+    const filtered = q ? base.filter(a => fullNameFor(a).toLowerCase().includes(q)) : base.slice();
     sortExecutivesList(filtered);
     updateExecutivesSortIndicators();
-    if (executivesStatus) executivesStatus.textContent = `${filtered.length} of ${executives.length} management shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (executivesStatus) executivesStatus.textContent = `${filtered.length} of ${base.length} management shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
     const frag = document.createDocumentFragment();
     filtered.forEach((ex) => {
       const tr = document.createElement('tr');
