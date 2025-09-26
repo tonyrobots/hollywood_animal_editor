@@ -2,7 +2,7 @@ Hollywood Animal — Savegame Editor
 
 Overview
 - Local, static web app to edit “Hollywood Animal” save files.
-- Tabs: Studio, Actors, Directors, Producers, Writers, Editors, Composers, Cinematographers, Security Agents, Executives, Movies.
+- Tabs: Studio, Actors, Directors, Producers, Writers, Editors, Composers, Cinematographers, Security Agents, Management, Movies.
 - Editing Support (Actors and other professions):
   - Acting Skill (`professions.Actor`) via slider (0–1, step 0.01)
   - Limit (`limit` and `Limit` kept in sync) via slider (0–1, step 0.01)
@@ -73,7 +73,7 @@ Detail View & Advanced Editor
 - Click any row (outside inputs) to open a detail overlay.
 - Friendly form exposes: Custom Name (overrides ID lookups), Gender, Studio (temporarily read-only), Happiness (mood), Loyalty (attitude), Self Esteem, Readiness for Tricks, Skill, Limit, and for actors: Artistic/Commercial Appeal. Sliders show x10 formatted values; Skill ≤ Limit enforced; `limit`/`Limit` kept in sync.
 
-Executives tab
+Management tab
 - Lists corporate (Cpt*) and lieutenant (Lieut*) roles under one view (e.g., HR, Legal, Finance, PR; Distribution, Engineering, etc.).
 - Columns: Department, Level, EXP, Happiness (0–100 slider, saves 0–1), Morale (0–100 slider, saves 0–1), Upgrade-Money, Upgrade-Influence.
 - Age is editable with the same behavior as other tabs.

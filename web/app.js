@@ -2655,7 +2655,7 @@
     const filtered = q ? executives.filter(a => fullNameFor(a).toLowerCase().includes(q)) : executives.slice();
     sortExecutivesList(filtered);
     updateExecutivesSortIndicators();
-    if (executivesStatus) executivesStatus.textContent = `${filtered.length} of ${executives.length} executives shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (executivesStatus) executivesStatus.textContent = `${filtered.length} of ${executives.length} management shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
     const frag = document.createDocumentFragment();
     filtered.forEach((ex) => {
       const tr = document.createElement('tr');
@@ -2676,8 +2676,8 @@
       const tdAtt=document.createElement('td'); const aw=document.createElement('div'); aw.className='slider-cell'; const ar=document.createElement('input'); ar.type='range'; ar.min='0'; ar.max='1'; ar.step='0.01'; const anum=isFinite(Number(ex.attitude))?Number(ex.attitude):0; ar.value=String(anum.toFixed(3)); const av=document.createElement('span'); av.className='slider-val'; av.textContent=formatUnitToHundred(anum); aw.appendChild(ar); aw.appendChild(av); tdAtt.appendChild(aw); tr.appendChild(tdAtt);
       ar.addEventListener('input', ()=>{ if(!('initial' in ar.dataset)) ar.dataset.initial=String(ex.attitude ?? ''); const norm=Number(ar.value).toFixed(3); ex.attitude=norm; av.textContent=formatUnitToHundred(norm); });
       ar.addEventListener('change', ()=>{ const finalVal=Number(ar.value).toFixed(3); const initialVal=ar.dataset.initial ?? String(finalVal); delete ar.dataset.initial; recordEdit({ entity: ex, label: 'Morale', path: 'attitude', oldValue: initialVal, newValue: finalVal }); });
-      const tdUM=document.createElement('td'); tdUM.textContent=`${Math.round((Number(ex.BonusCardMoney||0))*100/ (ex.BonusCardMoney>0?1:1))}%`; tr.appendChild(tdUM);
-      const tdUI=document.createElement('td'); tdUI.textContent=`${Math.round((Number(ex.BonusCardInfluencePoints||0))*100/ (ex.BonusCardInfluencePoints>0?1:1))}%`; tr.appendChild(tdUI);
+      const tdUM=document.createElement('td'); tdUM.textContent=`${Math.round((Number(ex.BonusCardMoney||0))*10)}%`; tr.appendChild(tdUM);
+      const tdUI=document.createElement('td'); tdUI.textContent=`${Math.round((Number(ex.BonusCardInfluencePoints||0))*10)}%`; tr.appendChild(tdUI);
       frag.appendChild(tr);
     });
     executivesTbody.replaceChildren(frag);
