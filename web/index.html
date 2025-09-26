@@ -57,7 +57,7 @@
       <button id="tabbtn-editors" class="tab" role="tab" aria-selected="false" data-tab="editors" aria-controls="tab-editors">Editors</button>
       <button id="tabbtn-composers" class="tab" role="tab" aria-selected="false" data-tab="composers" aria-controls="tab-composers">Composers</button>
       <button id="tabbtn-cinematographers" class="tab" role="tab" aria-selected="false" data-tab="cinematographers" aria-controls="tab-cinematographers">Cinematographers</button>
-      <button id="tabbtn-agents" class="tab" role="tab" aria-selected="false" data-tab="agents" aria-controls="tab-agents">Agents</button>
+      <button id="tabbtn-agents" class="tab" role="tab" aria-selected="false" data-tab="agents" aria-controls="tab-agents">Security Agents</button>
       <button id="tabbtn-movies" class="tab" role="tab" aria-selected="false" data-tab="movies" aria-controls="tab-movies">Movies</button>
     </nav>
 
@@ -282,7 +282,7 @@
             <tr>
               <th style="min-width: 240px;" data-sort-key="name">Name</th>
               <th data-sort-key="age">Age</th>
-              <th data-sort-key="skill">Agent Skill</th>
+              <th data-sort-key="skill">Security Agent Skill</th>
               <th data-sort-key="limit">Limit</th>
               <th data-sort-key="movies">Movies</th>
             </tr>
@@ -350,11 +350,11 @@
               </div>
               <div class="detail-field">
                 <label for="detailMood">Happiness <span class="formatted-val" id="detailMoodFmt"></span></label>
-                <div class="value-row"><input type="range" id="detailMood" min="-1" max="1" step="0.001" /><span class="detail-slider-val" id="detailMoodNum"></span></div>
+                <div class="value-row"><input type="range" id="detailMood" min="0" max="1" step="0.001" /><span class="detail-slider-val" id="detailMoodNum"></span></div>
               </div>
               <div class="detail-field">
                 <label for="detailAttitude">Loyalty <span class="formatted-val" id="detailAttitudeFmt"></span></label>
-                <div class="value-row"><input type="range" id="detailAttitude" min="-1" max="1" step="0.001" /><span class="detail-slider-val" id="detailAttitudeNum"></span></div>
+                <div class="value-row"><input type="range" id="detailAttitude" min="0" max="1" step="0.001" /><span class="detail-slider-val" id="detailAttitudeNum"></span></div>
               </div>
               <div class="detail-field">
                 <label for="detailSelfEsteem">Self Esteem <span class="formatted-val" id="detailSelfEsteemFmt"></span></label>
@@ -363,6 +363,10 @@
               <div class="detail-field">
                 <label for="detailReadiness">Readiness for Tricks</label>
                 <div class="value-row"><input type="number" id="detailReadiness" /></div>
+              </div>
+              <div class="detail-field">
+                <label for="detailState">State <span class="hint">("0" = free agent, "2" = Player Studio)</span></label>
+                <div class="value-row"><input type="text" id="detailState" /></div>
               </div>
               <div class="detail-field">
                 <label for="detailSkill">Skill <span class="formatted-val" id="detailSkillFmt"></span></label>

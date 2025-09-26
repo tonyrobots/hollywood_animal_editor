@@ -59,6 +59,7 @@
   const detailAttitude = document.getElementById('detailAttitude');
   const detailSelfEsteem = document.getElementById('detailSelfEsteem');
   const detailReadiness = document.getElementById('detailReadiness');
+  const detailState = document.getElementById('detailState');
   const detailSkill = document.getElementById('detailSkill');
   const detailLimit = document.getElementById('detailLimit');
   const detailArt = document.getElementById('detailArt');
@@ -259,6 +260,13 @@
     return (num * 10).toFixed(1);
   }
 
+  function formatUnitToHundred(value) {
+    if (value === undefined || value === null || value === '') return '';
+    const num = Number(String(value).replace(',', '.'));
+    if (!isFinite(num)) return '';
+    return (num * 100).toFixed(0);
+  }
+
   function refreshChangeUI() {
     if (changesPanel) changesPanel.hidden = changeLog.length === 0;
     if (changesCount) changesCount.textContent = String(changeLog.length);
@@ -319,8 +327,10 @@
       detailSelfEsteem.value = String(Number(detailEntity.selfEsteem ?? 0).toFixed(3));
       // Readiness (integer-ish scalar)
       if (detailReadiness) detailReadiness.value = detailEntity.readinessForTricks == null ? '' : String(detailEntity.readinessForTricks);
-      if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToTen(Number(detailEntity.mood ?? 0));
-      if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToTen(Number(detailEntity.attitude ?? 0));
+      // State (numeric or null)
+      if (detailState) detailState.value = detailEntity.state == null ? '' : String(detailEntity.state);
+      if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToHundred(Number(detailEntity.mood ?? 0));
+      if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToHundred(Number(detailEntity.attitude ?? 0));
       if (detailSelfEsteemFmt) detailSelfEsteemFmt.textContent = formatUnitToTen(Number(detailEntity.selfEsteem ?? 0));
       if (detailMoodNum) detailMoodNum.textContent = String(Number(detailEntity.mood ?? 0).toFixed(3));
       if (detailAttitudeNum) detailAttitudeNum.textContent = String(Number(detailEntity.attitude ?? 0).toFixed(3));
@@ -450,11 +460,11 @@
 
   // Detail sliders: live display updates (x10) without recording changes until Apply
   if (detailMood) detailMood.addEventListener('input', () => {
-    if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToTen(Number(detailMood.value));
+    if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToHundred(Number(detailMood.value));
     if (detailMoodNum) detailMoodNum.textContent = String(Number(detailMood.value).toFixed(3));
   });
   if (detailAttitude) detailAttitude.addEventListener('input', () => {
-    if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToTen(Number(detailAttitude.value));
+    if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToHundred(Number(detailAttitude.value));
     if (detailAttitudeNum) detailAttitudeNum.textContent = String(Number(detailAttitude.value).toFixed(3));
   });
   if (detailSelfEsteem) detailSelfEsteem.addEventListener('input', () => {
@@ -524,6 +534,14 @@
       if (isFinite(attitude)) detailEntity.attitude = attitude.toFixed(3);
       if (isFinite(se)) detailEntity.selfEsteem = se.toFixed(3);
       const ready = Number(detailReadiness.value); if (isFinite(ready)) detailEntity.readinessForTricks = Math.round(ready);
+      // State (text input -> number or null)
+      if (detailState) {
+        const raw = String(detailState.value || '').trim();
+        if (raw === '') detailEntity.state = null; else {
+          const asNum = Number(raw);
+          detailEntity.state = isFinite(asNum) ? asNum : raw;
+        }
+      }
       // Skill/Limit
       if (!detailEntity.professions || typeof detailEntity.professions !== 'object') detailEntity.professions = {};
       const skill = Number(detailSkill.value); if (isFinite(skill)) detailEntity.professions[writeKey] = skill.toFixed(3);
@@ -580,6 +598,10 @@
       // Readiness for Tricks
       if ((before.readinessForTricks ?? '') !== (after.readinessForTricks ?? '')) {
         recordEdit({ entity: after, label: 'Readiness for Tricks', path: 'readinessForTricks', oldValue: String(before.readinessForTricks ?? ''), newValue: String(after.readinessForTricks ?? '') });
+      }
+      // State
+      if ((before.state ?? '') !== (after.state ?? '')) {
+        recordEdit({ entity: after, label: 'State', path: 'state', oldValue: String(before.state ?? ''), newValue: String(after.state ?? '') });
       }
       // Skill
       const beforeSkill = get(before, `professions.${writeKey}`);
@@ -2172,7 +2194,7 @@
     cinematographersTbody.replaceChildren(frag);
   }
 
-  // --- Agents tab ---
+  // --- Security Agents tab ---
   let agentsSortState = { key: 'skill', dir: 'desc' };
   function sortAgentsList(list){ const dirMul=agentsSortState.dir==='desc'?-1:1; const key=agentsSortState.key; list.sort((a,b)=>{ if(key==='name') return fullNameFor(a).toLowerCase().localeCompare(fullNameFor(b).toLowerCase())*dirMul; let av=0,bv=0; if(key==='skill'){ av=getNumeric(normalizeDecimalString(a.professions?.Agent??'')); bv=getNumeric(normalizeDecimalString(b.professions?.Agent??'')); } else if(key==='age'){ av=getNumeric(getAge(a)); bv=getNumeric(getAge(b)); } else if(key==='limit'){ av=getNumeric(normalizeDecimalString(a.limit??a.Limit??'')); bv=getNumeric(normalizeDecimalString(b.limit??b.Limit??'')); } else if(key==='movies'){ av=moviesCountForRole(a,'Agent'); bv=moviesCountForRole(b,'Agent'); } if(av===bv) return 0; return av<bv?-1*dirMul:1*dirMul; }); }
   function updateAgentsSortIndicators(){ const ths=document.querySelectorAll('#agentsTable thead th'); ths.forEach((th)=>{ th.classList.remove('sort-asc','sort-desc'); const key=th.getAttribute('data-sort-key'); if(key&&key===agentsSortState.key) th.classList.add(agentsSortState.dir==='desc'?'sort-desc':'sort-asc'); }); }
@@ -2184,7 +2206,7 @@
     const filtered = q ? agents.filter(a => fullNameFor(a).toLowerCase().includes(q)) : agents.slice();
     sortAgentsList(filtered);
     updateAgentsSortIndicators();
-    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${agents.length} agents shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${agents.length} security agents shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
     const frag = document.createDocumentFragment();
     filtered.forEach((ag) => {
       const tr = document.createElement('tr');
@@ -2224,7 +2246,7 @@
         const finalVal = Number(skillRange.value).toFixed(3);
         const initialVal = skillRange.dataset.initial ?? String(finalVal);
         delete skillRange.dataset.initial;
-        recordEdit({ entity: ag, label: 'Agent Skill', path: 'professions.Agent', oldValue: initialVal, newValue: finalVal });
+        recordEdit({ entity: ag, label: 'Security Agent Skill', path: 'professions.Agent', oldValue: initialVal, newValue: finalVal });
         if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
           recordEdit({ entity: ag, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
         }
