@@ -2,12 +2,12 @@ Hollywood Animal — Savegame Editor
 
 Overview
 - Local, static web app to edit “Hollywood Animal” save files.
-- Tabs: Actors (implemented), Directors, Producers, Writers, Editors, Composers, Cinematographers, Agents (lists with sliders), Movies (read-only table).
+- Tabs: Studio, Actors, Directors, Producers, Writers, Editors, Composers, Cinematographers, Security Agents, Executives, Movies.
 - Editing Support (Actors and other professions):
   - Acting Skill (`professions.Actor`) via slider (0–1, step 0.01)
   - Limit (`limit` and `Limit` kept in sync) via slider (0–1, step 0.01)
   - ART and COM ratings under `whiteTagsNEW` (sliders with tick marks; UI shows 0.0–10.0, saves normalized strings)
-  - Age column (derived from in‑game year) — editing age updates `birthDate` year
+- Age column (derived from in‑game year) — editing age updates `birthDate` year. Age is editable across all tabs.
 
 What You Need
 - A browser (Chrome/Edge/Firefox recommended).
@@ -71,6 +71,11 @@ License
 
 Detail View & Advanced Editor
 - Click any row (outside inputs) to open a detail overlay.
-- Friendly form exposes: Custom Name (overrides ID lookups), Gender, Studio, Happiness (mood), Loyalty (attitude), Self Esteem, Readiness for Tricks, Skill, Limit, and for actors: Artistic/Commercial Appeal. Sliders show x10 formatted values; Skill ≤ Limit enforced; `limit`/`Limit` kept in sync.
+- Friendly form exposes: Custom Name (overrides ID lookups), Gender, Studio (temporarily read-only), Happiness (mood), Loyalty (attitude), Self Esteem, Readiness for Tricks, Skill, Limit, and for actors: Artistic/Commercial Appeal. Sliders show x10 formatted values; Skill ≤ Limit enforced; `limit`/`Limit` kept in sync.
+
+Executives tab
+- Lists corporate (Cpt*) and lieutenant (Lieut*) roles under one view (e.g., HR, Legal, Finance, PR; Distribution, Engineering, etc.).
+- Columns: Department, Level, EXP, Happiness (0–100 slider, saves 0–1), Morale (0–100 slider, saves 0–1), Upgrade-Money, Upgrade-Influence.
+- Age is editable with the same behavior as other tabs.
 - Studio picker includes: None, PL (Player Studio; labeled from `StudioName` in save when present), EM (Evergreen Movies), GB (Gerstein Bros.), MA (Marginese), SU (Supreme), HE (Hephaestus); unknown codes are appended as “CODE – Unknown Studio”.
 - A red “Direct JSON edit (advanced users only!)” link toggles the raw JSON editor. Actions: Format/Copy/Apply. Apply is undoable and closes the overlay.

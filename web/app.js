@@ -1484,9 +1484,26 @@
       tdName.textContent = fullNameFor(d);
       tr.appendChild(tdName);
 
-      // Age (readonly, derived)
+      // Age (editable)
       const tdAge = document.createElement('td');
-      tdAge.textContent = getAge(d) === '' ? '' : String(getAge(d));
+      const ageInput = document.createElement('input');
+      ageInput.type = 'number'; ageInput.min = '0'; ageInput.max = '200';
+      const currentAge = getAge(d);
+      ageInput.value = currentAge === '' ? '' : String(currentAge);
+      ageInput.placeholder = gameYear ? '—' : 'Set game year';
+      ageInput.addEventListener('change', () => {
+        if (!gameYear) return;
+        const newAge = Number(ageInput.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInput.value = currentAge; return; }
+        const parts = parseBirthDateParts(d.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = d.birthDate;
+        d.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: d, label: 'Age', path: 'birthDate', oldValue: prev, newValue: d.birthDate });
+      });
+      ageInput.addEventListener('focus', () => markFocusedId(d.id));
+      tdAge.appendChild(ageInput);
       tr.appendChild(tdAge);
 
       // Director Skill (slider)
@@ -1674,7 +1691,20 @@
       if (focusedEntityId != null && String(focusedEntityId) === String(p.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td');
       tdName.textContent = fullNameFor(p); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(p) === '' ? '' : String(getAge(p)); tr.appendChild(tdAge);
+      const tdAge = document.createElement('td');
+      const ageInputP = document.createElement('input'); ageInputP.type='number'; ageInputP.min='0'; ageInputP.max='200';
+      const currentAgeP = getAge(p); ageInputP.value = currentAgeP === '' ? '' : String(currentAgeP); ageInputP.placeholder = gameYear ? '—' : 'Set game year';
+      ageInputP.addEventListener('change', () => {
+        if (!gameYear) return; const newAge = Number(ageInputP.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInputP.value = currentAgeP; return; }
+        const parts = parseBirthDateParts(p.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = p.birthDate; p.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: p, label: 'Age', path: 'birthDate', oldValue: prev, newValue: p.birthDate });
+      });
+      ageInputP.addEventListener('focus', () => markFocusedId(p.id));
+      tdAge.appendChild(ageInputP); tr.appendChild(tdAge);
       // Skill slider
       const tdSkill = document.createElement('td');
       const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
@@ -1792,7 +1822,20 @@
       tr.addEventListener('pointerdown', () => markFocusedId(w.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(w.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(w); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(w) === '' ? '' : String(getAge(w)); tr.appendChild(tdAge);
+      const tdAgeW = document.createElement('td');
+      const ageInputW = document.createElement('input'); ageInputW.type='number'; ageInputW.min='0'; ageInputW.max='200';
+      const currentAgeW = getAge(w); ageInputW.value = currentAgeW === '' ? '' : String(currentAgeW); ageInputW.placeholder = gameYear ? '—' : 'Set game year';
+      ageInputW.addEventListener('change', () => {
+        if (!gameYear) return; const newAge = Number(ageInputW.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInputW.value = currentAgeW; return; }
+        const parts = parseBirthDateParts(w.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = w.birthDate; w.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: w, label: 'Age', path: 'birthDate', oldValue: prev, newValue: w.birthDate });
+      });
+      ageInputW.addEventListener('focus', () => markFocusedId(w.id));
+      tdAgeW.appendChild(ageInputW); tr.appendChild(tdAgeW);
       // Skill slider
       const tdSkill = document.createElement('td'); const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
       const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
@@ -1905,7 +1948,20 @@
       tr.addEventListener('pointerdown', () => markFocusedId(ed.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(ed.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ed); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(ed) === '' ? '' : String(getAge(ed)); tr.appendChild(tdAge);
+      const tdAgeE = document.createElement('td');
+      const ageInputE = document.createElement('input'); ageInputE.type='number'; ageInputE.min='0'; ageInputE.max='200';
+      const currentAgeE = getAge(ed); ageInputE.value = currentAgeE === '' ? '' : String(currentAgeE); ageInputE.placeholder = gameYear ? '—' : 'Set game year';
+      ageInputE.addEventListener('change', () => {
+        if (!gameYear) return; const newAge = Number(ageInputE.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInputE.value = currentAgeE; return; }
+        const parts = parseBirthDateParts(ed.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = ed.birthDate; ed.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: ed, label: 'Age', path: 'birthDate', oldValue: prev, newValue: ed.birthDate });
+      });
+      ageInputE.addEventListener('focus', () => markFocusedId(ed.id));
+      tdAgeE.appendChild(ageInputE); tr.appendChild(tdAgeE);
       // Skill slider
       const tdSkill = document.createElement('td'); const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
       const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
@@ -2053,7 +2109,20 @@
       tr.addEventListener('pointerdown', () => markFocusedId(c.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(c.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(c); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(c) === '' ? '' : String(getAge(c)); tr.appendChild(tdAge);
+      const tdAgeC = document.createElement('td');
+      const ageInputC = document.createElement('input'); ageInputC.type='number'; ageInputC.min='0'; ageInputC.max='200';
+      const currentAgeC = getAge(c); ageInputC.value = currentAgeC === '' ? '' : String(currentAgeC); ageInputC.placeholder = gameYear ? '—' : 'Set game year';
+      ageInputC.addEventListener('change', () => {
+        if (!gameYear) return; const newAge = Number(ageInputC.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInputC.value = currentAgeC; return; }
+        const parts = parseBirthDateParts(c.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = c.birthDate; c.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: c, label: 'Age', path: 'birthDate', oldValue: prev, newValue: c.birthDate });
+      });
+      ageInputC.addEventListener('focus', () => markFocusedId(c.id));
+      tdAgeC.appendChild(ageInputC); tr.appendChild(tdAgeC);
       const tdSkill = document.createElement('td');
       const skillWrap = document.createElement('div'); skillWrap.className='slider-cell';
       const skillRange=document.createElement('input'); skillRange.type='range'; skillRange.min='0'; skillRange.max='1'; skillRange.step='0.01';
@@ -2240,7 +2309,12 @@
       tr.addEventListener('pointerdown', () => markFocusedId(ag.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(ag.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ag); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(ag) === '' ? '' : String(getAge(ag)); tr.appendChild(tdAge);
+      const tdAge = document.createElement('td');
+      const ageInputAg=document.createElement('input'); ageInputAg.type='number'; ageInputAg.min='0'; ageInputAg.max='200';
+      const currentAgeAg=getAge(ag); ageInputAg.value=currentAgeAg===''?'':String(currentAgeAg); ageInputAg.placeholder=gameYear?'—':'Set game year';
+      ageInputAg.addEventListener('change',()=>{ if(!gameYear) return; const newAge=Number(ageInputAg.value); if(!isFinite(newAge)||newAge<0||newAge>200){ ageInputAg.value=currentAgeAg; return;} const parts=parseBirthDateParts(ag.birthDate)||{day:1,month:1,year:1}; const newYear=Math.floor(gameYear-Math.floor(newAge)); const safeYear=Math.min(Math.max(newYear,1850),2100); const prev=ag.birthDate; ag.birthDate=formatBirthDate(parts.day,parts.month,safeYear); recordEdit({ entity: ag, label: 'Age', path: 'birthDate', oldValue: prev, newValue: ag.birthDate }); });
+      ageInputAg.addEventListener('focus',()=>markFocusedId(ag.id));
+      tdAge.appendChild(ageInputAg); tr.appendChild(tdAge);
       // Skill slider
       const tdSkill = document.createElement('td');
       const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
@@ -2592,7 +2666,7 @@
       });
       tr.addEventListener('pointerdown', () => markFocusedId(ex.id));
       const tdName=document.createElement('td'); tdName.textContent=fullNameFor(ex); tr.appendChild(tdName);
-      const tdAge=document.createElement('td'); tdAge.textContent= getAge(ex)===''? '': String(getAge(ex)); tr.appendChild(tdAge);
+      const tdAge=document.createElement('td'); const ageInputEx=document.createElement('input'); ageInputEx.type='number'; ageInputEx.min='0'; ageInputEx.max='200'; const currentAgeEx=getAge(ex); ageInputEx.value=currentAgeEx===''?'':String(currentAgeEx); ageInputEx.placeholder=gameYear?'—':'Set game year'; ageInputEx.addEventListener('change',()=>{ if(!gameYear) return; const newAge=Number(ageInputEx.value); if(!isFinite(newAge)||newAge<0||newAge>200){ ageInputEx.value=currentAgeEx; return;} const parts=parseBirthDateParts(ex.birthDate)||{day:1,month:1,year:1}; const newYear=Math.floor(gameYear-Math.floor(newAge)); const safeYear=Math.min(Math.max(newYear,1850),2100); const prev=ex.birthDate; ex.birthDate=formatBirthDate(parts.day,parts.month,safeYear); recordEdit({ entity: ex, label: 'Age', path: 'birthDate', oldValue: prev, newValue: ex.birthDate }); }); ageInputEx.addEventListener('focus',()=>markFocusedId(ex.id)); tdAge.appendChild(ageInputEx); tr.appendChild(tdAge);
       const tdDept=document.createElement('td'); tdDept.textContent=executiveDepartmentFor(ex); tr.appendChild(tdDept);
       const tdLevel=document.createElement('td'); tdLevel.textContent=String(ex.level ?? '—'); tr.appendChild(tdLevel);
       const tdXP=document.createElement('td'); tdXP.textContent=String(ex.xp ?? '0'); tr.appendChild(tdXP);
