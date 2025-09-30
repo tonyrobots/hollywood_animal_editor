@@ -57,7 +57,8 @@
       <button id="tabbtn-editors" class="tab" role="tab" aria-selected="false" data-tab="editors" aria-controls="tab-editors">Editors</button>
       <button id="tabbtn-composers" class="tab" role="tab" aria-selected="false" data-tab="composers" aria-controls="tab-composers">Composers</button>
       <button id="tabbtn-cinematographers" class="tab" role="tab" aria-selected="false" data-tab="cinematographers" aria-controls="tab-cinematographers">Cinematographers</button>
-      <button id="tabbtn-agents" class="tab" role="tab" aria-selected="false" data-tab="agents" aria-controls="tab-agents">Agents</button>
+      <button id="tabbtn-agents" class="tab" role="tab" aria-selected="false" data-tab="agents" aria-controls="tab-agents">Security Agents</button>
+      <button id="tabbtn-executives" class="tab" role="tab" aria-selected="false" data-tab="executives" aria-controls="tab-executives">Management</button>
       <button id="tabbtn-movies" class="tab" role="tab" aria-selected="false" data-tab="movies" aria-controls="tab-movies">Movies</button>
     </nav>
 
@@ -282,12 +283,40 @@
             <tr>
               <th style="min-width: 240px;" data-sort-key="name">Name</th>
               <th data-sort-key="age">Age</th>
-              <th data-sort-key="skill">Agent Skill</th>
+              <th data-sort-key="skill">Security Agent Skill</th>
               <th data-sort-key="limit">Limit</th>
               <th data-sort-key="movies">Movies</th>
             </tr>
           </thead>
           <tbody id="agentsTbody"></tbody>
+        </table>
+      </section>
+    </section>
+    <section id="tab-executives" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-executives">
+      <div id="executivesPlaceholder" class="placeholder"></div>
+      <section id="executivesControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="executivesSearchInput" placeholder="Search management by name..." />
+          <div style="display:flex; align-items:center; gap:6px;">Game Year: <span id="gameYearText9">—</span></div>
+        </div>
+        <div id="executivesStatus" class="status"></div>
+      </section>
+      <section id="executivesTableSection" hidden>
+        <table id="executivesTable">
+          <thead>
+            <tr>
+              <th style="min-width: 240px;" data-sort-key="name">Name</th>
+              <th data-sort-key="age">Age</th>
+              <th data-sort-key="dept">Department</th>
+              <th data-sort-key="level">Level</th>
+              <th data-sort-key="exp">EXP</th>
+              <th data-sort-key="mood">Happiness</th>
+              <th data-sort-key="attitude">Morale</th>
+              <th data-sort-key="umoney">Upgrade-Money</th>
+              <th data-sort-key="uinfluence">Upgrade-Influence</th>
+            </tr>
+          </thead>
+          <tbody id="executivesTbody"></tbody>
         </table>
       </section>
     </section>
@@ -343,18 +372,18 @@
                 </div>
               </div>
               <div class="detail-field">
-                <label for="detailStudioId">Studio <span class="muted">(PL = Player Studio)</span></label>
+                <label for="detailStudioId">Studio <span class="muted">(temporarily read-only; PL = Player Studio)</span></label>
                 <div class="value-row">
-                  <select id="detailStudioId"></select>
+                  <select id="detailStudioId" disabled></select>
                 </div>
               </div>
               <div class="detail-field">
                 <label for="detailMood">Happiness <span class="formatted-val" id="detailMoodFmt"></span></label>
-                <div class="value-row"><input type="range" id="detailMood" min="-1" max="1" step="0.001" /><span class="detail-slider-val" id="detailMoodNum"></span></div>
+                <div class="value-row"><input type="range" id="detailMood" min="0" max="1" step="0.001" /><span class="detail-slider-val" id="detailMoodNum"></span></div>
               </div>
               <div class="detail-field">
                 <label for="detailAttitude">Loyalty <span class="formatted-val" id="detailAttitudeFmt"></span></label>
-                <div class="value-row"><input type="range" id="detailAttitude" min="-1" max="1" step="0.001" /><span class="detail-slider-val" id="detailAttitudeNum"></span></div>
+                <div class="value-row"><input type="range" id="detailAttitude" min="0" max="1" step="0.001" /><span class="detail-slider-val" id="detailAttitudeNum"></span></div>
               </div>
               <div class="detail-field">
                 <label for="detailSelfEsteem">Self Esteem <span class="formatted-val" id="detailSelfEsteemFmt"></span></label>
@@ -363,6 +392,10 @@
               <div class="detail-field">
                 <label for="detailReadiness">Readiness for Tricks</label>
                 <div class="value-row"><input type="number" id="detailReadiness" /></div>
+              </div>
+              <div class="detail-field">
+                <label for="detailState">State <span class="hint">("0" = free agent, "2" = Player Studio)</span></label>
+                <div class="value-row"><input type="text" id="detailState" /></div>
               </div>
               <div class="detail-field">
                 <label for="detailSkill">Skill <span class="formatted-val" id="detailSkillFmt"></span></label>

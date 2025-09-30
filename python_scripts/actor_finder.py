@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Tuple
 
 
 class ActorFinder:
-    def __init__(self, character_names_path: str = "data/CHARACTER_NAMES.json"):
+    def __init__(self, character_names_path: str = "../data/CHARACTER_NAMES.json"):
         """Initialize the ActorFinder with character names data."""
         self.character_names = self._load_character_names(character_names_path)
         

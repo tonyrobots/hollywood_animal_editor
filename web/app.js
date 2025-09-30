@@ -59,6 +59,7 @@
   const detailAttitude = document.getElementById('detailAttitude');
   const detailSelfEsteem = document.getElementById('detailSelfEsteem');
   const detailReadiness = document.getElementById('detailReadiness');
+  const detailState = document.getElementById('detailState');
   const detailSkill = document.getElementById('detailSkill');
   const detailLimit = document.getElementById('detailLimit');
   const detailArt = document.getElementById('detailArt');
@@ -113,6 +114,14 @@
   const agentsTableSection = document.getElementById('agentsTableSection');
   const agentsTbody = document.getElementById('agentsTbody');
   const gameYearText8 = document.getElementById('gameYearText8');
+  // Executives UI
+  const executivesPlaceholder = document.getElementById('executivesPlaceholder');
+  const executivesControls = document.getElementById('executivesControls');
+  const executivesSearchInput = document.getElementById('executivesSearchInput');
+  const executivesStatus = document.getElementById('executivesStatus');
+  const executivesTableSection = document.getElementById('executivesTableSection');
+  const executivesTbody = document.getElementById('executivesTbody');
+  const gameYearText9 = document.getElementById('gameYearText9');
   // Directors UI
   const directorsTableSection = document.getElementById('directorsTableSection');
   const directorsTbody = document.getElementById('directorsTbody');
@@ -146,6 +155,7 @@
   let saveObj = null;           // whole parsed save JSON
   let charactersArr = null;     // reference to the characters array in saveObj
   let actors = [];              // derived list of actor objects
+  let executives = [];          // derived list of executive objects (Lieut* and Cpt*)
   let names = [];               // CHARACTER_NAMES.locStrings array
   let nameMapLoaded = false;
   let saveLoaded = false;
@@ -259,6 +269,13 @@
     return (num * 10).toFixed(1);
   }
 
+  function formatUnitToHundred(value) {
+    if (value === undefined || value === null || value === '') return '';
+    const num = Number(String(value).replace(',', '.'));
+    if (!isFinite(num)) return '';
+    return (num * 100).toFixed(0);
+  }
+
   function refreshChangeUI() {
     if (changesPanel) changesPanel.hidden = changeLog.length === 0;
     if (changesCount) changesCount.textContent = String(changeLog.length);
@@ -319,8 +336,10 @@
       detailSelfEsteem.value = String(Number(detailEntity.selfEsteem ?? 0).toFixed(3));
       // Readiness (integer-ish scalar)
       if (detailReadiness) detailReadiness.value = detailEntity.readinessForTricks == null ? '' : String(detailEntity.readinessForTricks);
-      if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToTen(Number(detailEntity.mood ?? 0));
-      if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToTen(Number(detailEntity.attitude ?? 0));
+      // State (numeric or null)
+      if (detailState) detailState.value = detailEntity.state == null ? '' : String(detailEntity.state);
+      if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToHundred(Number(detailEntity.mood ?? 0));
+      if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToHundred(Number(detailEntity.attitude ?? 0));
       if (detailSelfEsteemFmt) detailSelfEsteemFmt.textContent = formatUnitToTen(Number(detailEntity.selfEsteem ?? 0));
       if (detailMoodNum) detailMoodNum.textContent = String(Number(detailEntity.mood ?? 0).toFixed(3));
       if (detailAttitudeNum) detailAttitudeNum.textContent = String(Number(detailEntity.attitude ?? 0).toFixed(3));
@@ -409,7 +428,7 @@
       refreshChangeUI();
       // no resort; refresh visible tables only
       render(); renderStudio();
-      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
+      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies();
     });
     if (redoBtn) redoBtn.addEventListener('click', () => {
       const entry = redoStack.pop();
@@ -421,7 +440,7 @@
       if (changesList) { const li = document.createElement('li'); li.textContent = entry.message; changesList.appendChild(li); }
       refreshChangeUI();
       render(); renderStudio();
-      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies();
+      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies();
     });
   }
 
@@ -450,11 +469,11 @@
 
   // Detail sliders: live display updates (x10) without recording changes until Apply
   if (detailMood) detailMood.addEventListener('input', () => {
-    if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToTen(Number(detailMood.value));
+    if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToHundred(Number(detailMood.value));
     if (detailMoodNum) detailMoodNum.textContent = String(Number(detailMood.value).toFixed(3));
   });
   if (detailAttitude) detailAttitude.addEventListener('input', () => {
-    if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToTen(Number(detailAttitude.value));
+    if (detailAttitudeFmt) detailAttitudeFmt.textContent = formatUnitToHundred(Number(detailAttitude.value));
     if (detailAttitudeNum) detailAttitudeNum.textContent = String(Number(detailAttitude.value).toFixed(3));
   });
   if (detailSelfEsteem) detailSelfEsteem.addEventListener('input', () => {
@@ -515,15 +534,24 @@
       // Scalars
       detailEntity.customName = String(detailCustomName.value || '').trim() || null;
       detailEntity.gender = detailGender1.checked ? 1 : 0;
-      if (detailStudioId && detailStudioId.tagName === 'SELECT') {
-        const studioRaw = String(detailStudioId.value || '').trim();
-        detailEntity.studioId = studioRaw === '' ? null : studioRaw;
-      }
+      // Studio selection temporarily disabled (read-only). Leave logic intact for future re-enable.
+      // if (detailStudioId && detailStudioId.tagName === 'SELECT') {
+      //   const studioRaw = String(detailStudioId.value || '').trim();
+      //   detailEntity.studioId = studioRaw === '' ? null : studioRaw;
+      // }
       const mood = Number(detailMood.value); const attitude = Number(detailAttitude.value); const se = Number(detailSelfEsteem.value);
       if (isFinite(mood)) detailEntity.mood = mood.toFixed(3);
       if (isFinite(attitude)) detailEntity.attitude = attitude.toFixed(3);
       if (isFinite(se)) detailEntity.selfEsteem = se.toFixed(3);
       const ready = Number(detailReadiness.value); if (isFinite(ready)) detailEntity.readinessForTricks = Math.round(ready);
+      // State (text input -> number or null)
+      if (detailState) {
+        const raw = String(detailState.value || '').trim();
+        if (raw === '') detailEntity.state = null; else {
+          const asNum = Number(raw);
+          detailEntity.state = isFinite(asNum) ? asNum : raw;
+        }
+      }
       // Skill/Limit
       if (!detailEntity.professions || typeof detailEntity.professions !== 'object') detailEntity.professions = {};
       const skill = Number(detailSkill.value); if (isFinite(skill)) detailEntity.professions[writeKey] = skill.toFixed(3);
@@ -562,9 +590,10 @@
         recordEdit({ entity: after, label: 'Gender', path: 'gender', oldValue: String(before.gender ?? ''), newValue: String(after.gender ?? '') });
       }
       // Studio
-      if ((before.studioId ?? '') !== (after.studioId ?? '')) {
-        recordEdit({ entity: after, label: 'Studio', path: 'studioId', oldValue: before.studioId ?? '', newValue: after.studioId ?? '' });
-      }
+      // Studio edits disabled for now
+      // if ((before.studioId ?? '') !== (after.studioId ?? '')) {
+      //   recordEdit({ entity: after, label: 'Studio', path: 'studioId', oldValue: before.studioId ?? '', newValue: after.studioId ?? '' });
+      // }
       // Happiness (mood)
       if ((before.mood ?? '') !== (after.mood ?? '')) {
         recordEdit({ entity: after, label: 'Happiness', path: 'mood', oldValue: before.mood ?? '', newValue: after.mood ?? '' });
@@ -580,6 +609,10 @@
       // Readiness for Tricks
       if ((before.readinessForTricks ?? '') !== (after.readinessForTricks ?? '')) {
         recordEdit({ entity: after, label: 'Readiness for Tricks', path: 'readinessForTricks', oldValue: String(before.readinessForTricks ?? ''), newValue: String(after.readinessForTricks ?? '') });
+      }
+      // State
+      if ((before.state ?? '') !== (after.state ?? '')) {
+        recordEdit({ entity: after, label: 'State', path: 'state', oldValue: String(before.state ?? ''), newValue: String(after.state ?? '') });
       }
       // Skill
       const beforeSkill = get(before, `professions.${writeKey}`);
@@ -607,7 +640,7 @@
       detailStatus.textContent = 'Applied. Review table for changes.';
     }
     // Rerender active views
-    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderMovies(); renderStudio();
+    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies(); renderStudio();
     // Close overlay after applying
     closeDetailEditor();
   });
@@ -841,6 +874,12 @@
   function isActorEntry(obj) {
     const prof = obj && obj.professions;
     return !!(prof && typeof prof === 'object' && ('Actor' in prof));
+  }
+
+  function isExecutiveEntry(obj) {
+    const prof = obj && obj.professions;
+    if (!prof || typeof prof !== 'object') return false;
+    return Object.keys(prof).some(k => k.startsWith('Lieut') || k.startsWith('Cpt'));
   }
 
   function isRoleEntry(obj, role) {
@@ -1131,7 +1170,7 @@
 
   // Tabs
   function activateTab(name) {
-    const valid = new Set(['studio','actors','directors','producers','writers','editors','movies','composers','cinematographers','agents']);
+    const valid = new Set(['studio','actors','directors','producers','writers','editors','movies','composers','cinematographers','agents','executives']);
     if (!valid.has(name)) name = 'actors';
     tabs.forEach(btn => {
       const match = btn.getAttribute('data-tab') === name;
@@ -1151,6 +1190,7 @@
     // When activating actors, ensure the table renders
     if (name === 'studio') renderStudio();
     if (name === 'actors') render();
+    if (name === 'executives') renderExecutives();
     if (name === 'directors') renderDirectors();
     if (name === 'producers') renderProducers();
     if (name === 'writers') renderWriters();
@@ -1362,6 +1402,7 @@
     if (gameYearText6) gameYearText6.textContent = gy;
     if (gameYearText7) gameYearText7.textContent = gy;
     if (gameYearText8) gameYearText8.textContent = gy;
+    if (gameYearText9) gameYearText9.textContent = gy;
     actors = charactersArr.filter(isActorEntry);
     // derive other roles for placeholder tabs
     directors = charactersArr.filter(obj => isRoleEntry(obj, 'Director'));
@@ -1372,6 +1413,7 @@
     composers = charactersArr.filter(obj => isRoleEntry(obj, 'Composer'));
     cinematographers = charactersArr.filter(obj => isRoleEntry(obj, 'Cinematographer'));
     agents = charactersArr.filter(obj => isRoleEntry(obj, 'Agent'));
+    executives = charactersArr.filter(obj => isExecutiveEntry(obj));
 
     // Clear placeholder messages
     if (directorsPlaceholder) directorsPlaceholder.textContent = '';
@@ -1407,6 +1449,8 @@
     if (isAgentsActive) renderAgents();
     const isMoviesActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'movies');
     if (isMoviesActive) renderMovies();
+    const isExecutivesActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'executives');
+    if (isExecutivesActive) renderExecutives();
     // Collapse loaders if both files are loaded
     if (loadersSection) {
       loadersSection.style.display = (saveLoaded && nameMapLoaded) ? 'none' : '';
@@ -1440,9 +1484,26 @@
       tdName.textContent = fullNameFor(d);
       tr.appendChild(tdName);
 
-      // Age (readonly, derived)
+      // Age (editable)
       const tdAge = document.createElement('td');
-      tdAge.textContent = getAge(d) === '' ? '' : String(getAge(d));
+      const ageInput = document.createElement('input');
+      ageInput.type = 'number'; ageInput.min = '0'; ageInput.max = '200';
+      const currentAge = getAge(d);
+      ageInput.value = currentAge === '' ? '' : String(currentAge);
+      ageInput.placeholder = gameYear ? '—' : 'Set game year';
+      ageInput.addEventListener('change', () => {
+        if (!gameYear) return;
+        const newAge = Number(ageInput.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInput.value = currentAge; return; }
+        const parts = parseBirthDateParts(d.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = d.birthDate;
+        d.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: d, label: 'Age', path: 'birthDate', oldValue: prev, newValue: d.birthDate });
+      });
+      ageInput.addEventListener('focus', () => markFocusedId(d.id));
+      tdAge.appendChild(ageInput);
       tr.appendChild(tdAge);
 
       // Director Skill (slider)
@@ -1630,7 +1691,20 @@
       if (focusedEntityId != null && String(focusedEntityId) === String(p.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td');
       tdName.textContent = fullNameFor(p); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(p) === '' ? '' : String(getAge(p)); tr.appendChild(tdAge);
+      const tdAge = document.createElement('td');
+      const ageInputP = document.createElement('input'); ageInputP.type='number'; ageInputP.min='0'; ageInputP.max='200';
+      const currentAgeP = getAge(p); ageInputP.value = currentAgeP === '' ? '' : String(currentAgeP); ageInputP.placeholder = gameYear ? '—' : 'Set game year';
+      ageInputP.addEventListener('change', () => {
+        if (!gameYear) return; const newAge = Number(ageInputP.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInputP.value = currentAgeP; return; }
+        const parts = parseBirthDateParts(p.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = p.birthDate; p.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: p, label: 'Age', path: 'birthDate', oldValue: prev, newValue: p.birthDate });
+      });
+      ageInputP.addEventListener('focus', () => markFocusedId(p.id));
+      tdAge.appendChild(ageInputP); tr.appendChild(tdAge);
       // Skill slider
       const tdSkill = document.createElement('td');
       const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
@@ -1748,7 +1822,20 @@
       tr.addEventListener('pointerdown', () => markFocusedId(w.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(w.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(w); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(w) === '' ? '' : String(getAge(w)); tr.appendChild(tdAge);
+      const tdAgeW = document.createElement('td');
+      const ageInputW = document.createElement('input'); ageInputW.type='number'; ageInputW.min='0'; ageInputW.max='200';
+      const currentAgeW = getAge(w); ageInputW.value = currentAgeW === '' ? '' : String(currentAgeW); ageInputW.placeholder = gameYear ? '—' : 'Set game year';
+      ageInputW.addEventListener('change', () => {
+        if (!gameYear) return; const newAge = Number(ageInputW.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInputW.value = currentAgeW; return; }
+        const parts = parseBirthDateParts(w.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = w.birthDate; w.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: w, label: 'Age', path: 'birthDate', oldValue: prev, newValue: w.birthDate });
+      });
+      ageInputW.addEventListener('focus', () => markFocusedId(w.id));
+      tdAgeW.appendChild(ageInputW); tr.appendChild(tdAgeW);
       // Skill slider
       const tdSkill = document.createElement('td'); const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
       const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
@@ -1861,7 +1948,20 @@
       tr.addEventListener('pointerdown', () => markFocusedId(ed.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(ed.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ed); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(ed) === '' ? '' : String(getAge(ed)); tr.appendChild(tdAge);
+      const tdAgeE = document.createElement('td');
+      const ageInputE = document.createElement('input'); ageInputE.type='number'; ageInputE.min='0'; ageInputE.max='200';
+      const currentAgeE = getAge(ed); ageInputE.value = currentAgeE === '' ? '' : String(currentAgeE); ageInputE.placeholder = gameYear ? '—' : 'Set game year';
+      ageInputE.addEventListener('change', () => {
+        if (!gameYear) return; const newAge = Number(ageInputE.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInputE.value = currentAgeE; return; }
+        const parts = parseBirthDateParts(ed.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = ed.birthDate; ed.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: ed, label: 'Age', path: 'birthDate', oldValue: prev, newValue: ed.birthDate });
+      });
+      ageInputE.addEventListener('focus', () => markFocusedId(ed.id));
+      tdAgeE.appendChild(ageInputE); tr.appendChild(tdAgeE);
       // Skill slider
       const tdSkill = document.createElement('td'); const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
       const skillRange = document.createElement('input'); skillRange.type = 'range'; skillRange.min = '0'; skillRange.max = '1'; skillRange.step = '0.01';
@@ -2009,7 +2109,20 @@
       tr.addEventListener('pointerdown', () => markFocusedId(c.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(c.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(c); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(c) === '' ? '' : String(getAge(c)); tr.appendChild(tdAge);
+      const tdAgeC = document.createElement('td');
+      const ageInputC = document.createElement('input'); ageInputC.type='number'; ageInputC.min='0'; ageInputC.max='200';
+      const currentAgeC = getAge(c); ageInputC.value = currentAgeC === '' ? '' : String(currentAgeC); ageInputC.placeholder = gameYear ? '—' : 'Set game year';
+      ageInputC.addEventListener('change', () => {
+        if (!gameYear) return; const newAge = Number(ageInputC.value);
+        if (!isFinite(newAge) || newAge < 0 || newAge > 200) { ageInputC.value = currentAgeC; return; }
+        const parts = parseBirthDateParts(c.birthDate) || { day: 1, month: 1, year: 1 };
+        const newYear = Math.floor(gameYear - Math.floor(newAge));
+        const safeYear = Math.min(Math.max(newYear, 1850), 2100);
+        const prev = c.birthDate; c.birthDate = formatBirthDate(parts.day, parts.month, safeYear);
+        recordEdit({ entity: c, label: 'Age', path: 'birthDate', oldValue: prev, newValue: c.birthDate });
+      });
+      ageInputC.addEventListener('focus', () => markFocusedId(c.id));
+      tdAgeC.appendChild(ageInputC); tr.appendChild(tdAgeC);
       const tdSkill = document.createElement('td');
       const skillWrap = document.createElement('div'); skillWrap.className='slider-cell';
       const skillRange=document.createElement('input'); skillRange.type='range'; skillRange.min='0'; skillRange.max='1'; skillRange.step='0.01';
@@ -2172,7 +2285,7 @@
     cinematographersTbody.replaceChildren(frag);
   }
 
-  // --- Agents tab ---
+  // --- Security Agents tab ---
   let agentsSortState = { key: 'skill', dir: 'desc' };
   function sortAgentsList(list){ const dirMul=agentsSortState.dir==='desc'?-1:1; const key=agentsSortState.key; list.sort((a,b)=>{ if(key==='name') return fullNameFor(a).toLowerCase().localeCompare(fullNameFor(b).toLowerCase())*dirMul; let av=0,bv=0; if(key==='skill'){ av=getNumeric(normalizeDecimalString(a.professions?.Agent??'')); bv=getNumeric(normalizeDecimalString(b.professions?.Agent??'')); } else if(key==='age'){ av=getNumeric(getAge(a)); bv=getNumeric(getAge(b)); } else if(key==='limit'){ av=getNumeric(normalizeDecimalString(a.limit??a.Limit??'')); bv=getNumeric(normalizeDecimalString(b.limit??b.Limit??'')); } else if(key==='movies'){ av=moviesCountForRole(a,'Agent'); bv=moviesCountForRole(b,'Agent'); } if(av===bv) return 0; return av<bv?-1*dirMul:1*dirMul; }); }
   function updateAgentsSortIndicators(){ const ths=document.querySelectorAll('#agentsTable thead th'); ths.forEach((th)=>{ th.classList.remove('sort-asc','sort-desc'); const key=th.getAttribute('data-sort-key'); if(key&&key===agentsSortState.key) th.classList.add(agentsSortState.dir==='desc'?'sort-desc':'sort-asc'); }); }
@@ -2184,7 +2297,7 @@
     const filtered = q ? agents.filter(a => fullNameFor(a).toLowerCase().includes(q)) : agents.slice();
     sortAgentsList(filtered);
     updateAgentsSortIndicators();
-    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${agents.length} agents shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${agents.length} security agents shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
     const frag = document.createDocumentFragment();
     filtered.forEach((ag) => {
       const tr = document.createElement('tr');
@@ -2196,7 +2309,12 @@
       tr.addEventListener('pointerdown', () => markFocusedId(ag.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(ag.id)) tr.classList.add('row-focused');
       const tdName = document.createElement('td'); tdName.textContent = fullNameFor(ag); tr.appendChild(tdName);
-      const tdAge = document.createElement('td'); tdAge.textContent = getAge(ag) === '' ? '' : String(getAge(ag)); tr.appendChild(tdAge);
+      const tdAge = document.createElement('td');
+      const ageInputAg=document.createElement('input'); ageInputAg.type='number'; ageInputAg.min='0'; ageInputAg.max='200';
+      const currentAgeAg=getAge(ag); ageInputAg.value=currentAgeAg===''?'':String(currentAgeAg); ageInputAg.placeholder=gameYear?'—':'Set game year';
+      ageInputAg.addEventListener('change',()=>{ if(!gameYear) return; const newAge=Number(ageInputAg.value); if(!isFinite(newAge)||newAge<0||newAge>200){ ageInputAg.value=currentAgeAg; return;} const parts=parseBirthDateParts(ag.birthDate)||{day:1,month:1,year:1}; const newYear=Math.floor(gameYear-Math.floor(newAge)); const safeYear=Math.min(Math.max(newYear,1850),2100); const prev=ag.birthDate; ag.birthDate=formatBirthDate(parts.day,parts.month,safeYear); recordEdit({ entity: ag, label: 'Age', path: 'birthDate', oldValue: prev, newValue: ag.birthDate }); });
+      ageInputAg.addEventListener('focus',()=>markFocusedId(ag.id));
+      tdAge.appendChild(ageInputAg); tr.appendChild(tdAge);
       // Skill slider
       const tdSkill = document.createElement('td');
       const skillWrap = document.createElement('div'); skillWrap.className = 'slider-cell';
@@ -2224,7 +2342,7 @@
         const finalVal = Number(skillRange.value).toFixed(3);
         const initialVal = skillRange.dataset.initial ?? String(finalVal);
         delete skillRange.dataset.initial;
-        recordEdit({ entity: ag, label: 'Agent Skill', path: 'professions.Agent', oldValue: initialVal, newValue: finalVal });
+        recordEdit({ entity: ag, label: 'Security Agent Skill', path: 'professions.Agent', oldValue: initialVal, newValue: finalVal });
         if (skillRange.dataset.autoLimitOld && skillRange.dataset.autoLimitNew && skillRange.dataset.autoLimitOld !== skillRange.dataset.autoLimitNew) {
           recordEdit({ entity: ag, label: 'Limit', path: 'limit', oldValue: skillRange.dataset.autoLimitOld, newValue: skillRange.dataset.autoLimitNew });
         }
@@ -2476,6 +2594,7 @@
   if (composersSearchInput) composersSearchInput.addEventListener('input', () => renderComposers());
   if (cinematographersSearchInput) cinematographersSearchInput.addEventListener('input', () => renderCinematographers());
   if (agentsSearchInput) agentsSearchInput.addEventListener('input', () => renderAgents());
+  if (executivesSearchInput) executivesSearchInput.addEventListener('input', () => renderExecutives());
   if (moviesSearchInput) moviesSearchInput.addEventListener('input', () => renderMovies());
   if (composersSearchInput) composersSearchInput.addEventListener('input', () => renderComposers());
   if (cinematographersSearchInput) cinematographersSearchInput.addEventListener('input', () => renderCinematographers());
@@ -2504,6 +2623,66 @@
     });
   })();
 
+  // Executives helpers and renderer
+  function executiveDepartmentFor(obj) {
+    const prof = obj.professions || {};
+    const known = [
+      ['CptHR','HR'],
+      ['CptLawyer','Legal'],
+      ['CptFinancier','Finance'],
+      ['CptPR','PR'],
+      ['LieutRelease','Distribution'],
+      ['LieutTech','Engineering'],
+      ['LieutServices','Services'],
+      ['LieutProduction','Production'],
+      ['LieutPost','Post-Production'],
+      ['LieutPre','Pre-Production']
+    ];
+    for (const [key,label] of known) if (key in prof) return label;
+    const first = Object.keys(prof).find(k => k.startsWith('Cpt') || k.startsWith('Lieut'));
+    return first || 'Executive';
+  }
+  function getExecutiveRoleKey(obj){ const prof=obj.professions||{}; return Object.keys(prof).find(k=>k.startsWith('Lieut')||k.startsWith('Cpt')) || null; }
+  function getExecutiveSkill(obj){ const key=getExecutiveRoleKey(obj); const val= key? obj.professions[key]: '0'; return getNumeric(normalizeDecimalString(val)); }
+  let executivesSortState = { key: 'dept', dir: 'asc' };
+  function sortExecutivesList(list){ const dirMul=executivesSortState.dir==='desc'?-1:1; const key=executivesSortState.key; list.sort((a,b)=>{ if(key==='name') return fullNameFor(a).toLowerCase().localeCompare(fullNameFor(b).toLowerCase())*dirMul; let av=0,bv=0; if(key==='dept'){ return executiveDepartmentFor(a).localeCompare(executiveDepartmentFor(b))*dirMul; } else if(key==='level'){ av=getNumeric(a.level??0); bv=getNumeric(b.level??0); } else if(key==='exp'){ av=getNumeric(a.xp??0); bv=getNumeric(b.xp??0); } else if(key==='mood'){ av=getNumeric(normalizeDecimalString(a.mood??'')); bv=getNumeric(normalizeDecimalString(b.mood??'')); } else if(key==='attitude'){ av=getNumeric(normalizeDecimalString(a.attitude??'')); bv=getNumeric(normalizeDecimalString(b.attitude??'')); } else if(key==='umoney'){ av=getNumeric(a.BonusCardMoney??0); bv=getNumeric(b.BonusCardMoney??0); } else if(key==='uinfluence'){ av=getNumeric(a.BonusCardInfluencePoints??0); bv=getNumeric(b.BonusCardInfluencePoints??0); } else if(key==='age'){ av=getNumeric(getAge(a)); bv=getNumeric(getAge(b)); } if(av===bv) return 0; return av<bv?-1*dirMul:1*dirMul; }); }
+  function updateExecutivesSortIndicators(){ const ths=document.querySelectorAll('#executivesTable thead th'); ths.forEach((th)=>{ th.classList.remove('sort-asc','sort-desc'); const key=th.getAttribute('data-sort-key'); if(key&&key===executivesSortState.key) th.classList.add(executivesSortState.dir==='desc'?'sort-desc':'sort-asc'); }); }
+  function renderExecutives(){
+    if (!saveLoaded || !executivesTbody) return;
+    if (executivesTableSection) executivesTableSection.hidden = false;
+    if (executivesControls) executivesControls.hidden = false;
+    const q = (executivesSearchInput?.value || '').toLowerCase().trim();
+    const base = executives.filter(ex => Number(ex.state) === 2);
+    const filtered = q ? base.filter(a => fullNameFor(a).toLowerCase().includes(q)) : base.slice();
+    sortExecutivesList(filtered);
+    updateExecutivesSortIndicators();
+    if (executivesStatus) executivesStatus.textContent = `${filtered.length} of ${base.length} management shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    const frag = document.createDocumentFragment();
+    filtered.forEach((ex) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(ex.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(ex);
+      });
+      tr.addEventListener('pointerdown', () => markFocusedId(ex.id));
+      const tdName=document.createElement('td'); tdName.textContent=fullNameFor(ex); tr.appendChild(tdName);
+      const tdAge=document.createElement('td'); const ageInputEx=document.createElement('input'); ageInputEx.type='number'; ageInputEx.min='0'; ageInputEx.max='200'; const currentAgeEx=getAge(ex); ageInputEx.value=currentAgeEx===''?'':String(currentAgeEx); ageInputEx.placeholder=gameYear?'—':'Set game year'; ageInputEx.addEventListener('change',()=>{ if(!gameYear) return; const newAge=Number(ageInputEx.value); if(!isFinite(newAge)||newAge<0||newAge>200){ ageInputEx.value=currentAgeEx; return;} const parts=parseBirthDateParts(ex.birthDate)||{day:1,month:1,year:1}; const newYear=Math.floor(gameYear-Math.floor(newAge)); const safeYear=Math.min(Math.max(newYear,1850),2100); const prev=ex.birthDate; ex.birthDate=formatBirthDate(parts.day,parts.month,safeYear); recordEdit({ entity: ex, label: 'Age', path: 'birthDate', oldValue: prev, newValue: ex.birthDate }); }); ageInputEx.addEventListener('focus',()=>markFocusedId(ex.id)); tdAge.appendChild(ageInputEx); tr.appendChild(tdAge);
+      const tdDept=document.createElement('td'); tdDept.textContent=executiveDepartmentFor(ex); tr.appendChild(tdDept);
+      const tdLevel=document.createElement('td'); tdLevel.textContent=String(ex.level ?? '—'); tr.appendChild(tdLevel);
+      const tdXP=document.createElement('td'); tdXP.textContent=String(ex.xp ?? '0'); tr.appendChild(tdXP);
+      const tdMood=document.createElement('td'); const mw=document.createElement('div'); mw.className='slider-cell'; const mr=document.createElement('input'); mr.type='range'; mr.min='0'; mr.max='1'; mr.step='0.01'; const mnum=isFinite(Number(ex.mood))?Number(ex.mood):0; mr.value=String(mnum.toFixed(3)); const mv=document.createElement('span'); mv.className='slider-val'; mv.textContent=formatUnitToHundred(mnum); mw.appendChild(mr); mw.appendChild(mv); tdMood.appendChild(mw); tr.appendChild(tdMood);
+      mr.addEventListener('input', ()=>{ if(!('initial' in mr.dataset)) mr.dataset.initial=String(ex.mood ?? ''); const norm=Number(mr.value).toFixed(3); ex.mood=norm; mv.textContent=formatUnitToHundred(norm); });
+      mr.addEventListener('change', ()=>{ const finalVal=Number(mr.value).toFixed(3); const initialVal=mr.dataset.initial ?? String(finalVal); delete mr.dataset.initial; recordEdit({ entity: ex, label: 'Happiness', path: 'mood', oldValue: initialVal, newValue: finalVal }); });
+      const tdAtt=document.createElement('td'); const aw=document.createElement('div'); aw.className='slider-cell'; const ar=document.createElement('input'); ar.type='range'; ar.min='0'; ar.max='1'; ar.step='0.01'; const anum=isFinite(Number(ex.attitude))?Number(ex.attitude):0; ar.value=String(anum.toFixed(3)); const av=document.createElement('span'); av.className='slider-val'; av.textContent=formatUnitToHundred(anum); aw.appendChild(ar); aw.appendChild(av); tdAtt.appendChild(aw); tr.appendChild(tdAtt);
+      ar.addEventListener('input', ()=>{ if(!('initial' in ar.dataset)) ar.dataset.initial=String(ex.attitude ?? ''); const norm=Number(ar.value).toFixed(3); ex.attitude=norm; av.textContent=formatUnitToHundred(norm); });
+      ar.addEventListener('change', ()=>{ const finalVal=Number(ar.value).toFixed(3); const initialVal=ar.dataset.initial ?? String(finalVal); delete ar.dataset.initial; recordEdit({ entity: ex, label: 'Morale', path: 'attitude', oldValue: initialVal, newValue: finalVal }); });
+      const tdUM=document.createElement('td'); tdUM.textContent=`${Math.round((Number(ex.BonusCardMoney||0))*10)}%`; tr.appendChild(tdUM);
+      const tdUI=document.createElement('td'); tdUI.textContent=`${Math.round((Number(ex.BonusCardInfluencePoints||0))*10)}%`; tr.appendChild(tdUI);
+      frag.appendChild(tr);
+    });
+    executivesTbody.replaceChildren(frag);
+  }
   // Directors sorting handlers
   (function attachDirectorsSorting() {
     const ths = document.querySelectorAll('#directorsTable thead th');
@@ -2609,6 +2788,18 @@
         if(agentsSortState.key===key) agentsSortState.dir = agentsSortState.dir==='desc'?'asc':'desc';
         else { agentsSortState.key=key; agentsSortState.dir='desc'; }
         updateAgentsSortIndicators(); renderAgents();
+      });
+    });
+  })();
+  // Executives sorting handlers
+  (function attachExecutivesSorting(){
+    const ths=document.querySelectorAll('#executivesTable thead th');
+    ths.forEach((th)=>{
+      const key=th.getAttribute('data-sort-key'); if(!key) return;
+      th.addEventListener('click',()=>{
+        if(executivesSortState.key===key) executivesSortState.dir = executivesSortState.dir==='desc'?'asc':'desc';
+        else { executivesSortState.key=key; executivesSortState.dir='desc'; }
+        updateExecutivesSortIndicators(); renderExecutives();
       });
     });
   })();
