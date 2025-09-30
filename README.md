@@ -45,16 +45,27 @@ Notes
 Compatibility
 - See `docs/COMPATIBILITY.md` for current save-format notes (2025-09) and schema tolerance.
 
+Docs
+- `docs/DATA_MODEL.md` — web editor data model details and role mappings
+- `docs/COMPATIBILITY.md` — supported save formats and tolerance rules
+- `docs/devlog.md` — ongoing notes and small TODOs
+
 Repository Structure
 - `web/` — static web app (open `web/index.html`).
   - `index.html`, `style.css`, `app.js`
   - `data/CHARACTER_NAMES.json` — canonical name map used by the app
 - `docs/` — reference docs and samples
   - `DATA_MODEL.md` — field locations and role key mapping
-  - `CONTRIBUTING.md` — local setup and dev guidelines
+  - `COMPATIBILITY.md` — format compatibility notes
+  - `devlog.md` — misc notes
 - `python_scripts/` — helper scripts (e.g., `actor_finder.py`, `find_char_by_state.py`)
    - `python_scripts/actor_finder.py` can resolve name IDs and pretty‑format saves.
    - `python_scripts/find_char_by_state.py` lists characters by state/bitmask.
+
+Samples
+- `docs/sample_save.json` — compact sample for quick testing
+- `docs/new_format/actor_only_sample.json` — slim actor-only sample (latest format)
+- `docs/legacy_formats/` — larger historical samples for analysis
 
 
 Troubleshooting

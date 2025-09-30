@@ -16,6 +16,10 @@ New Format (2025-09) Notes
 - The app includes a lightweight schema check on load that surfaces warnings; it does not block editing.
 - JSON with UTF‑8 BOM is handled gracefully.
 
+Studio (root-level)
+- Editable fields found on the save root: `budget` (int), `cash` (int), `influence` (int), `reputation` (string decimal, three places). The UI formats values and records minimal diffs.
+- Player studio name discovered via the first `StudioName` value found; used to label the `PL` option in studio selectors.
+
 Executives (corporate and lieutenants)
 - Identification: entries where `professions` has keys starting with `Cpt` (e.g., `CptHR`, `CptLawyer`, `CptFinancier`, `CptPR`) or `Lieut` (e.g., `LieutRelease`, `LieutTech`).
 - Displayed Department mapping (non-exhaustive):
@@ -83,6 +87,21 @@ Editor Fields (FilmEditor) (readable + sliders)
 - Limit: `limit` and `Limit` — kept synchronized.
 - ART/COM: shown read‑only when > 0.000.
 - Movies: `movies.FilmEditor` (array) when present.
+
+Composer Fields (readable + sliders)
+- Composer skill: `professions.Composer` (string decimal).
+- Limit: `limit` and `Limit` — kept synchronized.
+- Movies: `movies.Composer` (array) when present.
+
+Cinematographer Fields (readable + sliders)
+- Cinematographer skill: `professions.Cinematographer` (string decimal).
+- Limit: `limit` and `Limit` — kept synchronized.
+- Movies: `movies.Cinematographer` (array) when present.
+
+Security Agent Fields (readable + sliders)
+- Agent skill: `professions.Agent` (string decimal).
+- Limit: `limit` and `Limit` — kept synchronized.
+- Movies: `movies.Agent` (array) when present.
 
 Names
 - `web/data/CHARACTER_NAMES.json` is the canonical name map for the app. Structure:
