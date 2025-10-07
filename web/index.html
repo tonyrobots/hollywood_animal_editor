@@ -348,6 +348,7 @@
     <div id="detailOverlay" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="detailTitle">
       <div class="overlay-dialog">
         <div class="overlay-header">
+          <h2 id="detailHeaderName" class="detail-header-name">—</h2>
           <h3 id="detailTitle">Advanced Editor</h3>
           <button id="detailCloseBtn" aria-label="Close">✕</button>
         </div>
@@ -391,7 +392,7 @@
               </div>
               <div class="detail-field">
                 <label for="detailReadiness">Readiness for Tricks</label>
-                <div class="value-row"><input type="number" id="detailReadiness" /></div>
+                <div class="value-row"><select id="detailReadiness"><option value="0">0 - No tricks</option><option value="1">1 - Only clean tricks</option><option value="2">2 - Dirty tricks allowed</option></select></div>
               </div>
               <div class="detail-field">
                 <label for="detailState">State <span class="hint">("0" = free agent, "2" = Player Studio)</span></label>

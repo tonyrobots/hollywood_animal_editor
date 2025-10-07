@@ -40,6 +40,7 @@
   // Detail overlay DOM
   const detailOverlay = document.getElementById('detailOverlay');
   const detailTitle = document.getElementById('detailTitle');
+  const detailHeaderName = document.getElementById('detailHeaderName');
   const detailCloseBtn = document.getElementById('detailCloseBtn');
   const detailCancelBtn = document.getElementById('detailCancelBtn');
   const detailApplyBtn = document.getElementById('detailApplyBtn');
@@ -300,7 +301,9 @@
     detailEntity = entity;
     if (!detailEntity) return;
     detailTitle.textContent = 'Character Details';
-    detailName.textContent = (detailEntity.customName && String(detailEntity.customName).trim()) || fullNameFor(detailEntity) || detailEntity.name || 'Unknown';
+    const resolvedName = (detailEntity.customName && String(detailEntity.customName).trim()) || fullNameFor(detailEntity) || detailEntity.name || 'Unknown';
+    if (detailHeaderName) detailHeaderName.textContent = resolvedName;
+    detailName.textContent = resolvedName;
     detailId.textContent = String(detailEntity.id ?? '—');
     detailStatus.textContent = '';
     // Populate form fields
@@ -334,8 +337,8 @@
       detailMood.value = String(Number(detailEntity.mood ?? 0).toFixed(3));
       detailAttitude.value = String(Number(detailEntity.attitude ?? 0).toFixed(3));
       detailSelfEsteem.value = String(Number(detailEntity.selfEsteem ?? 0).toFixed(3));
-      // Readiness (integer-ish scalar)
-      if (detailReadiness) detailReadiness.value = detailEntity.readinessForTricks == null ? '' : String(detailEntity.readinessForTricks);
+      // Readiness (integer-ish scalar). Default to '0' for dropdown
+      if (detailReadiness) detailReadiness.value = detailEntity.readinessForTricks == null ? '0' : String(detailEntity.readinessForTricks);
       // State (numeric or null)
       if (detailState) detailState.value = detailEntity.state == null ? '' : String(detailEntity.state);
       if (detailMoodFmt) detailMoodFmt.textContent = formatUnitToHundred(Number(detailEntity.mood ?? 0));
@@ -1476,6 +1479,10 @@
     filtered.forEach((d) => {
       const tr = document.createElement('tr');
       tr.setAttribute('data-id', String(d.id ?? ''));
+      tr.addEventListener('click', (e) => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+        openDetailEditor(d);
+      });
       tr.addEventListener('pointerdown', () => markFocusedId(d.id));
       if (focusedEntityId != null && String(focusedEntityId) === String(d.id)) tr.classList.add('row-focused');
 

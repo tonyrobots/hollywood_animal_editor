@@ -96,6 +96,7 @@ td input[type="range"]{width:160px}
 .overlay[hidden]{display:none}
 .overlay-dialog{width:min(1100px, 92vw); max-height:90vh; background:#0e1016; border:1px solid var(--border); border-radius:10px; display:flex; flex-direction:column}
 .overlay-header{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; border-bottom:1px solid var(--border)}
+.detail-header-name{font-size:22px; font-weight:700; margin:0; padding:0; line-height:1.2; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .overlay-warning{color:var(--warn); margin:12px 14px 0 14px}
 .overlay-meta{display:flex; gap:12px; flex-wrap:wrap; padding:8px 14px; color:var(--muted)}
 #detailJson{flex:1; min-height:320px; margin:8px 14px; padding:10px; background:#0f1115; color:var(--text); border:1px solid var(--border); border-radius:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px}
