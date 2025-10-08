@@ -48,6 +48,15 @@
       </div>
     </section>
 
+    <div id="globalFilters" class="controls" hidden>
+      <div class="control-row" style="justify-content:flex-end;">
+        <label class="muted" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+          <span>Player Studio <span id="playerStudioNameWrap">(<span id="playerStudioName">—</span>)</span> Only</span>
+          <span class="switch"><input type="checkbox" id="playerStudioOnly" /><span class="slider"></span></span>
+        </label>
+      </div>
+    </div>
+
     <nav class="tabs" role="tablist" aria-label="Primary">
       <button id="tabbtn-studio" class="tab active" role="tab" aria-selected="true" data-tab="studio" aria-controls="tab-studio">Studio</button>
       <button id="tabbtn-actors" class="tab" role="tab" aria-selected="false" data-tab="actors" aria-controls="tab-actors">Actors</button>

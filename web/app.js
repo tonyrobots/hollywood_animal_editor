@@ -37,6 +37,11 @@
   const changesCount = document.getElementById('changesCount');
   const undoBtn = document.getElementById('undoBtn');
   const redoBtn = document.getElementById('redoBtn');
+  // Global filters
+  const globalFilters = document.getElementById('globalFilters');
+  const playerStudioOnly = document.getElementById('playerStudioOnly');
+  const playerStudioNameEl = document.getElementById('playerStudioName');
+  const playerStudioNameWrap = document.getElementById('playerStudioNameWrap');
   // Detail overlay DOM
   const detailOverlay = document.getElementById('detailOverlay');
   const detailTitle = document.getElementById('detailTitle');
@@ -197,6 +202,10 @@
   const ART_COM_OPTIONS = ["0.000", "0.150", "0.300", "0.700", "1.000"]; // normalized, include 0 default
 
   // Utils
+  function isPlayerStudioEntity(obj) {
+    const id = obj && obj.studioId != null ? String(obj.studioId) : '';
+    return id === 'PL';
+  }
   const readFileAsText = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(reader.error);
@@ -313,7 +322,7 @@
       // Populate studio select
       if (detailStudioId && detailStudioId.tagName === 'SELECT') {
         detailStudioId.innerHTML = '';
-        const playerStudioName = findFirstValueByKey(saveObj, 'StudioName');
+        const playerStudioName = findFirstValueByKey(saveObj, 'studioName') ?? findFirstValueByKey(saveObj, 'StudioName');
         const presets = [
           { value: '', label: 'None' },
           { value: 'PL', label: `PL - ${playerStudioName ? String(playerStudioName) : 'Player Studio'}` },
@@ -1247,12 +1256,13 @@
 
     // filter by search
     const q = (searchInput.value || '').toLowerCase().trim();
-    const filtered = q ? actors.filter(a => fullNameFor(a).toLowerCase().includes(q)) : actors.slice();
+    const basePool = (playerStudioOnly && playerStudioOnly.checked) ? actors.filter(isPlayerStudioEntity) : actors.slice();
+    const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
 
     // sort by current sort state
     sortList(filtered);
 
-    statusEl.textContent = `${filtered.length} of ${actors.length} actors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    statusEl.textContent = `${filtered.length} of ${basePool.length} actors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
 
     // render rows
     const frag = document.createDocumentFragment();
@@ -1433,6 +1443,7 @@
     updateSortIndicators();
     render();
     renderStudio();
+    refreshGlobalFilterUI();
     // Render role tabs if that tab is active
     const isStudioActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'studio');
     if (isStudioActive) renderStudio();
@@ -1467,13 +1478,14 @@
 
     // filter by search
     const q = (directorsSearchInput?.value || '').toLowerCase().trim();
-    const filtered = q ? directors.filter(a => fullNameFor(a).toLowerCase().includes(q)) : directors.slice();
+    const basePool = (playerStudioOnly && playerStudioOnly.checked) ? directors.filter(isPlayerStudioEntity) : directors.slice();
+    const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
 
     // sort
     sortDirectorsList(filtered);
     updateDirectorsSortIndicators();
 
-    if (directorsStatus) directorsStatus.textContent = `${filtered.length} of ${directors.length} directors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (directorsStatus) directorsStatus.textContent = `${filtered.length} of ${basePool.length} directors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
 
     const frag = document.createDocumentFragment();
     filtered.forEach((d) => {
@@ -1681,10 +1693,11 @@
     if (producersControls) producersControls.hidden = false;
 
     const q = (producersSearchInput?.value || '').toLowerCase().trim();
-    const filtered = q ? producers.filter(a => fullNameFor(a).toLowerCase().includes(q)) : producers.slice();
+    const basePool = (playerStudioOnly && playerStudioOnly.checked) ? producers.filter(isPlayerStudioEntity) : producers.slice();
+    const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortProducersList(filtered);
     updateProducersSortIndicators();
-    if (producersStatus) producersStatus.textContent = `${filtered.length} of ${producers.length} producers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (producersStatus) producersStatus.textContent = `${filtered.length} of ${basePool.length} producers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
 
     const frag = document.createDocumentFragment();
     filtered.forEach((p) => {
@@ -1813,10 +1826,11 @@
     if (writersControls) writersControls.hidden = false;
 
     const q = (writersSearchInput?.value || '').toLowerCase().trim();
-    const filtered = q ? writers.filter(a => fullNameFor(a).toLowerCase().includes(q)) : writers.slice();
+    const basePool = (playerStudioOnly && playerStudioOnly.checked) ? writers.filter(isPlayerStudioEntity) : writers.slice();
+    const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortWritersList(filtered);
     updateWritersSortIndicators();
-    if (writersStatus) writersStatus.textContent = `${filtered.length} of ${writers.length} writers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (writersStatus) writersStatus.textContent = `${filtered.length} of ${basePool.length} writers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
 
     const frag = document.createDocumentFragment();
     filtered.forEach((w) => {
@@ -1939,10 +1953,11 @@
     if (editorsControls) editorsControls.hidden = false;
 
     const q = (editorsSearchInput?.value || '').toLowerCase().trim();
-    const filtered = q ? editors.filter(a => fullNameFor(a).toLowerCase().includes(q)) : editors.slice();
+    const basePool = (playerStudioOnly && playerStudioOnly.checked) ? editors.filter(isPlayerStudioEntity) : editors.slice();
+    const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortEditorsList(filtered);
     updateEditorsSortIndicators();
-    if (editorsStatus) editorsStatus.textContent = `${filtered.length} of ${editors.length} editors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (editorsStatus) editorsStatus.textContent = `${filtered.length} of ${basePool.length} editors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
 
     const frag = document.createDocumentFragment();
     filtered.forEach((ed) => {
@@ -2102,9 +2117,10 @@
     if (composersTableSection) composersTableSection.hidden = false;
     if (composersControls) composersControls.hidden = false;
     const q = (composersSearchInput?.value || '').toLowerCase().trim();
-    const filtered = q ? composers.filter(a => fullNameFor(a).toLowerCase().includes(q)) : composers.slice();
+    const basePool = (playerStudioOnly && playerStudioOnly.checked) ? composers.filter(isPlayerStudioEntity) : composers.slice();
+    const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortComposersList(filtered); updateComposersSortIndicators();
-    if (composersStatus) composersStatus.textContent = `${filtered.length} of ${composers.length} composers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (composersStatus) composersStatus.textContent = `${filtered.length} of ${basePool.length} composers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
     const frag = document.createDocumentFragment();
     filtered.forEach((c)=>{
       const tr = document.createElement('tr');
@@ -2208,10 +2224,11 @@
     if (cinematographersControls) cinematographersControls.hidden = false;
 
     const q = (cinematographersSearchInput?.value || '').toLowerCase().trim();
-    const filtered = q ? cinematographers.filter(a => fullNameFor(a).toLowerCase().includes(q)) : cinematographers.slice();
+    const basePool = (playerStudioOnly && playerStudioOnly.checked) ? cinematographers.filter(isPlayerStudioEntity) : cinematographers.slice();
+    const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortCinematographersList(filtered);
     updateCinematographersSortIndicators();
-    if (cinematographersStatus) cinematographersStatus.textContent = `${filtered.length} of ${cinematographers.length} cinematographers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (cinematographersStatus) cinematographersStatus.textContent = `${filtered.length} of ${basePool.length} cinematographers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
 
     const frag = document.createDocumentFragment();
     filtered.forEach((ci) => {
@@ -2301,10 +2318,11 @@
     if (agentsTableSection) agentsTableSection.hidden = false;
     if (agentsControls) agentsControls.hidden = false;
     const q = (agentsSearchInput?.value || '').toLowerCase().trim();
-    const filtered = q ? agents.filter(a => fullNameFor(a).toLowerCase().includes(q)) : agents.slice();
+    const basePool = (playerStudioOnly && playerStudioOnly.checked) ? agents.filter(isPlayerStudioEntity) : agents.slice();
+    const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortAgentsList(filtered);
     updateAgentsSortIndicators();
-    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${agents.length} security agents shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${basePool.length} security agents shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
     const frag = document.createDocumentFragment();
     filtered.forEach((ag) => {
       const tr = document.createElement('tr');
@@ -2410,6 +2428,16 @@
     }
     namesMeta.textContent = 'Name map not auto-loaded. Select data/CHARACTER_NAMES.json above or serve from repo root.';
     nameMapLoaded = false;
+  }
+
+  // Global filter: wire toggle + label update
+  function refreshGlobalFilterUI() {
+    if (!globalFilters) return;
+    globalFilters.hidden = !saveLoaded;
+    if (playerStudioNameEl) {
+      const playerStudioName = findFirstValueByKey(saveObj, 'studioName') ?? findFirstValueByKey(saveObj, 'StudioName');
+      playerStudioNameEl.textContent = playerStudioName ? String(playerStudioName) : '—';
+    }
   }
 
   // Event wiring — save file
@@ -2594,6 +2622,10 @@
 
   // Search
   searchInput.addEventListener('input', () => render());
+  if (playerStudioOnly) playerStudioOnly.addEventListener('change', () => {
+    // Rerender all relevant tables when toggled
+    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives();
+  });
   if (directorsSearchInput) directorsSearchInput.addEventListener('input', () => renderDirectors());
   if (producersSearchInput) producersSearchInput.addEventListener('input', () => renderProducers());
   if (writersSearchInput) writersSearchInput.addEventListener('input', () => renderWriters());
@@ -2659,7 +2691,8 @@
     if (executivesTableSection) executivesTableSection.hidden = false;
     if (executivesControls) executivesControls.hidden = false;
     const q = (executivesSearchInput?.value || '').toLowerCase().trim();
-    const base = executives.filter(ex => Number(ex.state) === 2);
+    const baseAll = executives.filter(ex => Number(ex.state) === 2);
+    const base = (playerStudioOnly && playerStudioOnly.checked) ? baseAll.filter(isPlayerStudioEntity) : baseAll;
     const filtered = q ? base.filter(a => fullNameFor(a).toLowerCase().includes(q)) : base.slice();
     sortExecutivesList(filtered);
     updateExecutivesSortIndicators();
