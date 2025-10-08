@@ -7,12 +7,18 @@ Overview
 
 
 Run Locally
-- Recommended: serve from repo root and open `/web/`:
-  - Python: `python -m http.server` then open `http://localhost:8000/web/`
-  - Node: `npx serve` (or any static server) then open the served `/web/` path
+- **New Preact/TypeScript build (in progress):**
+  1. `npm install`
+  2. `npm start`
+  3. Open `http://localhost:5173/` to load the refactor workspace.
+  The new UI currently surfaces a lightweight Actors preview fed by the shared data/domain modules. Additional tabs and editing flows are being ported over iteratively.
+- **Legacy static build (current production experience):**
+  - Serve from repo root and open `/web/`:
+    - Python: `python -m http.server` then open `http://localhost:8000/web/`
+    - Node: `npx serve` (or any static server) then open the served `/web/` path
 - Direct file open works, but the browser may block fetching the name map. In that case, use the “Load Name Map” input and select `web/data/CHARACTER_NAMES.json`.
 
-or, just use it online at https://hollywood-animal-editor.vercel.app
+Or, just use it online at https://hollywood-animal-editor.vercel.app
 
 Using the Editor
 1) Tabs
@@ -46,7 +52,8 @@ Compatibility
 - See `docs/COMPATIBILITY.md` for current save-format notes (2025-09) and schema tolerance.
 
 Repository Structure
-- `web/` — static web app (open `web/index.html`).
+- `src/` — new Preact/Signals codebase (Vite entry lives at project `index.html`).
+- `web/` — legacy static web app preserved for comparison.
   - `index.html`, `style.css`, `app.js`
   - `data/CHARACTER_NAMES.json` — canonical name map used by the app
 - `docs/` — reference docs and samples
