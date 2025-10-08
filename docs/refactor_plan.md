@@ -61,8 +61,8 @@ This document captures the agreed-upon strategy for refactoring the Hollywood An
 - Any additional studio codes or data model tweaks that should be captured while porting.
 
 ## Next Actions
-1. Scaffold Vite/TypeScript/Preact tooling and update deployment pipeline for the new bundle.
-2. Begin extracting domain utilities with unit tests (Step 2).
-3. Draft the central store and migrate the Actors tab as the pilot. 
+1. Flesh out reusable table/detail components and finish the Actors tab (editing, change log integration).
+2. Port additional role tabs (Directors, Producers, Writers, etc.) onto the shared components/state.
+3. Connect export/download flow and retire legacy `web/app.js` once feature parity is reached. 
 
 All further work should reference this plan to maintain continuity if the effort pauses or shifts between contributors.
