@@ -5,11 +5,13 @@
   'use strict';
 
   // DOM
+  const tabsNav = document.querySelector('nav.tabs');
+  if (tabsNav) tabsNav.hidden = true;
   const saveFileInput = document.getElementById('saveFileInput');
-  const namesFileInput = document.getElementById('namesFileInput');
+  const namesFileInput = null;
   const dropZone = document.getElementById('dropZone');
   const saveMeta = document.getElementById('saveMeta');
-  const namesMeta = document.getElementById('namesMeta');
+  const namesMeta = null;
   const reloadBtn = document.getElementById('reloadBtn');
   const loadersSection = document.getElementById('loaders');
   const controls = document.getElementById('controls');
@@ -1262,7 +1264,7 @@
     // sort by current sort state
     sortList(filtered);
 
-    statusEl.textContent = `${filtered.length} of ${basePool.length} actors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    statusEl.textContent = `${filtered.length} of ${basePool.length} actors shown`;
 
     // render rows
     const frag = document.createDocumentFragment();
@@ -1388,6 +1390,7 @@
 
   function refreshAfterDataLoad() {
     if (!saveLoaded) return;
+    if (tabsNav) tabsNav.hidden = false;
     // Derive characters/actors view
     studioRoot = findStudioRoot(saveObj) || saveObj;
     charactersArr = extractCharacters(saveObj);
@@ -1467,7 +1470,8 @@
     if (isExecutivesActive) renderExecutives();
     // Collapse loaders if both files are loaded
     if (loadersSection) {
-      loadersSection.style.display = (saveLoaded && nameMapLoaded) ? 'none' : '';
+      // Simplify: hide loaders once a save is loaded; name map is auto-loaded
+      loadersSection.style.display = saveLoaded ? 'none' : '';
     }
   }
 
@@ -1485,7 +1489,7 @@
     sortDirectorsList(filtered);
     updateDirectorsSortIndicators();
 
-    if (directorsStatus) directorsStatus.textContent = `${filtered.length} of ${basePool.length} directors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (directorsStatus) directorsStatus.textContent = `${filtered.length} of ${basePool.length} directors shown`;
 
     const frag = document.createDocumentFragment();
     filtered.forEach((d) => {
@@ -1697,7 +1701,7 @@
     const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortProducersList(filtered);
     updateProducersSortIndicators();
-    if (producersStatus) producersStatus.textContent = `${filtered.length} of ${basePool.length} producers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (producersStatus) producersStatus.textContent = `${filtered.length} of ${basePool.length} producers shown`;
 
     const frag = document.createDocumentFragment();
     filtered.forEach((p) => {
@@ -1830,7 +1834,7 @@
     const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortWritersList(filtered);
     updateWritersSortIndicators();
-    if (writersStatus) writersStatus.textContent = `${filtered.length} of ${basePool.length} writers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (writersStatus) writersStatus.textContent = `${filtered.length} of ${basePool.length} writers shown`;
 
     const frag = document.createDocumentFragment();
     filtered.forEach((w) => {
@@ -1957,7 +1961,7 @@
     const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortEditorsList(filtered);
     updateEditorsSortIndicators();
-    if (editorsStatus) editorsStatus.textContent = `${filtered.length} of ${basePool.length} editors shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (editorsStatus) editorsStatus.textContent = `${filtered.length} of ${basePool.length} editors shown`;
 
     const frag = document.createDocumentFragment();
     filtered.forEach((ed) => {
@@ -2120,7 +2124,7 @@
     const basePool = (playerStudioOnly && playerStudioOnly.checked) ? composers.filter(isPlayerStudioEntity) : composers.slice();
     const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortComposersList(filtered); updateComposersSortIndicators();
-    if (composersStatus) composersStatus.textContent = `${filtered.length} of ${basePool.length} composers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (composersStatus) composersStatus.textContent = `${filtered.length} of ${basePool.length} composers shown`;
     const frag = document.createDocumentFragment();
     filtered.forEach((c)=>{
       const tr = document.createElement('tr');
@@ -2228,7 +2232,7 @@
     const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortCinematographersList(filtered);
     updateCinematographersSortIndicators();
-    if (cinematographersStatus) cinematographersStatus.textContent = `${filtered.length} of ${basePool.length} cinematographers shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (cinematographersStatus) cinematographersStatus.textContent = `${filtered.length} of ${basePool.length} cinematographers shown`;
 
     const frag = document.createDocumentFragment();
     filtered.forEach((ci) => {
@@ -2322,7 +2326,7 @@
     const filtered = q ? basePool.filter(a => fullNameFor(a).toLowerCase().includes(q)) : basePool;
     sortAgentsList(filtered);
     updateAgentsSortIndicators();
-    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${basePool.length} security agents shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (agentsStatus) agentsStatus.textContent = `${filtered.length} of ${basePool.length} security agents shown`;
     const frag = document.createDocumentFragment();
     filtered.forEach((ag) => {
       const tr = document.createElement('tr');
@@ -2417,8 +2421,7 @@
         if (Array.isArray(data?.locStrings)) {
           names = data.locStrings;
           nameMapLoaded = true;
-          namesMeta.textContent = `Loaded name map (locStrings: ${names.length}) from ${url}`;
-          if (loadersSection && saveLoaded && nameMapLoaded) loadersSection.style.display = 'none';
+          if (loadersSection && saveLoaded) loadersSection.style.display = 'none';
           render();
           return;
         }
@@ -2426,7 +2429,6 @@
         // try next
       }
     }
-    namesMeta.textContent = 'Name map not auto-loaded. Select data/CHARACTER_NAMES.json above or serve from repo root.';
     nameMapLoaded = false;
   }
 
@@ -2452,7 +2454,8 @@
       lastLoadedFile = file;
       saveMeta.textContent = `Loaded save: ${file.name} (${file.size.toLocaleString()} bytes)`;
       if (reloadBtn) reloadBtn.disabled = false;
-      if (loadersSection && saveLoaded && nameMapLoaded) loadersSection.style.display = 'none';
+      if (loadersSection && saveLoaded) loadersSection.style.display = 'none';
+      if (tabsNav) tabsNav.hidden = false;
       refreshAfterDataLoad();
     } catch (err) {
       console.error(err);
@@ -2478,7 +2481,8 @@
       lastLoadedFile = file;
       saveMeta.textContent = `Loaded save: ${file.name} (${file.size.toLocaleString()} bytes)`;
       if (reloadBtn) reloadBtn.disabled = false;
-      if (loadersSection && saveLoaded && nameMapLoaded) loadersSection.style.display = 'none';
+      if (loadersSection && saveLoaded) loadersSection.style.display = 'none';
+      if (tabsNav) tabsNav.hidden = false;
       refreshAfterDataLoad();
     } catch (err) {
       console.error(err);
@@ -2498,6 +2502,7 @@
         originalSaveName = candidate.name;
         lastLoadedFile = candidate;
         saveMeta.textContent = `Reloaded save: ${candidate.name} (${candidate.size.toLocaleString()} bytes)`;
+        if (tabsNav) tabsNav.hidden = false;
         refreshAfterDataLoad();
       } catch (err) {
         console.error(err);
@@ -2506,27 +2511,7 @@
     });
   }
 
-  // Name file input fallback
-  namesFileInput.addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await readFileAsText(file);
-      const data = JSON.parse(text);
-      if (Array.isArray(data?.locStrings)) {
-        names = data.locStrings;
-        nameMapLoaded = true;
-        namesMeta.textContent = `Loaded name map (locStrings: ${names.length}) from ${file.name}`;
-        if (loadersSection && saveLoaded && nameMapLoaded) loadersSection.style.display = 'none';
-        render();
-      } else {
-        namesMeta.textContent = 'Invalid CHARACTER_NAMES.json (missing locStrings array).';
-      }
-    } catch (err) {
-      console.error(err);
-      namesMeta.textContent = 'Failed to parse CHARACTER_NAMES.json.';
-    }
-  });
+  // Name file input fallback removed — app auto-loads bundled name map
 
   // Studio inputs
   if (studioBudgetInput) {
@@ -2696,7 +2681,7 @@
     const filtered = q ? base.filter(a => fullNameFor(a).toLowerCase().includes(q)) : base.slice();
     sortExecutivesList(filtered);
     updateExecutivesSortIndicators();
-    if (executivesStatus) executivesStatus.textContent = `${filtered.length} of ${base.length} management shown` + (!nameMapLoaded ? ' — load name map to see full names' : '');
+    if (executivesStatus) executivesStatus.textContent = `${filtered.length} of ${base.length} management shown`;
     const frag = document.createDocumentFragment();
     filtered.forEach((ex) => {
       const tr = document.createElement('tr');

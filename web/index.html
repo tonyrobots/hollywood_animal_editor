@@ -28,7 +28,7 @@
 
     <section id="loaders">
       <div class="loader">
-        <h2>1) Load Save File</h2>
+        <h2>Load Your Save</h2>
         <div id="dropZone" class="drop-zone" tabindex="0" aria-label="Drop save file here">
           <p>Drag & drop save JSON here, or</p>
           <input type="file" id="saveFileInput" accept="application/json,.json" />
@@ -38,13 +38,6 @@
           <button id="reloadBtn" disabled>Reload Current Save</button>
         </div>
         <div id="saveMeta" class="meta"></div>
-      </div>
-
-      <div class="loader">
-        <h2>2) Load Name Map</h2>
-        <p class="hint">Tries to auto-load <code>data/CHARACTER_NAMES.json</code>. If it fails, provide it here:</p>
-        <input type="file" id="namesFileInput" accept="application/json,.json" />
-        <div id="namesMeta" class="meta"></div>
       </div>
     </section>
 
@@ -57,7 +50,7 @@
       </div>
     </div>
 
-    <nav class="tabs" role="tablist" aria-label="Primary">
+    <nav class="tabs" role="tablist" aria-label="Primary" hidden>
       <button id="tabbtn-studio" class="tab active" role="tab" aria-selected="true" data-tab="studio" aria-controls="tab-studio">Studio</button>
       <button id="tabbtn-actors" class="tab" role="tab" aria-selected="false" data-tab="actors" aria-controls="tab-actors">Actors</button>
       <button id="tabbtn-directors" class="tab" role="tab" aria-selected="false" data-tab="directors" aria-controls="tab-directors">Directors</button>
@@ -439,7 +432,7 @@
     </div>
 
     <footer>
-      <p class="note">Tip: If opening this file directly (file://), browsers may block auto-loading <code>data/CHARACTER_NAMES.json</code>. Use the Name Map loader above or serve locally (e.g., <code>python -m http.server</code>).</p>
+      <p class="note"></p>
     </footer>
 
     <script src="./app.js"></script>
