@@ -24,8 +24,13 @@ describe('date helpers', () => {
     expect(year).toBeGreaterThan(1900);
   });
 
-  it('returns null when game metadata missing', () => {
+  it('derives year from actor-only sample timestamps', () => {
     const year = computeGameYearFromData(actorOnly);
+    expect(year).toBeGreaterThan(1900);
+  });
+
+  it('returns null when no date strings exist', () => {
+    const year = computeGameYearFromData({ foo: 'bar', nested: { value: 123 } });
     expect(year).toBeNull();
   });
 

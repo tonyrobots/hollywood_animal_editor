@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'preact/hooks';
 import { createAppStore, StoreProvider } from './state';
 import { ActorsView } from './views';
 import { SaveLoader } from './components/SaveLoader';
+import { ChangeLogPanel } from './components/ChangeLogPanel';
 import { loadBundledNameMap } from './services/names';
 
 export function App() {
@@ -35,6 +36,7 @@ export function App() {
       <main class="layout">
         <SaveLoader />
         <ActorsView />
+        <ChangeLogPanel />
       </main>
     </StoreProvider>
   );

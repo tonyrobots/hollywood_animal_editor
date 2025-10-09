@@ -50,6 +50,7 @@ export interface LoadedSave {
   raw: unknown;
   characters: TalentData[];
   names: string[] | null;
+  gameYear: number | null;
 }
 
 export interface StoreSnapshot {
@@ -60,6 +61,7 @@ export interface StoreSnapshot {
   };
   timeline: TimelineState;
   names: string[] | null;
+  gameYear: number | null;
 }
 
 export type StoreAction = 'loadSave' | 'applyChange' | 'undo' | 'redo' | 'reset';
@@ -86,6 +88,7 @@ export interface AppStore {
     };
     timeline: Signal<TimelineState>;
     names: Signal<string[] | null>;
+    gameYear: Signal<number | null>;
     lastAction: Signal<AppStoreSnapshot['lastAction']>;
   };
   derived: {
@@ -97,6 +100,11 @@ export interface AppStore {
     setNameMap: (names: string[] | null) => void;
     updateActorFilters: (partial: Partial<ActorFilters>) => void;
     recordChange: (entry: ChangeEntry) => void;
+    updateActorSkill: (actor: TalentData, value: number | string) => void;
+    updateActorLimit: (actor: TalentData, value: number | string) => void;
+    updateActorTag: (actor: TalentData, tagId: 'ART' | 'COM', value: number | string) => void;
+    updateActorAge: (actor: TalentData, age: number) => void;
+    applyActorSnapshot: (actor: TalentData, snapshot: TalentData, label?: string) => void;
     undo: () => void;
     redo: () => void;
     reset: () => void;
