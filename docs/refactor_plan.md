@@ -61,7 +61,7 @@ This document captures the agreed-upon strategy for refactoring the Hollywood An
 - Any additional studio codes or data model tweaks that should be captured while porting.
 
 ## Next Actions
-1. Port additional role tabs (Directors, Producers, Writers, etc.) onto the shared components/state.
+1. Port the remaining role tabs (Producers, Writers, Editors, Composers, Cinematographers, Agents, Management, Movies) onto the shared components/state—Directors now live on the new stack.
 2. Connect export/download flow and retire legacy `web/app.js` once feature parity is reached.
 3. Harden the new shared components (pagination, undo coalescing, JSON validation) and round out test coverage before expanding to new data fields. 
 

@@ -1,6 +1,5 @@
 import { useState } from 'preact/hooks';
 import { readFileAsText, parseSaveJson } from '../services/files';
-import { readNameFile } from '../services/names';
 import { useAppStore } from '../state';
 
 export function SaveLoader() {
@@ -8,13 +7,9 @@ export function SaveLoader() {
   const [status, setStatus] = useState<string>('No save loaded.');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setLoading] = useState(false);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [nameLoading, setNameLoading] = useState(false);
 
-  const names = store.signals.names.value;
-  const nameStatus = names
-    ? `Name map loaded (${names.length.toLocaleString()} entries)`
-    : 'Name map not loaded — IDs will be shown until a map is provided.';
+  const hasSave = Boolean(store.signals.save.value);
+  if (hasSave) return null;
 
   async function handleFiles(fileList: FileList | null) {
     const file = fileList?.[0];
@@ -57,28 +52,10 @@ export function SaveLoader() {
     event.preventDefault();
   };
 
-  const onNameInputChange = async (event: Event) => {
-    const target = event.currentTarget as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
-    setNameLoading(true);
-    setNameError(null);
-    try {
-      const locStrings = await readNameFile(file);
-      store.actions.setNameMap(locStrings);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load name map.';
-      setNameError(message);
-    } finally {
-      setNameLoading(false);
-      if (target) target.value = '';
-    }
-  };
-
   return (
     <section class="panel">
       <header class="panel__header">
-        <h2>1. Load Save File</h2>
+        <h2>Load Save File</h2>
         <p>Drag & drop your Hollywood Animal JSON save or choose it via the button below.</p>
       </header>
       <div
@@ -98,19 +75,6 @@ export function SaveLoader() {
       <footer class="panel__footer">
         <p class={error ? 'status status--error' : 'status'}>{error ?? status}</p>
       </footer>
-      <div class="panel__section">
-        <h3>Optional: Name Map</h3>
-        <p class="panel__description">
-          Loading the official `CHARACTER_NAMES.json` lets the editor resolve first/last name IDs.
-        </p>
-        <div class="panel__inputs">
-          <label class="file-picker">
-            <input type="file" accept="application/json,.json" onChange={onNameInputChange} disabled={nameLoading} />
-            <span>{nameLoading ? 'Loading…' : 'Load name map JSON…'}</span>
-          </label>
-        </div>
-        <p class={nameError ? 'status status--error' : 'status'}>{nameError ?? nameStatus}</p>
-      </div>
     </section>
   );
 }

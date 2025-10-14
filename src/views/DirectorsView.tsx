@@ -3,10 +3,10 @@ import { AgeField } from '../components/AgeField';
 import { SliderField } from '../components/SliderField';
 import { useAppStore } from '../state';
 import { TalentDetailDrawer } from './TalentDetailDrawer';
-import { fullName, getAge, getTagValue, normalizeDecimalString } from '../domain';
+import { fullName, getAge, normalizeDecimalString } from '../domain';
 import type { TalentData } from '../types/save';
 
-type SortColumn = 'name' | 'skill' | 'limit' | 'art' | 'com' | 'age';
+type SortColumn = 'name' | 'skill' | 'limit' | 'age';
 type SortDirection = 'asc' | 'desc';
 
 interface SortState {
@@ -14,19 +14,15 @@ interface SortState {
   direction: SortDirection;
 }
 
-interface ActorRow {
-  actor: TalentData;
+interface DirectorRow {
+  entity: TalentData;
   displayName: string;
   skill: number;
   limit: number;
-  art: number;
-  com: number;
   age: number | '';
   studio: string | null;
   idLabel: string;
 }
-
-const ART_COM_TICKS = [0, 0.15, 0.3, 0.7, 1];
 
 function parseUnit(value: unknown, fallback = 0): number {
   const normalized = normalizeDecimalString(value ?? '');
@@ -35,55 +31,53 @@ function parseUnit(value: unknown, fallback = 0): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export function ActorsView() {
+export function DirectorsView() {
   const store = useAppStore();
-  const filters = store.signals.filters.actors.value;
+  const filters = store.signals.filters.directors.value;
   const names = store.signals.names.value;
   const gameYear = store.signals.gameYear.value;
-  const baseCount = store.signals.actors.value.length;
+  const baseCount = store.signals.directors.value.length;
   const save = store.signals.save.value;
-  const [selectedActor, setSelectedActor] = useState<TalentData | null>(null);
+  const [selectedDirector, setSelectedDirector] = useState<TalentData | null>(null);
   const [sortState, setSortState] = useState<SortState>({ column: 'name', direction: 'asc' });
 
   useEffect(() => {
     if (!save) {
-      setSelectedActor(null);
+      setSelectedDirector(null);
     }
   }, [save]);
 
-  const actors = store.derived.filteredActors.value;
-  const filteredCount = actors.length;
+  const directors = store.derived.filteredDirectors.value;
+  const filteredCount = directors.length;
   const subtitle =
-    filteredCount === baseCount ? `${baseCount} actors loaded` : `${filteredCount} of ${baseCount} actors shown`;
+    filteredCount === baseCount
+      ? `${baseCount} directors loaded`
+      : `${filteredCount} of ${baseCount} directors shown`;
 
-  const rows = useMemo<ActorRow[]>(() => {
+  const rows = useMemo<DirectorRow[]>(() => {
     const nameMap = names ?? null;
-    const mapped = actors.map((actor) => {
+    const mapped = directors.map((entity) => {
       const displayName = nameMap
         ? fullName(nameMap, {
-            firstId: actor.firstNameId,
-            lastId: actor.lastNameId,
-            customName: actor.customName
+            firstId: entity.firstNameId,
+            lastId: entity.lastNameId,
+            customName: entity.customName
           })
-        : actor.customName ||
-          `${actor.firstNameId ?? ''}${actor.firstNameId && actor.lastNameId ? ' ' : ''}${actor.lastNameId ?? ''}`.trim() ||
-          'Unknown Actor';
-      const skill = parseUnit(actor.professions?.Actor ?? '0');
-      const limitRaw = parseUnit(actor.limit ?? actor.Limit ?? '', skill);
+        : entity.customName ||
+          `${entity.firstNameId ?? ''}${entity.firstNameId && entity.lastNameId ? ' ' : ''}${entity.lastNameId ?? ''}`.trim() ||
+          'Unknown Director';
+      const skill = parseUnit(entity.professions?.Director ?? '0');
+      const limitRaw = parseUnit(entity.limit ?? entity.Limit ?? '', skill);
       const limit = limitRaw < skill ? skill : limitRaw;
-      const art = parseUnit(getTagValue(actor, 'ART'), 0);
-      const com = parseUnit(getTagValue(actor, 'COM'), 0);
-      const age = getAge(actor, gameYear);
+      const age = getAge(entity, gameYear);
       return {
-        actor,
+        entity,
         displayName,
         skill,
         limit,
-        art,
-        com,
         age,
-        studio: actor.studioId ?? null,
-        idLabel: actor.id != null ? String(actor.id) : '—'
+        studio: entity.studioId ?? null,
+        idLabel: entity.id != null ? String(entity.id) : '—'
       };
     });
 
@@ -101,12 +95,6 @@ export function ActorsView() {
         case 'limit':
           compare = a.limit - b.limit;
           break;
-        case 'art':
-          compare = a.art - b.art;
-          break;
-        case 'com':
-          compare = a.com - b.com;
-          break;
         case 'age':
           {
             const valueA = typeof a.age === 'number' ? a.age : -Infinity;
@@ -116,23 +104,23 @@ export function ActorsView() {
           break;
       }
       if (compare === 0) {
-        const idA = a.actor.id ?? 0;
-        const idB = b.actor.id ?? 0;
+        const idA = a.entity.id ?? 0;
+        const idB = b.entity.id ?? 0;
         compare = idA - idB;
       }
       return compare * direction;
     });
     return sorted;
-  }, [actors, names, gameYear, sortState]);
+  }, [directors, names, gameYear, sortState]);
 
   const handleSearch = (event: Event) => {
     const value = (event.currentTarget as HTMLInputElement).value;
-    store.actions.updateActorFilters({ search: value });
+    store.actions.updateDirectorFilters({ search: value });
   };
 
   const handleStudioToggle = (event: Event) => {
     const { checked } = event.currentTarget as HTMLInputElement;
-    store.actions.updateActorFilters({ playerStudioOnly: checked });
+    store.actions.updateDirectorFilters({ playerStudioOnly: checked });
   };
 
   const toggleSort = (column: SortColumn) => {
@@ -150,29 +138,25 @@ export function ActorsView() {
     return sortState.direction === 'asc' ? '^' : 'v';
   };
 
-  const handleRowNameClick = (actor: TalentData) => {
-    setSelectedActor(actor);
-  };
-
   return (
     <>
       <section class="panel">
         <header class="panel__header">
-          <h2>Actors</h2>
+          <h2>Directors</h2>
           <p class="panel__subtitle">{subtitle}</p>
         </header>
         <div class="panel__controls">
           <label class="panel__field">
             <span>Search</span>
-            <input type="search" value={filters.search} onInput={handleSearch} placeholder="Find actors…" />
+            <input type="search" value={filters.search} onInput={handleSearch} placeholder="Find directors…" />
           </label>
           <label class="panel__toggle">
             <input type="checkbox" checked={filters.playerStudioOnly} onChange={handleStudioToggle} />
             <span>Player Studio only</span>
           </label>
         </div>
-        {actors.length === 0 ? (
-          <p class="panel__empty">Load a save to preview actors.</p>
+        {directors.length === 0 ? (
+          <p class="panel__empty">Load a save to preview directors.</p>
         ) : (
           <div class="table-wrap">
             <table class="data-table data-table--interactive">
@@ -195,16 +179,6 @@ export function ActorsView() {
                     </button>
                   </th>
                   <th>
-                    <button type="button" class="table-sort" onClick={() => toggleSort('art')}>
-                      Artistic Appeal <span class="table-sort__indicator">{renderSortIndicator('art')}</span>
-                    </button>
-                  </th>
-                  <th>
-                    <button type="button" class="table-sort" onClick={() => toggleSort('com')}>
-                      Commercial Appeal <span class="table-sort__indicator">{renderSortIndicator('com')}</span>
-                    </button>
-                  </th>
-                  <th>
                     <button type="button" class="table-sort" onClick={() => toggleSort('age')}>
                       Age <span class="table-sort__indicator">{renderSortIndicator('age')}</span>
                     </button>
@@ -214,11 +188,11 @@ export function ActorsView() {
               </thead>
               <tbody>
                 {rows.map((row, index) => {
-                  const key = row.actor.id != null ? `actor-${row.actor.id}` : `actor-${index}`;
+                  const key = row.entity.id != null ? `director-${row.entity.id}` : `director-${index}`;
                   return (
                     <tr key={key}>
                       <td>
-                        <button type="button" class="link-button" onClick={() => handleRowNameClick(row.actor)}>
+                        <button type="button" class="link-button" onClick={() => setSelectedDirector(row.entity)}>
                           {row.displayName}
                         </button>
                       </td>
@@ -226,11 +200,11 @@ export function ActorsView() {
                       <td>
                         <SliderField
                           value={row.skill}
-                          onCommit={(value) => store.actions.updateActorSkill(row.actor, value)}
                           min={0}
                           max={1}
                           step={0.01}
-                          title="Acting skill (0–1 range shown as 0–10)."
+                          onCommit={(value) => store.actions.updateDirectorSkill(row.entity, value)}
+                          title="Directing skill (0–1 range shown as 0–10)."
                         />
                       </td>
                       <td>
@@ -239,34 +213,17 @@ export function ActorsView() {
                           min={row.skill}
                           max={1}
                           step={0.01}
-                          onCommit={(value) => store.actions.updateActorLimit(row.actor, value)}
-                          title="Limit cannot be reduced below acting skill."
+                          onCommit={(value) => store.actions.updateDirectorLimit(row.entity, value)}
+                          title="Limit cannot be reduced below directing skill."
                         />
                       </td>
                       <td>
-                        <SliderField
-                          value={row.art}
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          ticks={ART_COM_TICKS}
-                          onCommit={(value) => store.actions.updateActorTag(row.actor, 'ART', value)}
-                          title="Artistic Appeal (snaps to key film breakpoints)."
+                        <AgeField
+                          entity={row.entity}
+                          age={row.age}
+                          gameYear={gameYear}
+                          onCommit={store.actions.updateDirectorAge}
                         />
-                      </td>
-                      <td>
-                        <SliderField
-                          value={row.com}
-                          min={0}
-                          max={1}
-                          step={0.01}
-                          ticks={ART_COM_TICKS}
-                          onCommit={(value) => store.actions.updateActorTag(row.actor, 'COM', value)}
-                          title="Commercial Appeal (snaps to key film breakpoints)."
-                        />
-                      </td>
-                      <td>
-                        <AgeField entity={row.actor} age={row.age} gameYear={gameYear} onCommit={store.actions.updateActorAge} />
                       </td>
                       <td>{row.studio ?? '—'}</td>
                     </tr>
@@ -278,10 +235,10 @@ export function ActorsView() {
         )}
       </section>
       <TalentDetailDrawer
-        kind="actor"
-        entity={selectedActor}
-        open={selectedActor !== null}
-        onClose={() => setSelectedActor(null)}
+        kind="director"
+        entity={selectedDirector}
+        open={selectedDirector !== null}
+        onClose={() => setSelectedDirector(null)}
       />
     </>
   );

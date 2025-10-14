@@ -17,19 +17,33 @@ function createActor(overrides: Partial<TalentData> = {}): TalentData {
   };
 }
 
+function createDirector(overrides: Partial<TalentData> = {}): TalentData {
+  return {
+    id: 201,
+    firstNameId: '3',
+    lastNameId: '4',
+    professions: { Director: '0.400' },
+    limit: '0.400',
+    Limit: '0.400',
+    birthDate: '01-01-1975',
+    studioId: 'PL',
+    ...overrides
+  };
+}
+
 describe('createAppStore actor editing', () => {
   let actor: TalentData;
   let store: ReturnType<typeof createAppStore>;
 
   beforeEach(() => {
     actor = createActor();
+    const director = createDirector();
     const raw = {
-      characters: [actor],
+      characters: [actor, director],
       gameDate: '1990-06-01T00:00:00'
     };
     store = createAppStore();
     store.actions.loadSave(raw, { filename: 'test.json', size: 0, loadedAt: Date.now() });
-    // refresh reference from store after load
     actor = store.signals.actors.value[0];
   });
 
@@ -67,5 +81,47 @@ describe('createAppStore actor editing', () => {
     store.actions.applyActorSnapshot(actor, { ...actor, limit: '0.900', Limit: '0.900', alias: 'Tester' });
     expect(actor.limit).toBe('0.900');
     expect((actor as Record<string, unknown>).alias).toBe('Tester');
+  });
+});
+
+describe('createAppStore director editing', () => {
+  let director: TalentData;
+  let store: ReturnType<typeof createAppStore>;
+
+  beforeEach(() => {
+    director = createDirector();
+    const raw = {
+      characters: [createActor(), director],
+      gameDate: '1992-01-01T00:00:00'
+    };
+    store = createAppStore();
+    store.actions.loadSave(raw, { filename: 'directors.json', size: 0, loadedAt: Date.now() });
+    director = store.signals.directors.value[0];
+  });
+
+  it('updates director skill and keeps limit in sync', () => {
+    store.actions.updateDirectorSkill(director, 0.75);
+    expect(director.professions?.Director).toBe('0.750');
+    expect(director.limit).toBe('0.750');
+    expect(director.Limit).toBe('0.750');
+  });
+
+  it('prevents limit from dropping below skill', () => {
+    director.professions = { Director: '0.650' };
+    director.limit = '0.800';
+    director.Limit = '0.800';
+    store.actions.updateDirectorLimit(director, 0.4);
+    expect(director.limit).toBe('0.650');
+    expect(director.Limit).toBe('0.650');
+  });
+
+  it('updates director age when game year available', () => {
+    store.actions.updateDirectorAge(director, 30);
+    expect(director.birthDate).toBe('01-01-1962');
+  });
+
+  it('applies JSON snapshots for directors', () => {
+    store.actions.applyDirectorSnapshot(director, { ...director, nickname: 'Visionary' });
+    expect((director as Record<string, unknown>).nickname).toBe('Visionary');
   });
 });

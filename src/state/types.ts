@@ -34,7 +34,7 @@ export interface TimelineState {
   undone: ChangeEntry[];
 }
 
-export interface ActorFilters {
+export interface CollectionFilters {
   search: string;
   playerStudioOnly: boolean;
 }
@@ -56,8 +56,10 @@ export interface LoadedSave {
 export interface StoreSnapshot {
   save: LoadedSave | null;
   actors: TalentData[];
+  directors: TalentData[];
   filters: {
-    actors: ActorFilters;
+    actors: CollectionFilters;
+    directors: CollectionFilters;
   };
   timeline: TimelineState;
   names: string[] | null;
@@ -68,6 +70,7 @@ export type StoreAction = 'loadSave' | 'applyChange' | 'undo' | 'redo' | 'reset'
 
 export interface DerivedSnapshot {
   filteredActors: TalentData[];
+  filteredDirectors: TalentData[];
   hasChanges: boolean;
 }
 
@@ -83,8 +86,10 @@ export interface AppStore {
   signals: {
     save: Signal<LoadedSave | null>;
     actors: Signal<TalentData[]>;
+    directors: Signal<TalentData[]>;
     filters: {
-      actors: Signal<ActorFilters>;
+      actors: Signal<CollectionFilters>;
+      directors: Signal<CollectionFilters>;
     };
     timeline: Signal<TimelineState>;
     names: Signal<string[] | null>;
@@ -93,17 +98,24 @@ export interface AppStore {
   };
   derived: {
     filteredActors: Signal<TalentData[]>;
+    filteredDirectors: Signal<TalentData[]>;
     hasChanges: Signal<boolean>;
   };
   actions: {
     loadSave: (raw: unknown, meta: SaveMeta, names?: string[] | null) => void;
     setNameMap: (names: string[] | null) => void;
-    updateActorFilters: (partial: Partial<ActorFilters>) => void;
+    updateCollectionFilters: (kind: EntityKind, partial: Partial<CollectionFilters>) => void;
+    updateActorFilters: (partial: Partial<CollectionFilters>) => void;
+    updateDirectorFilters: (partial: Partial<CollectionFilters>) => void;
     recordChange: (entry: ChangeEntry) => void;
     updateActorSkill: (actor: TalentData, value: number | string) => void;
     updateActorLimit: (actor: TalentData, value: number | string) => void;
     updateActorTag: (actor: TalentData, tagId: 'ART' | 'COM', value: number | string) => void;
     updateActorAge: (actor: TalentData, age: number) => void;
+    updateDirectorSkill: (actor: TalentData, value: number | string) => void;
+    updateDirectorLimit: (actor: TalentData, value: number | string) => void;
+    updateDirectorAge: (actor: TalentData, age: number) => void;
+    applyDirectorSnapshot: (actor: TalentData, snapshot: TalentData, label?: string) => void;
     applyActorSnapshot: (actor: TalentData, snapshot: TalentData, label?: string) => void;
     undo: () => void;
     redo: () => void;
