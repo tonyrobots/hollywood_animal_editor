@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { DetailDrawer } from '../components/DetailDrawer';
-import { useAppStore } from '../state';
-import { fullName, getAge, formatUnitToTen, getTagValue, normalizeDecimalString } from '../domain';
+import { AgeField } from '../components/AgeField';
+import { SliderField } from '../components/SliderField';
+import { TagValueInput } from '../components/TagValueInput';
+import { ROLE_CONFIG, useAppStore } from '../state';
+import {
+  fullName,
+  getAge,
+  formatStudioDisplay,
+  formatUnitToTen,
+  getTagValue,
+  normalizeDecimalString
+} from '../domain';
 import type { TalentData } from '../types/save';
-
-type TalentKind = 'actor' | 'director';
+type TalentKind = keyof typeof ROLE_CONFIG;
 
 interface TalentDetailDrawerProps {
   kind: TalentKind;
@@ -13,29 +22,33 @@ interface TalentDetailDrawerProps {
   onClose: () => void;
 }
 
-const ROLE_TITLES: Record<TalentKind, string> = {
-  actor: 'Actor',
-  director: 'Director'
-};
-
-const PROFESSION_KEY: Record<TalentKind, string> = {
-  actor: 'Actor',
-  director: 'Director'
-};
+const READINESS_OPTIONS = [
+  { value: '0', label: 'No tricks' },
+  { value: '1', label: 'Only clean tricks' },
+  { value: '2', label: 'Dirty tricks allowed' }
+];
 
 export function TalentDetailDrawer({ kind, entity, open, onClose }: TalentDetailDrawerProps) {
   const store = useAppStore();
+  const config = ROLE_CONFIG[kind];
   const names = store.signals.names.value;
   const gameYear = store.signals.gameYear.value;
   const timeline = store.signals.timeline.value;
   const timelineVersion = timeline.applied.length + timeline.undone.length;
 
-  const collections = kind === 'actor' ? store.signals.actors.value : store.signals.directors.value;
+  const collections = store.signals[config.collectionKey].value;
 
   const [jsonDraft, setJsonDraft] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [isDirty, setDirty] = useState(false);
   const [lastEntityKey, setLastEntityKey] = useState<number | null>(null);
+  const [mode, setMode] = useState<'form' | 'json'>('form');
+  const [nameDraft, setNameDraft] = useState('');
+  const [genderDraft, setGenderDraft] = useState<0 | 1>(0);
+  const [readinessDraft, setReadinessDraft] = useState('0');
+  const [selfEsteemDraft, setSelfEsteemDraft] = useState('');
+  const [skillPreview, setSkillPreview] = useState<number | null>(null);
+  const [limitPreview, setLimitPreview] = useState<number | null>(null);
 
   const entityKey = useMemo(() => {
     if (!entity) return null;
@@ -50,6 +63,13 @@ export function TalentDetailDrawer({ kind, entity, open, onClose }: TalentDetail
       setJsonError(null);
       setDirty(false);
       setLastEntityKey(null);
+      setMode('form');
+      setNameDraft('');
+      setGenderDraft(0);
+      setReadinessDraft('0');
+      setSelfEsteemDraft('');
+      setSkillPreview(null);
+      setLimitPreview(null);
       return;
     }
     const changed = entityKey !== lastEntityKey;
@@ -58,10 +78,24 @@ export function TalentDetailDrawer({ kind, entity, open, onClose }: TalentDetail
       setJsonError(null);
       setDirty(false);
       setLastEntityKey(entityKey);
+      if (changed) {
+        setMode('form');
+      }
+      setNameDraft(typeof entity.customName === 'string' ? entity.customName : '');
+      setGenderDraft(Number(entity.gender) === 1 ? 1 : 0);
+      const draftReadiness = Math.min(
+        Math.max(Math.round(Number(entity.readinessForTricks) || 0), 0),
+        READINESS_OPTIONS.length - 1
+      );
+      setReadinessDraft(String(draftReadiness));
+      const seDraft = normalizeDecimalString(entity.selfEsteem ?? '');
+      setSelfEsteemDraft(seDraft);
+      setSkillPreview(null);
+      setLimitPreview(null);
     }
   }, [entity, entityKey, open, timelineVersion]);
 
-  const roleLabel = ROLE_TITLES[kind];
+  const roleLabel = config.detailLabel;
 
   const displayName = entity
     ? names
@@ -77,23 +111,61 @@ export function TalentDetailDrawer({ kind, entity, open, onClose }: TalentDetail
 
   const age = entity ? getAge(entity, gameYear) : '';
 
-  const professionKey = PROFESSION_KEY[kind];
+  const professionKey = config.professionKey;
   const skillValue = entity ? normalizeDecimalString(entity.professions?.[professionKey] ?? '') : '';
   const limitValue = entity ? normalizeDecimalString(entity.limit ?? entity.Limit ?? '') : '';
 
-  const art = kind === 'actor' && entity ? formatUnitToTen(getTagValue(entity, 'ART')) : '';
-  const com = kind === 'actor' && entity ? formatUnitToTen(getTagValue(entity, 'COM')) : '';
+  const skillNumber = entity ? Number(skillValue || '0') : 0;
+  const safeSkill = Number.isFinite(skillNumber) ? Math.min(Math.max(skillNumber, 0), 1) : 0;
+  const limitNumber = entity ? Number(limitValue || skillValue || '0') : 0;
+  const safeLimit = Number.isFinite(limitNumber) ? Math.min(Math.max(limitNumber, safeSkill), 1) : safeSkill;
+  const studioCode = entity
+    ? entity.studioId == null
+      ? ''
+      : String(entity.studioId)
+    : '';
+  const studioDisplay = entity ? (studioCode ? formatStudioDisplay(studioCode) : 'None') : '—';
+  const moodRaw = entity ? Number(normalizeDecimalString(entity.mood ?? '')) : 0;
+  const safeMood = Number.isFinite(moodRaw) ? Math.min(Math.max(moodRaw, 0), 1) : 0;
+  const attitudeRaw = entity ? Number(normalizeDecimalString(entity.attitude ?? '')) : 0;
+  const safeAttitude = Number.isFinite(attitudeRaw) ? Math.min(Math.max(attitudeRaw, 0), 1) : 0;
+  const commitSelfEsteem = () => {
+    if (!entity) return;
+    const trimmed = selfEsteemDraft.trim();
+    if (trimmed === '') {
+      const fallback = normalizeDecimalString(entity.selfEsteem ?? '');
+      setSelfEsteemDraft(fallback);
+      return;
+    }
+    const numeric = Number(trimmed);
+    if (!Number.isFinite(numeric)) {
+      const fallback = normalizeDecimalString(entity.selfEsteem ?? '');
+      setSelfEsteemDraft(fallback);
+      return;
+    }
+    store.actions.updateSelfEsteem(kind, entity, numeric);
+    const formatted = normalizeDecimalString(numeric);
+    setSelfEsteemDraft(formatted);
+  };
+  const artValue = kind === 'actor' && entity ? Number(normalizeDecimalString(getTagValue(entity, 'ART'))) || 0 : 0;
+  const comValue = kind === 'actor' && entity ? Number(normalizeDecimalString(getTagValue(entity, 'COM'))) || 0 : 0;
+  const skillDisplay = skillPreview ?? safeSkill;
+  const limitBase = limitPreview ?? safeLimit;
+  const limitDisplay = Math.max(limitBase, skillDisplay);
+  const originalName = entity
+    ? names
+      ? fullName(names, { firstId: entity.firstNameId, lastId: entity.lastNameId })
+      : `${entity.firstNameId ?? ''}${entity.firstNameId && entity.lastNameId ? ' ' : ''}${entity.lastNameId ?? ''}`.trim() ||
+        `Unknown ${roleLabel}`
+    : '—';
 
   const handleSubmit = (event: Event) => {
     event.preventDefault();
     if (!entity) return;
     try {
       const parsed = JSON.parse(jsonDraft);
-      if (kind === 'actor') {
-        store.actions.applyActorSnapshot(entity, parsed, 'Actor JSON edit');
-      } else {
-        store.actions.applyDirectorSnapshot(entity, parsed, 'Director JSON edit');
-      }
+      const defaultLabel = `${config.detailLabel} JSON edit`;
+      store.actions.applySnapshot(kind, entity, parsed, defaultLabel);
       setJsonError(null);
       setDirty(false);
       setJsonDraft(JSON.stringify(entity, null, 2));
@@ -109,74 +181,247 @@ export function TalentDetailDrawer({ kind, entity, open, onClose }: TalentDetail
         <p class="drawer__empty">Select a {roleLabel.toLowerCase()} to inspect their details.</p>
       ) : (
         <>
-          <section class="drawer__section">
-            <h4>Summary</h4>
+          <section class="drawer__section drawer__summary-row">
             <dl class="drawer__summary">
               <div>
                 <dt>ID</dt>
                 <dd>{entity.id ?? '—'}</dd>
               </div>
               <div>
+                <dt>Original Name</dt>
+                <dd>{originalName}</dd>
+              </div>
+              <div>
                 <dt>Studio</dt>
-                <dd>{entity.studioId ?? '—'}</dd>
+                <dd>{studioDisplay}</dd>
               </div>
-              <div>
-                <dt>Age</dt>
-                <dd>{age === '' ? '—' : age}</dd>
-              </div>
-              <div>
-                <dt>{roleLabel} Skill</dt>
-                <dd>{skillValue ? formatUnitToTen(skillValue) : '—'}</dd>
-              </div>
-              <div>
-                <dt>Limit</dt>
-                <dd>{limitValue ? formatUnitToTen(limitValue) : '—'}</dd>
-              </div>
-              {kind === 'actor' && (
-                <>
-                  <div>
-                    <dt>Artistic Appeal</dt>
-                    <dd>{art || '—'}</dd>
-                  </div>
-                  <div>
-                    <dt>Commercial Appeal</dt>
-                    <dd>{com || '—'}</dd>
-                  </div>
-                </>
-              )}
             </dl>
+            <div class="drawer__mode">
+              <button
+                type="button"
+                class={`drawer__mode-button${mode === 'form' ? ' drawer__mode-button--active' : ''}`}
+                onClick={() => setMode('form')}
+              >
+                Friendly Controls
+              </button>
+              <button
+                type="button"
+                class={`drawer__mode-button${mode === 'json' ? ' drawer__mode-button--active' : ''}`}
+                onClick={() => setMode('json')}
+              >
+                Raw JSON
+              </button>
+            </div>
           </section>
           <section class="drawer__section">
-            <h4>Advanced JSON Editor</h4>
-            <form class="drawer__form" onSubmit={handleSubmit}>
-              <textarea
-                value={jsonDraft}
-                onInput={(event) => {
-                  setJsonDraft((event.currentTarget as HTMLTextAreaElement).value);
-                  setDirty(true);
-                }}
-                rows={18}
-                spellCheck={false}
-              />
-              {jsonError && <p class="drawer__error">{jsonError}</p>}
-              <div class="drawer__buttons">
-                <button type="submit" disabled={!isDirty}>
-                  Apply JSON Changes
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!entity) return;
-                    setJsonDraft(JSON.stringify(entity, null, 2));
-                    setJsonError(null);
-                    setDirty(false);
-                  }}
-                  disabled={!isDirty}
-                >
-                  Revert Draft
-                </button>
+            <h4>Detail Editing</h4>
+            {mode === 'form' ? (
+              <div class="drawer__controls">
+                <div class="drawer__control">
+                  <label>Custom Name</label>
+                  <input
+                    type="text"
+                    value={nameDraft}
+                    onInput={(event) => setNameDraft((event.currentTarget as HTMLInputElement).value)}
+                    onBlur={() => entity && store.actions.updateCustomName(kind, entity, nameDraft)}
+                    placeholder="Leave blank to use generated name"
+                  />
+                </div>
+                <div class="drawer__control">
+                  <label>Gender</label>
+                  <div class="drawer__radio-group">
+                    <label class="drawer__radio">
+                      <input
+                        type="radio"
+                        name="detailGender"
+                        checked={genderDraft === 0}
+                        onChange={() => {
+                          setGenderDraft(0);
+                          entity && store.actions.updateGender(kind, entity, 0);
+                        }}
+                      />
+                      <span>Male</span>
+                    </label>
+                    <label class="drawer__radio">
+                      <input
+                        type="radio"
+                        name="detailGender"
+                        checked={genderDraft === 1}
+                        onChange={() => {
+                          setGenderDraft(1);
+                          entity && store.actions.updateGender(kind, entity, 1);
+                        }}
+                      />
+                      <span>Female</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="drawer__control">
+                  <label>Age</label>
+                  <AgeField
+                    entity={entity}
+                    age={age}
+                    gameYear={gameYear}
+                    onCommit={(current, nextAge) => store.actions.updateAge(kind, current, nextAge)}
+                  />
+                </div>
+                <div class="drawer__control">
+                  <label>Happiness</label>
+                  <SliderField
+                    value={safeMood}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    formatValue={(value) => `${Math.round(value * 100)}%`}
+                    onCommit={(value) => entity && store.actions.updateMood(kind, entity, value)}
+                    title="Happiness (0–100%)."
+                  />
+                </div>
+                <div class="drawer__control">
+                  <label>Loyalty</label>
+                  <SliderField
+                    value={safeAttitude}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    formatValue={(value) => `${Math.round(value * 100)}%`}
+                    onCommit={(value) => entity && store.actions.updateAttitude(kind, entity, value)}
+                    title="Loyalty (0–100%)."
+                  />
+                </div>
+                <div class="drawer__control">
+                  <label>Self-esteem</label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    value={selfEsteemDraft}
+                    onInput={(event) => setSelfEsteemDraft((event.currentTarget as HTMLInputElement).value)}
+                    onBlur={() => {
+                      commitSelfEsteem();
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        commitSelfEsteem();
+                        (event.currentTarget as HTMLInputElement).blur();
+                      }
+                    }}
+                    placeholder="0.000"
+                  />
+                </div>
+                {kind === 'actor' && (
+                  <div class="drawer__control">
+                    <label>Readiness for Tricks</label>
+                    <select
+                      class="drawer__select"
+                      value={readinessDraft}
+                      onChange={(event) => {
+                        const value = (event.currentTarget as HTMLSelectElement).value;
+                        setReadinessDraft(value);
+                        entity && store.actions.updateReadiness(kind, entity, Number(value));
+                      }}
+                    >
+                      {READINESS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div class="drawer__control">
+                  <label>{config.label}</label>
+                  <SliderField
+                    value={skillDisplay}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    onChange={(value) => {
+                      setSkillPreview(value);
+                      setLimitPreview((prev) => {
+                        const baseline = prev ?? safeLimit;
+                        return value > baseline ? value : prev;
+                      });
+                    }}
+                    onCommit={(value) => {
+                      if (!entity) return;
+                      store.actions.updateSkill(kind, entity, value);
+                      setSkillPreview(null);
+                      setLimitPreview(null);
+                    }}
+                    title={config.skillTooltip}
+                  />
+                </div>
+                <div class="drawer__control">
+                  <label>Limit</label>
+                  <SliderField
+                    value={limitDisplay}
+                    min={skillDisplay}
+                    max={1}
+                    step={0.01}
+                    onChange={(value) => setLimitPreview(value)}
+                    onCommit={(value) => {
+                      if (!entity) return;
+                      store.actions.updateLimit(kind, entity, value);
+                      setLimitPreview(null);
+                    }}
+                    title="Limit cannot be reduced below current skill."
+                  />
+                </div>
+                {kind === 'actor' && (
+                  <>
+                    <div class="drawer__control">
+                      <label>Artistic Appeal</label>
+                      <TagValueInput
+                        value={artValue}
+                        icon="🎭"
+                        title="Artistic Appeal (enter 0.0–10.0; saved as 0.000–1.000)"
+                        onCommit={(value) => store.actions.updateActorTag(entity, 'ART', value)}
+                      />
+                    </div>
+                    <div class="drawer__control">
+                      <label>Commercial Appeal</label>
+                      <TagValueInput
+                        value={comValue}
+                        icon="⭐"
+                        title="Commercial Appeal (enter 0.0–10.0; saved as 0.000–1.000)"
+                        onCommit={(value) => store.actions.updateActorTag(entity, 'COM', value)}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
-            </form>
+            ) : (
+              <form class="drawer__form" onSubmit={handleSubmit}>
+                <textarea
+                  value={jsonDraft}
+                  onInput={(event) => {
+                    setJsonDraft((event.currentTarget as HTMLTextAreaElement).value);
+                    setDirty(true);
+                  }}
+                  rows={18}
+                  spellCheck={false}
+                />
+                {jsonError && <p class="drawer__error">{jsonError}</p>}
+                <div class="drawer__buttons">
+                  <button type="submit" disabled={!isDirty}>
+                    Apply JSON Changes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!entity) return;
+                      setJsonDraft(JSON.stringify(entity, null, 2));
+                      setJsonError(null);
+                      setDirty(false);
+                    }}
+                    disabled={!isDirty}
+                  >
+                    Revert Draft
+                  </button>
+                </div>
+              </form>
+            )}
           </section>
         </>
       )}

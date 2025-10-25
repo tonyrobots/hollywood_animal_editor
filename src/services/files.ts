@@ -14,3 +14,22 @@ export function parseSaveJson(contents: string): unknown {
     throw new Error('Save file is not valid JSON.');
   }
 }
+
+export function serializeSave(raw: unknown): string {
+  if (raw == null) {
+    throw new Error('Save data is unavailable.');
+  }
+  return JSON.stringify(raw, null, 2);
+}
+
+export function downloadTextFile(filename: string, contents: string, mimeType = 'application/json') {
+  const blob = new Blob([contents], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}

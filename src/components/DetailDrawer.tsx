@@ -10,7 +10,7 @@ interface DetailDrawerProps {
   width?: string;
 }
 
-export function DetailDrawer({ open, title, onClose, children, footer, width = '520px' }: DetailDrawerProps) {
+export function DetailDrawer({ open, title, onClose, children, footer, width }: DetailDrawerProps) {
   useEffect(() => {
     if (!open) return;
     const handler = (event: KeyboardEvent) => {
@@ -35,7 +35,7 @@ export function DetailDrawer({ open, title, onClose, children, footer, width = '
 
   return (
     <div class="drawer-overlay" onClick={handleOverlayClick}>
-      <aside class="drawer" style={{ width }} onClick={stopPropagation}>
+      <aside class="drawer" style={width ? { width } : undefined} onClick={stopPropagation}>
         <header class="drawer__header">
           <h3>{title}</h3>
           <button type="button" class="drawer__close" onClick={onClose} aria-label="Close detail view">

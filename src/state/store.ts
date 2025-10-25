@@ -4,6 +4,8 @@ import {
   ensureTag,
   extractCharacters,
   formatBirthDate,
+  formatStudioDisplay,
+  formatUnitToHundred,
   formatUnitToTen,
   fullName,
   isActorEntry,
@@ -23,6 +25,7 @@ import type {
   LoadedSave,
   SaveMeta,
   StoreAction,
+  TalentRole,
   TimelineState
 } from './types';
 
@@ -31,21 +34,129 @@ const MAX_BIRTH_YEAR = 2100;
 
 let changeSequence = 0;
 
-const ROLE_CONFIG = {
+const GENDER_LABELS: Record<number, string> = {
+  0: 'Male',
+  1: 'Female'
+};
+
+const READINESS_LABELS = ['No tricks', 'Only clean tricks', 'Dirty tricks allowed'] as const;
+
+type CollectionKey =
+  | 'actors'
+  | 'directors'
+  | 'producers'
+  | 'writers'
+  | 'editors'
+  | 'composers'
+  | 'cinematographers'
+  | 'agents';
+
+type FilteredKey =
+  | 'filteredActors'
+  | 'filteredDirectors'
+  | 'filteredProducers'
+  | 'filteredWriters'
+  | 'filteredEditors'
+  | 'filteredComposers'
+  | 'filteredCinematographers'
+  | 'filteredAgents';
+
+interface RoleConfig {
+  professionKey: string;
+  label: string;
+  predicate: (entity: TalentData) => boolean;
+  collectionKey: CollectionKey;
+  filteredKey: FilteredKey;
+  detailLabel: string;
+  title: string;
+  skillTooltip: string;
+}
+
+export const ROLE_CONFIG: Record<TalentRole, RoleConfig> = {
   actor: {
     professionKey: 'Actor',
     label: 'Acting Skill',
-    predicate: isActorEntry
+    predicate: isActorEntry,
+    collectionKey: 'actors',
+    filteredKey: 'filteredActors',
+    detailLabel: 'Actor',
+    title: 'Actors',
+    skillTooltip: 'Acting skill (0–1 range shown as 0–10).'
   },
   director: {
     professionKey: 'Director',
     label: 'Directing Skill',
-    predicate: isRoleEntry('Director')
+    predicate: isRoleEntry('Director'),
+    collectionKey: 'directors',
+    filteredKey: 'filteredDirectors',
+    detailLabel: 'Director',
+    title: 'Directors',
+    skillTooltip: 'Directing skill (0–1 range shown as 0–10).'
+  },
+  producer: {
+    professionKey: 'Producer',
+    label: 'Producing Skill',
+    predicate: isRoleEntry('Producer'),
+    collectionKey: 'producers',
+    filteredKey: 'filteredProducers',
+    detailLabel: 'Producer',
+    title: 'Producers',
+    skillTooltip: 'Producing skill (0–1 range shown as 0–10).'
+  },
+  writer: {
+    professionKey: 'Scriptwriter',
+    label: 'Writing Skill',
+    predicate: isRoleEntry('Scriptwriter'),
+    collectionKey: 'writers',
+    filteredKey: 'filteredWriters',
+    detailLabel: 'Writer',
+    title: 'Writers',
+    skillTooltip: 'Writing skill (0–1 range shown as 0–10).'
+  },
+  editor: {
+    professionKey: 'FilmEditor',
+    label: 'Editing Skill',
+    predicate: isRoleEntry('FilmEditor'),
+    collectionKey: 'editors',
+    filteredKey: 'filteredEditors',
+    detailLabel: 'Editor',
+    title: 'Editors',
+    skillTooltip: 'Editing skill (0–1 range shown as 0–10).'
+  },
+  composer: {
+    professionKey: 'Composer',
+    label: 'Composing Skill',
+    predicate: isRoleEntry('Composer'),
+    collectionKey: 'composers',
+    filteredKey: 'filteredComposers',
+    detailLabel: 'Composer',
+    title: 'Composers',
+    skillTooltip: 'Composing skill (0–1 range shown as 0–10).'
+  },
+  cinematographer: {
+    professionKey: 'Cinematographer',
+    label: 'Cinematography Skill',
+    predicate: isRoleEntry('Cinematographer'),
+    collectionKey: 'cinematographers',
+    filteredKey: 'filteredCinematographers',
+    detailLabel: 'Cinematographer',
+    title: 'Cinematographers',
+    skillTooltip: 'Cinematography skill (0–1 range shown as 0–10).'
+  },
+  agent: {
+    professionKey: 'Agent',
+    label: 'Agent Skill',
+    predicate: isRoleEntry('Agent'),
+    collectionKey: 'agents',
+    filteredKey: 'filteredAgents',
+    detailLabel: 'Agent',
+    title: 'Agents',
+    skillTooltip: 'Agent skill (0–1 range shown as 0–10).'
   }
 } as const;
 
-type SupportedKind = keyof typeof ROLE_CONFIG;
-const ROLE_KINDS = Object.keys(ROLE_CONFIG) as SupportedKind[];
+export type SupportedKind = keyof typeof ROLE_CONFIG;
+export const ROLE_KINDS = Object.keys(ROLE_CONFIG) as SupportedKind[];
 
 function isSupportedKind(kind: EntityKind | SupportedKind): kind is SupportedKind {
   return (ROLE_CONFIG as Record<string, unknown>)[kind as string] != null;
@@ -120,40 +231,96 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
 
   const collections: Record<SupportedKind, Signal<TalentData[]>> = {
     actor: signal(initial?.actors ?? []),
-    director: signal(initial?.directors ?? [])
+    director: signal(initial?.directors ?? []),
+    producer: signal(initial?.producers ?? []),
+    writer: signal(initial?.writers ?? []),
+    editor: signal(initial?.editors ?? []),
+    composer: signal(initial?.composers ?? []),
+    cinematographer: signal(initial?.cinematographers ?? []),
+    agent: signal(initial?.agents ?? [])
   };
 
-  const filters = {
+  const filters: Record<SupportedKind, Signal<CollectionFilters>> = {
     actor: signal(initial?.filters?.actors ?? defaultFilters()),
-    director: signal(initial?.filters?.directors ?? defaultFilters())
-  } as const;
+    director: signal(initial?.filters?.directors ?? defaultFilters()),
+    producer: signal(initial?.filters?.producers ?? defaultFilters()),
+    writer: signal(initial?.filters?.writers ?? defaultFilters()),
+    editor: signal(initial?.filters?.editors ?? defaultFilters()),
+    composer: signal(initial?.filters?.composers ?? defaultFilters()),
+    cinematographer: signal(initial?.filters?.cinematographers ?? defaultFilters()),
+    agent: signal(initial?.filters?.agents ?? defaultFilters())
+  };
 
   const actors = collections.actor;
   const directors = collections.director;
+  const producers = collections.producer;
+  const writers = collections.writer;
+  const editors = collections.editor;
+  const composers = collections.composer;
+  const cinematographers = collections.cinematographer;
+  const agents = collections.agent;
 
   const timeline = signal<TimelineState>(initial?.timeline ?? defaultTimeline());
   const lastAction = signal<AppStoreSnapshot['lastAction']>(initial?.lastAction ?? null);
 
   const fallbackIds: Record<SupportedKind, WeakMap<TalentData, number>> = {
     actor: new WeakMap(),
-    director: new WeakMap()
+    director: new WeakMap(),
+    producer: new WeakMap(),
+    writer: new WeakMap(),
+    editor: new WeakMap(),
+    composer: new WeakMap(),
+    cinematographer: new WeakMap(),
+    agent: new WeakMap()
   };
   const fallbackSequences: Record<SupportedKind, number> = {
     actor: 1,
-    director: 1
+    director: 1,
+    producer: 1,
+    writer: 1,
+    editor: 1,
+    composer: 1,
+    cinematographer: 1,
+    agent: 1
   };
 
-  const filteredActors = createFilteredCollection('actor');
-  const filteredDirectors = createFilteredCollection('director');
+  const filteredCollections: Record<SupportedKind, Signal<TalentData[]>> = {} as Record<
+    SupportedKind,
+    Signal<TalentData[]>
+  >;
+  for (const kind of ROLE_KINDS) {
+    filteredCollections[kind] = createFilteredCollection(kind);
+  }
+
+  const filteredActors = filteredCollections.actor;
+  const filteredDirectors = filteredCollections.director;
+  const filteredProducers = filteredCollections.producer;
+  const filteredWriters = filteredCollections.writer;
+  const filteredEditors = filteredCollections.editor;
+  const filteredComposers = filteredCollections.composer;
+  const filteredCinematographers = filteredCollections.cinematographer;
+  const filteredAgents = filteredCollections.agent;
   const hasChanges = computed(() => timeline.value.applied.length > 0);
 
   const snapshot = computed<AppStoreSnapshot>(() => ({
     save: save.value,
     actors: actors.value,
     directors: directors.value,
+    producers: producers.value,
+    writers: writers.value,
+    editors: editors.value,
+    composers: composers.value,
+    cinematographers: cinematographers.value,
+    agents: agents.value,
     filters: {
       actors: filters.actor.value,
-      directors: filters.director.value
+      directors: filters.director.value,
+      producers: filters.producer.value,
+      writers: filters.writer.value,
+      editors: filters.editor.value,
+      composers: filters.composer.value,
+      cinematographers: filters.cinematographer.value,
+      agents: filters.agent.value
     },
     timeline: timeline.value,
     names: names.value,
@@ -161,6 +328,12 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
     derived: {
       filteredActors: filteredActors.value,
       filteredDirectors: filteredDirectors.value,
+      filteredProducers: filteredProducers.value,
+      filteredWriters: filteredWriters.value,
+      filteredEditors: filteredEditors.value,
+      filteredComposers: filteredComposers.value,
+      filteredCinematographers: filteredCinematographers.value,
+      filteredAgents: filteredAgents.value,
       hasChanges: hasChanges.value
     },
     lastAction: lastAction.value
@@ -265,13 +438,141 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
     refreshCollectionsAndSave();
   }
 
-  function updateFilters(kind: SupportedKind, partial: Partial<CollectionFilters>) {
-    filters[kind].value = {
-      ...filters[kind].value,
-      ...partial
-    };
-    noteAction('applyChange', { scope: `filters.${kind}`, partial });
-  }
+function updateFilters(kind: SupportedKind, partial: Partial<CollectionFilters>) {
+  filters[kind].value = {
+    ...filters[kind].value,
+    ...partial
+  };
+  noteAction('applyChange', { scope: `filters.${kind}`, partial });
+}
+
+function updateCustomNameForRole(kind: SupportedKind, entity: TalentData, name: string | null | undefined) {
+  if (!isKnown(kind, entity)) return;
+  const trimmed = typeof name === 'string' ? name.trim() : '';
+  const next = trimmed === '' ? null : trimmed;
+  const previous = typeof entity.customName === 'string' && entity.customName.trim() !== '' ? entity.customName : null;
+  if (previous === next) return;
+
+  const applyName = (value: string | null) => {
+    if (value === null) {
+      delete entity.customName;
+    } else {
+      entity.customName = value;
+    }
+    refreshCollectionsAndSave();
+  };
+
+  const label = next ? `Custom Name → "${next}"` : 'Custom Name cleared';
+
+  const change: ChangeEntry = {
+    id: nextChangeId(),
+    entity: toEntityRef(kind, entity),
+    label,
+    path: 'customName',
+    previous,
+    next,
+    timestamp: Date.now(),
+    apply: () => applyName(next),
+    revert: () => applyName(previous)
+  };
+
+  applyName(next);
+  pushChange(change);
+}
+
+function updateGenderForRole(kind: SupportedKind, entity: TalentData, gender: number) {
+  if (!isKnown(kind, entity)) return;
+  const next = Number(gender) === 1 ? 1 : 0;
+  const previous = Number(entity.gender) === 1 ? 1 : 0;
+  if (previous === next) return;
+
+  const applyGender = (value: number) => {
+    entity.gender = value;
+    refreshCollectionsAndSave();
+  };
+
+  const label = `Gender → ${GENDER_LABELS[next] ?? String(next)}`;
+
+  const change: ChangeEntry = {
+    id: nextChangeId(),
+    entity: toEntityRef(kind, entity),
+    label,
+    path: 'gender',
+    previous,
+    next,
+    timestamp: Date.now(),
+    apply: () => applyGender(next),
+    revert: () => applyGender(previous)
+  };
+
+  applyGender(next);
+  pushChange(change);
+}
+
+function updateScalarStatForRole(
+  kind: SupportedKind,
+  entity: TalentData,
+  key: 'mood' | 'attitude' | 'selfEsteem',
+  value: number,
+  label: string,
+  format: (value: number) => string
+) {
+  if (!isKnown(kind, entity)) return;
+  const numeric = Number(value);
+  const base = Number.isFinite(numeric) ? numeric : 0;
+  const bounded = key === 'selfEsteem' ? base : Math.min(Math.max(base, 0), 1);
+  const sanitized = Math.abs(bounded) < 0.0005 ? 0 : bounded;
+  const next = sanitized.toFixed(3);
+  const previous = normalizeDecimalString((entity as Record<string, unknown>)[key] ?? '');
+  if (previous === next) return;
+
+  const applyValue = (val: string) => {
+    (entity as Record<string, unknown>)[key] = val;
+    refreshCollectionsAndSave();
+  };
+
+  const change: ChangeEntry = {
+    id: nextChangeId(),
+    entity: toEntityRef(kind, entity),
+    label: `${label} → ${format(sanitized)}`,
+    path: key,
+    previous,
+    next,
+    timestamp: Date.now(),
+    apply: () => applyValue(next),
+    revert: () => applyValue(previous)
+  };
+
+  applyValue(next);
+  pushChange(change);
+}
+
+function updateReadinessForRole(kind: SupportedKind, entity: TalentData, readiness: number) {
+  if (!isKnown(kind, entity)) return;
+  const normalized = Math.min(Math.max(Math.round(Number(readiness) || 0), 0), READINESS_LABELS.length - 1);
+  const previousRaw = Number.isFinite(Number(entity.readinessForTricks)) ? Number(entity.readinessForTricks) : 0;
+  if (previousRaw === normalized) return;
+
+  const applyValue = (val: number) => {
+    entity.readinessForTricks = val;
+    refreshCollectionsAndSave();
+  };
+
+  const change: ChangeEntry = {
+    id: nextChangeId(),
+    entity: toEntityRef(kind, entity),
+    label: `Readiness for Tricks → ${READINESS_LABELS[normalized] ?? normalized}`,
+    path: 'readinessForTricks',
+    previous: previousRaw,
+    next: normalized,
+    timestamp: Date.now(),
+    apply: () => applyValue(normalized),
+    revert: () => applyValue(previousRaw)
+  };
+
+  applyValue(normalized);
+  pushChange(change);
+}
 
   function updateSkillForRole(kind: SupportedKind, entity: TalentData, value: number | string) {
     if (!isKnown(kind, entity)) return;
@@ -356,12 +657,12 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
     pushChange(change);
   }
 
-  function updateAgeForRole(kind: SupportedKind, entity: TalentData, age: number) {
-    if (!isKnown(kind, entity)) return;
-    const currentYear = gameYear.value;
-    if (typeof currentYear !== 'number') return;
-    const numericAge = Number(age);
-    if (!Number.isFinite(numericAge)) return;
+function updateAgeForRole(kind: SupportedKind, entity: TalentData, age: number) {
+  if (!isKnown(kind, entity)) return;
+  const currentYear = gameYear.value;
+  if (typeof currentYear !== 'number') return;
+  const numericAge = Number(age);
+  if (!Number.isFinite(numericAge)) return;
 
     const clampedAge = clamp(Math.floor(numericAge), 0, 200);
     const targetYear = currentYear - clampedAge;
@@ -400,6 +701,43 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
     pushChange(change);
   }
 
+  function updateStudioForRole(kind: SupportedKind, entity: TalentData, studioId: string | null) {
+    if (!isKnown(kind, entity)) return;
+    const previousRaw =
+      typeof entity.studioId === 'string'
+        ? entity.studioId
+        : entity.studioId == null
+        ? null
+        : String(entity.studioId);
+    const normalized =
+      studioId && studioId.trim() ? studioId.trim().toUpperCase() : null;
+    if (previousRaw === normalized) return;
+
+    const applyStudio = (value: string | null) => {
+      if (value === null) {
+        entity.studioId = null;
+      } else {
+        entity.studioId = value;
+      }
+      refreshCollectionsAndSave();
+    };
+
+    const change: ChangeEntry = {
+      id: nextChangeId(),
+      entity: toEntityRef(kind, entity),
+      label: `Studio → ${formatStudioDisplay(normalized)}`,
+      path: 'studioId',
+      previous: previousRaw,
+      next: normalized,
+      timestamp: Date.now(),
+      apply: () => applyStudio(normalized),
+      revert: () => applyStudio(previousRaw)
+    };
+
+    applyStudio(normalized);
+    pushChange(change);
+  }
+
   function applyRoleSnapshot(kind: SupportedKind, entity: TalentData, snapshot: TalentData, label = 'Talent JSON edit') {
     if (!isKnown(kind, entity)) return;
     if (!snapshot || typeof snapshot !== 'object') return;
@@ -435,9 +773,21 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
       save,
       actors,
       directors,
+      producers,
+      writers,
+      editors,
+      composers,
+      cinematographers,
+      agents,
       filters: {
         actors: filters.actor,
-        directors: filters.director
+        directors: filters.director,
+        producers: filters.producer,
+        writers: filters.writer,
+        editors: filters.editor,
+        composers: filters.composer,
+        cinematographers: filters.cinematographer,
+        agents: filters.agent
       },
       timeline,
       names,
@@ -447,6 +797,12 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
     derived: {
       filteredActors,
       filteredDirectors,
+      filteredProducers,
+      filteredWriters,
+      filteredEditors,
+      filteredComposers,
+      filteredCinematographers,
+      filteredAgents,
       hasChanges
     },
     actions: {
@@ -513,6 +869,51 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
       recordChange(entry) {
         pushChange(entry);
       },
+      updateCustomName(kind, entity, name) {
+        if (!isSupportedKind(kind)) return;
+        updateCustomNameForRole(kind, entity, name);
+      },
+      updateGender(kind, entity, gender) {
+        if (!isSupportedKind(kind)) return;
+        updateGenderForRole(kind, entity, gender);
+      },
+      updateMood(kind, entity, value) {
+        if (!isSupportedKind(kind)) return;
+        updateScalarStatForRole(kind, entity, 'mood', value, 'Happiness', (v) => `${formatUnitToHundred(v)}%`);
+      },
+      updateAttitude(kind, entity, value) {
+        if (!isSupportedKind(kind)) return;
+        updateScalarStatForRole(kind, entity, 'attitude', value, 'Loyalty', (v) => `${formatUnitToHundred(v)}%`);
+      },
+      updateSelfEsteem(kind, entity, value) {
+        if (!isSupportedKind(kind)) return;
+        updateScalarStatForRole(kind, entity, 'selfEsteem', value, 'Self-esteem', (v) => formatUnitToTen(v));
+      },
+      updateReadiness(kind, entity, readiness) {
+        if (!isSupportedKind(kind)) return;
+        updateReadinessForRole(kind, entity, readiness);
+      },
+      updateStudio(kind, entity, studioId) {
+        if (!isSupportedKind(kind)) return;
+        updateStudioForRole(kind, entity, studioId);
+      },
+      updateSkill(kind, entity, value) {
+        if (!isSupportedKind(kind)) return;
+        updateSkillForRole(kind, entity, value);
+      },
+      updateLimit(kind, entity, value) {
+        if (!isSupportedKind(kind)) return;
+        updateLimitForRole(kind, entity, value);
+      },
+      updateAge(kind, entity, age) {
+        if (!isSupportedKind(kind)) return;
+        updateAgeForRole(kind, entity, age);
+      },
+      applySnapshot(kind, entity, snapshot, label) {
+        if (!isSupportedKind(kind)) return;
+        const fallbackLabel = `${ROLE_CONFIG[kind].detailLabel} JSON edit`;
+        applyRoleSnapshot(kind, entity, snapshot, label ?? fallbackLabel);
+      },
       updateActorSkill(entity, value) {
         updateSkillForRole('actor', entity, value);
       },
@@ -551,6 +952,27 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
       updateActorAge(entity, age) {
         updateAgeForRole('actor', entity, age);
       },
+      updateActorCustomName(entity, name) {
+        updateCustomNameForRole('actor', entity, name);
+      },
+      updateActorGender(entity, gender) {
+        updateGenderForRole('actor', entity, gender);
+      },
+      updateActorMood(entity, value) {
+        updateScalarStatForRole('actor', entity, 'mood', value, 'Happiness', (v) => `${formatUnitToHundred(v)}%`);
+      },
+      updateActorAttitude(entity, value) {
+        updateScalarStatForRole('actor', entity, 'attitude', value, 'Loyalty', (v) => `${formatUnitToHundred(v)}%`);
+      },
+      updateActorSelfEsteem(entity, value) {
+        updateScalarStatForRole('actor', entity, 'selfEsteem', value, 'Self-esteem', (v) => formatUnitToTen(v));
+      },
+      updateActorReadiness(entity, readiness) {
+        updateReadinessForRole('actor', entity, readiness);
+      },
+      updateActorStudio(entity, studioId) {
+        updateStudioForRole('actor', entity, studioId);
+      },
       updateDirectorSkill(entity, value) {
         updateSkillForRole('director', entity, value);
       },
@@ -559,6 +981,15 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
       },
       updateDirectorAge(entity, age) {
         updateAgeForRole('director', entity, age);
+      },
+      updateDirectorCustomName(entity, name) {
+        updateCustomNameForRole('director', entity, name);
+      },
+      updateDirectorGender(entity, gender) {
+        updateGenderForRole('director', entity, gender);
+      },
+      updateDirectorStudio(entity, studioId) {
+        updateStudioForRole('director', entity, studioId);
       },
       applyActorSnapshot(entity, snapshot, label) {
         applyRoleSnapshot('actor', entity, snapshot, label ?? 'Actor JSON edit');

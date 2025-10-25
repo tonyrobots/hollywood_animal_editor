@@ -85,4 +85,5 @@ Known Unknowns / TODOs
 
 Workflow Tips for Agents
 - Keep changes scoped; avoid touching unrelated save content.
+- Aim for clean, maintainable code, but resist over-engineering; this is a simple editor maintained by one developer, so favor pragmatic solutions.
 - Keep `web/data/CHARACTER_NAMES.json` as the canonical served name map.
