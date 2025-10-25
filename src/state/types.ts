@@ -46,6 +46,9 @@ export interface TimelineState {
 
 export interface CollectionFilters {
   search: string;
+}
+
+export interface GlobalFilters {
   playerStudioOnly: boolean;
 }
 
@@ -73,6 +76,7 @@ export interface StoreSnapshot {
   composers: TalentData[];
   cinematographers: TalentData[];
   agents: TalentData[];
+  globalFilters: GlobalFilters;
   filters: {
     actors: CollectionFilters;
     directors: CollectionFilters;
@@ -121,6 +125,7 @@ export interface AppStore {
     composers: Signal<TalentData[]>;
     cinematographers: Signal<TalentData[]>;
     agents: Signal<TalentData[]>;
+    globalFilters: Signal<GlobalFilters>;
     filters: {
       actors: Signal<CollectionFilters>;
       directors: Signal<CollectionFilters>;
@@ -150,6 +155,7 @@ export interface AppStore {
   actions: {
     loadSave: (raw: unknown, meta: SaveMeta, names?: string[] | null) => void;
     setNameMap: (names: string[] | null) => void;
+    updateGlobalFilters: (partial: Partial<GlobalFilters>) => void;
     updateCollectionFilters: (kind: EntityKind, partial: Partial<CollectionFilters>) => void;
     updateActorFilters: (partial: Partial<CollectionFilters>) => void;
     updateDirectorFilters: (partial: Partial<CollectionFilters>) => void;

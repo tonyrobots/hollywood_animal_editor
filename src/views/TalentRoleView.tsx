@@ -107,15 +107,16 @@ function SkillSliderCell({ kind, row, tooltip }: { kind: SupportedKind; row: Rol
       step={0.01}
       onChange={(value) => {
         context.setSkillPreview(value);
-        context.setLimitPreview((prev) => {
-          const baseline = prev ?? limitBase;
-          return value > baseline ? value : prev;
-        });
+        // If skill moves above limit, raise limit to match
+        const currentEffectiveLimit = context.limitPreview !== null ? context.limitPreview : limitBase;
+        if (value > currentEffectiveLimit) {
+          context.setLimitPreview(value);
+        }
       }}
       onCommit={(value) => {
         store.actions.updateSkill(kind, row.entity, value);
         context.setSkillPreview(null);
-        context.setLimitPreview(null);
+        // Don't clear limitPreview here - let the useEffect handle it after entity updates
       }}
       title={tooltip}
     />
@@ -129,7 +130,7 @@ function LimitSliderCell({ kind, row }: { kind: SupportedKind; row: RoleRow }) {
     return (
       <SliderField
         value={row.limit}
-        min={row.skill}
+        min={0}
         max={1}
         step={0.01}
         onCommit={(value) => store.actions.updateLimit(kind, row.entity, value)}
@@ -147,14 +148,18 @@ function LimitSliderCell({ kind, row }: { kind: SupportedKind; row: RoleRow }) {
   return (
     <SliderField
       value={limitValue}
-      min={skillValue}
+      min={0}
       max={1}
       step={0.01}
       onChange={(value) => {
-        context.setLimitPreview(value);
+        // Clamp to skill level - can't go below current skill
+        const clamped = Math.max(value, skillValue);
+        context.setLimitPreview(clamped);
       }}
       onCommit={(value) => {
-        store.actions.updateLimit(kind, row.entity, value);
+        // Clamp to skill level before committing
+        const clamped = Math.max(value, skillValue);
+        store.actions.updateLimit(kind, row.entity, clamped);
         context.setLimitPreview(null);
       }}
       title="Limit cannot be reduced below current skill."
@@ -185,6 +190,8 @@ export function TalentRoleView({ kind, augmentRow, extraColumns, extraColumnInse
   const filteredKey = config.filteredKey;
   const filtersSignal = store.signals.filters[collectionKey];
   const filters = filtersSignal.value;
+  const globalFilters = store.signals.globalFilters.value;
+  const playerStudioOnly = globalFilters.playerStudioOnly;
   const gameYear = store.signals.gameYear.value;
   const save = store.signals.save.value;
   const collectionSignal = store.signals[collectionKey];
@@ -253,13 +260,6 @@ export function TalentRoleView({ kind, augmentRow, extraColumns, extraColumnInse
         )
       },
       {
-        id: 'id',
-        label: 'ID',
-        sortable: true,
-        sortValue: (row) => Number(row.entity.id ?? 0),
-        render: (row) => row.idLabel
-      },
-      {
         id: 'skill',
         label: 'Skill',
         sortable: true,
@@ -310,9 +310,9 @@ export function TalentRoleView({ kind, augmentRow, extraColumns, extraColumnInse
     store.actions.updateCollectionFilters(kind, { search: value });
   };
 
-  const handleStudioToggle = (event: Event) => {
+  const handleGlobalFilterToggle = (event: Event) => {
     const target = event.currentTarget as HTMLInputElement;
-    store.actions.updateCollectionFilters(kind, { playerStudioOnly: target.checked });
+    store.actions.updateGlobalFilters({ playerStudioOnly: target.checked });
   };
 
   const toggleSort = (columnId: string) => {
@@ -366,9 +366,12 @@ export function TalentRoleView({ kind, augmentRow, extraColumns, extraColumnInse
             <span>Search</span>
             <input type="search" value={filters.search} onInput={handleSearch} placeholder={`Find ${pluralLower}…`} />
           </label>
-          <label class="panel__toggle">
-            <input type="checkbox" checked={filters.playerStudioOnly} onChange={handleStudioToggle} />
-            <span>Player Studio only</span>
+          <label class="panel__toggle" style="cursor: pointer; margin-left: auto;">
+            <span>Player Studio Only</span>
+            <span class="toggle-switch">
+              <input type="checkbox" checked={playerStudioOnly} onChange={handleGlobalFilterToggle} />
+              <span class="toggle-switch__slider" />
+            </span>
           </label>
         </div>
         {rows.length === 0 ? (

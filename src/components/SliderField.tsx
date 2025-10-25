@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
+import { TagValueInput } from './TagValueInput';
 
 export interface SliderFieldProps {
   label?: ComponentChildren;
@@ -17,6 +18,23 @@ export interface SliderFieldProps {
 
 const DEFAULT_FORMAT = (value: number) => (Number.isFinite(value) ? (value * 10).toFixed(1) : '—');
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 1000 : false
+  );
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1000);
+    };
+    
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile;
+}
+
 export function SliderField({
   label,
   value,
@@ -30,7 +48,9 @@ export function SliderField({
   ticks,
   title
 }: SliderFieldProps) {
+  const isMobile = useIsMobile();
   const [draft, setDraft] = useState<number>(value);
+  
   useEffect(() => {
     setDraft(value);
   }, [value]);
@@ -52,6 +72,24 @@ export function SliderField({
     onCommit(next);
   };
 
+  // On mobile, use TagValueInput component
+  if (isMobile) {
+    return (
+      <div class="slider-field">
+        {label && <div class="slider-field__label">{label}</div>}
+        <TagValueInput
+          value={value}
+          title={title}
+          min={min * 10}
+          max={max * 10}
+          step={step * 10}
+          onCommit={onCommit}
+        />
+      </div>
+    );
+  }
+
+  // On desktop, use slider
   return (
     <div class="slider-field" title={title}>
       {label && <div class="slider-field__label">{label}</div>}

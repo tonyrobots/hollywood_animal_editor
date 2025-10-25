@@ -173,7 +173,12 @@ function clamp(value: number, min: number, max: number): number {
 
 function defaultFilters(): CollectionFilters {
   return {
-    search: '',
+    search: ''
+  };
+}
+
+function defaultGlobalFilters(): import('./types').GlobalFilters {
+  return {
     playerStudioOnly: false
   };
 }
@@ -228,6 +233,7 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
   const save = signal<LoadedSave | null>(initial?.save ?? null);
   const names = signal(initial?.names ?? initial?.save?.names ?? null);
   const gameYear = signal<number | null>(initial?.gameYear ?? initial?.save?.gameYear ?? null);
+  const globalFilters = signal(initial?.globalFilters ?? defaultGlobalFilters());
 
   const collections: Record<SupportedKind, Signal<TalentData[]>> = {
     actor: signal(initial?.actors ?? []),
@@ -312,6 +318,7 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
     composers: composers.value,
     cinematographers: cinematographers.value,
     agents: agents.value,
+    globalFilters: globalFilters.value,
     filters: {
       actors: filters.actor.value,
       directors: filters.director.value,
@@ -349,7 +356,8 @@ export function createAppStore(initial?: Partial<AppStoreSnapshot>): AppStore {
     return computed(() => {
       const map = names.value;
       const current = source.value;
-      const { search, playerStudioOnly } = filterSignal.value;
+      const { search } = filterSignal.value;
+      const { playerStudioOnly } = globalFilters.value;
       const term = search.trim().toLowerCase();
       return current.filter((entity) => {
         if (playerStudioOnly && !isPlayerStudioEntity(entity)) return false;
@@ -444,6 +452,14 @@ function updateFilters(kind: SupportedKind, partial: Partial<CollectionFilters>)
     ...partial
   };
   noteAction('applyChange', { scope: `filters.${kind}`, partial });
+}
+
+function updateGlobalFiltersImpl(partial: Partial<import('./types').GlobalFilters>) {
+  globalFilters.value = {
+    ...globalFilters.value,
+    ...partial
+  };
+  noteAction('applyChange', { scope: 'globalFilters', partial });
 }
 
 function updateCustomNameForRole(kind: SupportedKind, entity: TalentData, name: string | null | undefined) {
@@ -783,6 +799,7 @@ function updateAgeForRole(kind: SupportedKind, entity: TalentData, age: number) 
       composers,
       cinematographers,
       agents,
+      globalFilters,
       filters: {
         actors: filters.actor,
         directors: filters.director,
@@ -841,6 +858,7 @@ function updateAgeForRole(kind: SupportedKind, entity: TalentData, age: number) 
           filters[kind].value = defaultFilters();
         }
 
+        globalFilters.value = defaultGlobalFilters();
         timeline.value = defaultTimeline();
         noteAction('loadSave', {
           meta,
@@ -859,6 +877,9 @@ function updateAgeForRole(kind: SupportedKind, entity: TalentData, age: number) 
           };
         }
         noteAction('applyChange', { scope: 'names', size: newNames?.length ?? 0 });
+      },
+      updateGlobalFilters(partial) {
+        updateGlobalFiltersImpl(partial);
       },
       updateCollectionFilters(kind, partial) {
         if (!isSupportedKind(kind)) return;
@@ -1027,6 +1048,7 @@ function updateAgeForRole(kind: SupportedKind, entity: TalentData, age: number) 
         for (const kind of ROLE_KINDS) {
           filters[kind].value = defaultFilters();
         }
+        globalFilters.value = defaultGlobalFilters();
         timeline.value = defaultTimeline();
         noteAction('reset');
       }

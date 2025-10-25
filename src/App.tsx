@@ -95,6 +95,7 @@ export function App() {
       <main class="layout">
         <SaveLoader />
         {hasSave && <ExportToolbar />}
+        {hasSave && <ChangeLogPanel />}
         {hasSave && (
           <>
             <section class="panel">
@@ -116,7 +117,6 @@ export function App() {
               </div>
             </section>
             {renderActiveView()}
-            <ChangeLogPanel />
           </>
         )}
       </main>
