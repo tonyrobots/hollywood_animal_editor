@@ -1,8 +1,8 @@
 Project: Hollywood Animal — Savegame Editor
 
 Purpose
-- Build a local, static web app to edit “Hollywood Animal” save files.
-- Tabs: Actors, Directors, Producers, Writers, Editors, Composers, Cinematographers, Agents (lists with skill/limit sliders), Movies (read-only table).
+- Build a web app to edit “Hollywood Animal” save files.
+- Tabs: Actors, Directors, Producers, Writers, Editors, Composers, Cinematographers, Agents (lists with skill/limit sliders), Movies (read-only table for now).
 - Editing capabilities include profession skills and limits across roles, ART/COM for actors, and a detail view with advanced JSON editing.
 
 Repository Layout
@@ -57,8 +57,7 @@ File Handling Guidelines
   - Write numeric fields as strings with exactly three decimals ("0.300").
   - Maintain both `limit` and `Limit` in sync.
 
-Static Web App
-- No server required. Works offline from `index.html`.
+ Web App - hosted at https://hollywood-animal-editor.vercel.app
 - Flow:
   1) Drag‑and‑drop or file picker to load a save JSON.
   2) Robustly find the `characters` array and filter to `professions.Actor`.
@@ -86,5 +85,4 @@ Known Unknowns / TODOs
 
 Workflow Tips for Agents
 - Keep changes scoped; avoid touching unrelated save content.
-- Prefer pure JS/TS with no external build; if adding tooling, keep it offline‑friendly.
 - Keep `web/data/CHARACTER_NAMES.json` as the canonical served name map.
