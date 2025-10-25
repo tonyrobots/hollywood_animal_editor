@@ -483,11 +483,15 @@ function updateCustomNameForRole(kind: SupportedKind, entity: TalentData, name: 
 function updateGenderForRole(kind: SupportedKind, entity: TalentData, gender: number) {
   if (!isKnown(kind, entity)) return;
   const next = Number(gender) === 1 ? 1 : 0;
-  const previous = Number(entity.gender) === 1 ? 1 : 0;
+  const previous = typeof entity.gender === 'number' ? (Number(entity.gender) === 1 ? 1 : 0) : undefined;
   if (previous === next) return;
 
-  const applyGender = (value: number) => {
-    entity.gender = value;
+  const applyGender = (value: number | undefined) => {
+    if (value === undefined) {
+      delete entity.gender;
+    } else {
+      entity.gender = value;
+    }
     refreshCollectionsAndSave();
   };
 
