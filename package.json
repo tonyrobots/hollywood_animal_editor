@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --config vite.config.ts",
     "start": "npm run dev",
-    "build": "tsc && vite build --config vite.config.ts",
+    "build": "tsc --noEmit && vite build --config vite.config.ts",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview --config vite.config.ts",
     "test": "vitest",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",

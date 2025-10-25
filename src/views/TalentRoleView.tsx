@@ -367,7 +367,7 @@ export function TalentRoleView({ kind, augmentRow, extraColumns, extraColumnInse
             <input type="search" value={filters.search} onInput={handleSearch} placeholder={`Find ${pluralLower}…`} />
           </label>
           <label class="panel__toggle" style="cursor: pointer; margin-left: auto;">
-            <span>Player Studio Only</span>
+            <span>Player Studio Only [DEBUG: IN {config.title.toUpperCase()}]</span>
             <span class="toggle-switch">
               <input type="checkbox" checked={playerStudioOnly} onChange={handleGlobalFilterToggle} />
               <span class="toggle-switch__slider" />

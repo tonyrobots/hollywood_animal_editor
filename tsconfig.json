@@ -6,7 +6,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowJs": false,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "jsxImportSource": "preact",
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -16,7 +16,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": false,
     "skipLibCheck": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "noEmit": true
   },
   "include": ["src"],
   "references": [
