@@ -977,3 +977,43 @@ body {
 .muted {
   color: rgba(248, 250, 252, 0.6);
 }
+
+/* Site Header */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.45);
+}
+
+.site-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-header__logo {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+@media (min-width: 900px) {
+  .site-header__logo {
+    height: 34px;
+  }
+}
+
+.site-header__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}

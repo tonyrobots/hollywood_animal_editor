@@ -3,6 +3,7 @@ To do:
 [x] add filter to show only your studio employees
 
 Dev log:
+2025-10-25: Build pipeline cleaned: switched to Vite for transpile/bundle with `tsc --noEmit` for type-check only; updated tsconfig to `jsx: react-jsx` with Preact. Removed duplicated .jsx/.js artifacts from source (keep only .ts/.tsx going forward).
 2025-10-09: Generalized the store for multi-role collections (actors/directors), added reusable age field & talent detail drawer, and ported the Directors tab with sortable sliders plus shared undo/redo logging. Extended store unit tests to cover director workflows.
 2025-10-09: Rebuilt the Actors tab on the new stack — added reusable slider/age controls tied into the store, wired undo/redo change log, and introduced the actor detail drawer with JSON editing. Added preliminary store unit tests for skill/limit/tag/age mutations (Vitest still needs WebCrypto, so runs are blocked inside the sandbox).
 2025-10-08: Stood up a new Vite/Preact shell under `src/` with domain/store modules, save loader, actor preview table, and optional name map uploader. Legacy `web/` build left intact for comparison; tests updated to cover game-year edge cases.

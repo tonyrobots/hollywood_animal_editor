@@ -23,7 +23,6 @@ import type {
   CollectionFilters,
   EntityKind,
   LoadedSave,
-  SaveMeta,
   StoreAction,
   TalentRole,
   TimelineState

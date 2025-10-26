@@ -1,7 +1,6 @@
 import { createContext } from 'preact';
 import type { ComponentChild, ComponentChildren } from 'preact';
 import { useContext, useEffect, useMemo, useState } from 'preact/hooks';
-import type { StateUpdater } from 'preact/hooks';
 import { AgeField } from '../components/AgeField';
 import { SliderField } from '../components/SliderField';
 import { ROLE_CONFIG, type SupportedKind, useAppStore } from '../state';
@@ -43,8 +42,8 @@ function parseUnit(value: unknown, fallback = 0): number {
 interface SkillLimitContextValue {
   skillPreview: number | null;
   limitPreview: number | null;
-  setSkillPreview: StateUpdater<number | null>;
-  setLimitPreview: StateUpdater<number | null>;
+  setSkillPreview: (value: number | null) => void;
+  setLimitPreview: (value: number | null) => void;
   skillBase: number;
   limitBase: number;
 }
@@ -358,20 +357,23 @@ export function TalentRoleView({ kind, augmentRow, extraColumns, extraColumnInse
     <>
       <section class="panel">
         <header class="panel__header">
-          <h2>{config.title}</h2>
-          <p class="panel__subtitle">{subtitle}</p>
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+            <h2>
+              {config.title} <span class="panel__subtitle">({subtitle})</span>
+            </h2>
+            <label class="panel__toggle" style="cursor: pointer;">
+              <span>Player Studio Only</span>
+              <span class="toggle-switch">
+                <input type="checkbox" checked={playerStudioOnly} onChange={handleGlobalFilterToggle} />
+                <span class="toggle-switch__slider" />
+              </span>
+            </label>
+          </div>
         </header>
         <div class="panel__controls">
           <label class="panel__field">
             <span>Search</span>
             <input type="search" value={filters.search} onInput={handleSearch} placeholder={`Find ${pluralLower}…`} />
-          </label>
-          <label class="panel__toggle" style="cursor: pointer; margin-left: auto;">
-            <span>Player Studio Only [DEBUG: IN {config.title.toUpperCase()}]</span>
-            <span class="toggle-switch">
-              <input type="checkbox" checked={playerStudioOnly} onChange={handleGlobalFilterToggle} />
-              <span class="toggle-switch__slider" />
-            </span>
           </label>
         </div>
         {rows.length === 0 ? (

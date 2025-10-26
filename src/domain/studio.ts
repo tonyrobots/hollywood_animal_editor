@@ -62,7 +62,10 @@ export const BASE_STUDIO_OPTIONS = [
 
 export function buildStudioOptions(currentCode: string | null | undefined) {
   const normalized = currentCode == null ? '' : String(currentCode).trim().toUpperCase();
-  const options = [...BASE_STUDIO_OPTIONS];
+  const options: { value: string; label: string }[] = BASE_STUDIO_OPTIONS.map((o) => ({
+    value: o.value,
+    label: o.label
+  }));
   if (normalized && !options.some((option) => option.value === normalized)) {
     options.push({ value: normalized, label: formatStudioDisplay(normalized) });
   }

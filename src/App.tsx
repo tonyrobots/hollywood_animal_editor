@@ -11,9 +11,10 @@ import {
   WritersView
 } from './views';
 import { SaveLoader } from './components/SaveLoader';
-import { ExportToolbar } from './components/ExportToolbar';
 import { ChangeLogPanel } from './components/ChangeLogPanel';
 import { loadBundledNameMap } from './services/names';
+import { downloadTextFile, serializeSave } from './services/files';
+import logoUrl from '../web/images/logo_ha_1280x720.png';
 
 type TabKey = (typeof ROLE_CONFIG)[SupportedKind]['collectionKey'];
 
@@ -45,6 +46,7 @@ export function App() {
 
   const [activeTab, setActiveTab] = useState<TabKey>('actors');
   const hasSave = Boolean(store.signals.save.value);
+  const hasChanges = store.derived.hasChanges.value;
 
   const tabEntries = ROLE_KINDS.map((kind) => {
     const config = ROLE_CONFIG[kind];
@@ -93,29 +95,44 @@ export function App() {
   return (
     <StoreProvider value={store}>
       <main class="layout">
+        <header class="site-header">
+          <div class="site-header__brand">
+            <img src={logoUrl} alt="Hollywood Animal" class="site-header__logo" />
+            <span class="site-header__title">Save Game Editor</span>
+          </div>
+          {hasSave && hasChanges && (
+            <button
+              type="button"
+              class="toolbar__button"
+              onClick={() => {
+                const save = store.signals.save.value;
+                if (!save) return;
+                const rawName = save.meta?.filename ?? 'edited-save.json';
+                const filename = rawName.toLowerCase().endsWith('.json') ? rawName : `${rawName}.json`;
+                const payload = serializeSave(save.raw);
+                downloadTextFile(filename, payload);
+              }}
+            >
+              Download Edited Save
+            </button>
+          )}
+        </header>
         <SaveLoader />
-        {hasSave && <ExportToolbar />}
         {hasSave && <ChangeLogPanel />}
         {hasSave && (
           <>
-            <section class="panel">
-              <header class="panel__header">
-                <h2>Talent</h2>
-                <p class="panel__subtitle">Switch between the available talent editors.</p>
-              </header>
-              <div class="tabs">
-                {tabEntries.map((entry) => (
-                  <button
-                    key={entry.key}
-                    type="button"
-                    class={`tabs__button${activeTab === entry.key ? ' tabs__button--active' : ''}`}
-                    onClick={() => setActiveTab(entry.key)}
-                  >
-                    {entry.title} <span class="tabs__count">({entry.count})</span>
-                  </button>
-                ))}
-              </div>
-            </section>
+            <div class="tabs">
+              {tabEntries.map((entry) => (
+                <button
+                  key={entry.key}
+                  type="button"
+                  class={`tabs__button${activeTab === entry.key ? ' tabs__button--active' : ''}`}
+                  onClick={() => setActiveTab(entry.key)}
+                >
+                  {entry.title} <span class="tabs__count">({entry.count})</span>
+                </button>
+              ))}
+            </div>
             {renderActiveView()}
           </>
         )}

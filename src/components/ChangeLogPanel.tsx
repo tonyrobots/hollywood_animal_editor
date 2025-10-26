@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'preact/hooks';
-import { useAppStore, ROLE_CONFIG } from '../state';
+import { useAppStore, ROLE_CONFIG, type SupportedKind } from '../state';
 import { fullName } from '../domain';
 import type { ChangeEntry, EntityRef } from '../state/types';
 import type { TalentData } from '../types/save';
@@ -18,10 +18,13 @@ export function ChangeLogPanel() {
   const resolveEntityName = (entityRef: EntityRef | null): string | null => {
     if (!entityRef) return null;
 
-    const config = ROLE_CONFIG[entityRef.kind];
+    const kind = entityRef.kind as SupportedKind;
+    const config = ROLE_CONFIG[kind];
     if (!config) return null;
 
-    const collection = store.signals[config.collectionKey].value;
+    const collection = (store.signals as unknown as Record<string, typeof store.signals.actors>)[
+      config.collectionKey
+    ].value;
     const entity = collection.find((e: TalentData) => e.id === entityRef.id);
     
     if (!entity) return null;

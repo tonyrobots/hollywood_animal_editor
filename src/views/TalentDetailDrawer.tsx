@@ -4,14 +4,7 @@ import { AgeField } from '../components/AgeField';
 import { SliderField } from '../components/SliderField';
 import { TagValueInput } from '../components/TagValueInput';
 import { ROLE_CONFIG, useAppStore } from '../state';
-import {
-  fullName,
-  getAge,
-  formatStudioDisplay,
-  formatUnitToTen,
-  getTagValue,
-  normalizeDecimalString
-} from '../domain';
+import { fullName, getAge, formatStudioDisplay, getTagValue, normalizeDecimalString } from '../domain';
 import type { TalentData } from '../types/save';
 type TalentKind = keyof typeof ROLE_CONFIG;
 
@@ -400,7 +393,7 @@ export function TalentDetailDrawer({ kind, entity, open, onClose }: TalentDetail
                     setDirty(true);
                   }}
                   rows={18}
-                  spellCheck={false}
+                  spellcheck={false}
                 />
                 {jsonError && <p class="drawer__error">{jsonError}</p>}
                 <div class="drawer__buttons">
