@@ -3,6 +3,7 @@ To do:
 [x] add filter to show only your studio employees
 
 Dev log:
+2025-10-26: UI polish. Added a sticky top header with the project logo and the "Save Game Editor" title; integrated the export/download action into this header (shown only when a save is loaded and there are pending changes) and removed the separate Export toolbar. Simplified the Talent area by removing the extra container box and placing the role tabs directly above the active role view. In each role table, moved the global "Player Studio Only" toggle to the top‑right of the header row and inlined the loaded count next to the role title to reduce vertical spacing.
 2025-10-25: Build pipeline cleaned: switched to Vite for transpile/bundle with `tsc --noEmit` for type-check only; updated tsconfig to `jsx: react-jsx` with Preact. Removed duplicated .jsx/.js artifacts from source (keep only .ts/.tsx going forward).
 2025-10-09: Generalized the store for multi-role collections (actors/directors), added reusable age field & talent detail drawer, and ported the Directors tab with sortable sliders plus shared undo/redo logging. Extended store unit tests to cover director workflows.
 2025-10-09: Rebuilt the Actors tab on the new stack — added reusable slider/age controls tied into the store, wired undo/redo change log, and introduced the actor detail drawer with JSON editing. Added preliminary store unit tests for skill/limit/tag/age mutations (Vitest still needs WebCrypto, so runs are blocked inside the sandbox).
