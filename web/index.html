@@ -62,6 +62,7 @@
       <button id="tabbtn-agents" class="tab" role="tab" aria-selected="false" data-tab="agents" aria-controls="tab-agents">Security Agents</button>
       <button id="tabbtn-executives" class="tab" role="tab" aria-selected="false" data-tab="executives" aria-controls="tab-executives">Management</button>
       <button id="tabbtn-movies" class="tab" role="tab" aria-selected="false" data-tab="movies" aria-controls="tab-movies">Movies</button>
+      <button id="tabbtn-research" class="tab" role="tab" aria-selected="false" data-tab="research" aria-controls="tab-research">Research</button>    
     </nav>
 
     <section id="tab-studio" class="tab-content active" role="tabpanel" aria-labelledby="tabbtn-studio">
@@ -342,6 +343,28 @@
             </tr>
           </thead>
           <tbody id="moviesTbody"></tbody>
+        </table>
+      </section>
+    </section>
+
+    <!-- Research Tab -->
+    <section id="tab-research" class="tab-content" role="tabpanel" aria-labelledby="tabbtn-research">
+      <section id="researchControls" class="controls" hidden>
+        <div class="control-row">
+          <input type="text" id="researchSearchInput" placeholder="Search ongoing research..." />
+        </div>
+        <div id="researchStatus" class="status"></div>
+      </section>
+      <section id="researchTableSection" hidden>
+        <table id="researchTable">
+          <thead>
+            <tr>
+              <th style="min-width: 200px;">Perk ID</th>
+              <th>Department / Domain</th>
+              <th>Progress</th>
+            </tr>
+          </thead>
+          <tbody id="researchTbody"></tbody>
         </table>
       </section>
     </section>

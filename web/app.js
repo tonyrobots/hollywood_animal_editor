@@ -122,6 +122,9 @@
   const agentsTableSection = document.getElementById('agentsTableSection');
   const agentsTbody = document.getElementById('agentsTbody');
   const gameYearText8 = document.getElementById('gameYearText8');
+  // Research UI
+  const researchTbody = document.getElementById('researchTbody');
+  const researchSearchInput = document.getElementById('researchSearchInput');
   // Executives UI
   const executivesPlaceholder = document.getElementById('executivesPlaceholder');
   const executivesControls = document.getElementById('executivesControls');
@@ -186,6 +189,7 @@
   let cinematographers = [];
   let agents = [];
   let movies = [];
+  let researchItems = [];
   // UI focus tracking
   let focusedEntityId = null;
   let detailEntity = null; // currently opened entity for advanced edit
@@ -442,7 +446,7 @@
       refreshChangeUI();
       // no resort; refresh visible tables only
       render(); renderStudio();
-      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies();
+      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies(); renderResearch();
     });
     if (redoBtn) redoBtn.addEventListener('click', () => {
       const entry = redoStack.pop();
@@ -454,7 +458,7 @@
       if (changesList) { const li = document.createElement('li'); li.textContent = entry.message; changesList.appendChild(li); }
       refreshChangeUI();
       render(); renderStudio();
-      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies();
+      renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies(); renderResearch();
     });
   }
 
@@ -654,7 +658,7 @@
       detailStatus.textContent = 'Applied. Review table for changes.';
     }
     // Rerender active views
-    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies(); renderStudio();
+    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderMovies(); renderStudio(); renderResearch();
     // Close overlay after applying
     closeDetailEditor();
   });
@@ -1184,7 +1188,7 @@
 
   // Tabs
   function activateTab(name) {
-    const valid = new Set(['studio','actors','directors','producers','writers','editors','movies','composers','cinematographers','agents','executives']);
+    const valid = new Set(['studio','actors','directors','producers','writers','editors','movies','composers','cinematographers','agents','executives', 'research']);
     if (!valid.has(name)) name = 'actors';
     tabs.forEach(btn => {
       const match = btn.getAttribute('data-tab') === name;
@@ -1213,6 +1217,7 @@
     if (name === 'cinematographers') renderCinematographers();
     if (name === 'agents') renderAgents();
     if (name === 'movies') renderMovies();
+    if (name === 'research') renderResearch();
   }
 
   function renderStudio() {
@@ -1430,6 +1435,7 @@
     cinematographers = charactersArr.filter(obj => isRoleEntry(obj, 'Cinematographer'));
     agents = charactersArr.filter(obj => isRoleEntry(obj, 'Agent'));
     executives = charactersArr.filter(obj => isExecutiveEntry(obj));
+    researchItems = findFirstValueByKey(saveObj, 'perksOpeningProgress') || [];
 
     // Clear placeholder messages
     if (directorsPlaceholder) directorsPlaceholder.textContent = '';
@@ -1468,11 +1474,89 @@
     if (isMoviesActive) renderMovies();
     const isExecutivesActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'executives');
     if (isExecutivesActive) renderExecutives();
+    const isResearchActive = Array.from(tabs).some(b => b.classList.contains('active') && b.getAttribute('data-tab') === 'research');
+    if (isResearchActive) renderResearch();
     // Collapse loaders if both files are loaded
     if (loadersSection) {
       // Simplify: hide loaders once a save is loaded; name map is auto-loaded
       loadersSection.style.display = saveLoaded ? 'none' : '';
     }
+  }
+
+  // --- Research tab ---
+  function renderResearch() {
+    if (!saveLoaded || !researchTbody) return;
+    const researchTableSection = document.getElementById('researchTableSection');
+    const researchControls = document.getElementById('researchControls');
+    if (researchTableSection) researchTableSection.hidden = false;
+    if (researchControls) researchControls.hidden = false;
+
+    const q = (researchSearchInput?.value || '').toLowerCase().trim();
+    const filtered = q
+      ? researchItems.filter((item) =>
+          (item.perkId || '').toLowerCase().includes(q) ||
+          (item.department || '').toLowerCase().includes(q)
+        )
+      : researchItems;
+
+    const researchStatus = document.getElementById('researchStatus');
+    if (researchStatus) researchStatus.textContent = `${filtered.length} of ${researchItems.length} perks shown`;
+
+    const frag = document.createDocumentFragment();
+
+    filtered.forEach((item) => {
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', String(item.perkId ?? ''));
+
+      // Perk ID
+      const tdId = document.createElement('td');
+      tdId.textContent = item.perkId || '—';
+      tr.appendChild(tdId);
+
+      // Department / Domain
+      const tdDept = document.createElement('td');
+      tdDept.textContent = item.department && item.department !== 'NONE' ? item.department : `Domain ${item.domain ?? '—'}`;
+      tr.appendChild(tdDept);
+
+      // Progress Slider
+      const tdProgress = document.createElement('td');
+      const progWrap = document.createElement('div');
+      progWrap.className = 'slider-cell';
+      const progRange = document.createElement('input');
+      progRange.type = 'range';
+      progRange.min = '0';
+      progRange.max = '1';
+      progRange.step = '0.001';
+      const curProg = isFinite(Number(item.progress)) ? Number(item.progress) : 0;
+      progRange.value = String(curProg);
+
+      const progVal = document.createElement('span');
+      progVal.className = 'slider-val';
+      progVal.textContent = `${(curProg * 100).toFixed(1)}%`;
+
+      progRange.addEventListener('input', () => {
+        if (!('initial' in progRange.dataset)) progRange.dataset.initial = String(item.progress ?? '0.000');
+        const norm = Number(progRange.value).toFixed(3);
+        item.progress = norm;
+        progVal.textContent = `${(Number(norm) * 100).toFixed(1)}%`;
+      });
+
+      progRange.addEventListener('change', () => {
+        const finalVal = Number(progRange.value).toFixed(3);
+        const initialVal = progRange.dataset.initial ?? String(curProg);
+        delete progRange.dataset.initial;
+        recordEdit({ entity: item, label: `Progress (${item.perkId})`, path: 'progress', oldValue: initialVal, newValue: finalVal, suppressEntityInLog: true });
+      });
+
+      progWrap.appendChild(progRange);
+      progWrap.appendChild(progVal);
+      tdProgress.appendChild(progWrap);
+      tr.appendChild(tdProgress);
+
+      frag.appendChild(tr);
+    });
+
+    researchTbody.replaceChildren(frag);
   }
 
   function renderDirectors() {
@@ -2609,7 +2693,7 @@
   searchInput.addEventListener('input', () => render());
   if (playerStudioOnly) playerStudioOnly.addEventListener('change', () => {
     // Rerender all relevant tables when toggled
-    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives();
+    render(); renderDirectors(); renderProducers(); renderWriters(); renderEditors(); renderComposers(); renderCinematographers(); renderAgents(); renderExecutives(); renderResearch();
   });
   if (directorsSearchInput) directorsSearchInput.addEventListener('input', () => renderDirectors());
   if (producersSearchInput) producersSearchInput.addEventListener('input', () => renderProducers());
@@ -2623,7 +2707,7 @@
   if (composersSearchInput) composersSearchInput.addEventListener('input', () => renderComposers());
   if (cinematographersSearchInput) cinematographersSearchInput.addEventListener('input', () => renderCinematographers());
   if (agentsSearchInput) agentsSearchInput.addEventListener('input', () => renderAgents());
-
+  if (researchSearchInput) {researchSearchInput.addEventListener('input', renderResearch);}
   // Game year: display-only (no inputs)
 
   // Sorting handlers
